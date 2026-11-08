@@ -286,12 +286,12 @@ function opsaet() {
     { noegle: 'TEAMBUDGET_BRUGT_CELLE', vaerdi: '' }
   ]);
   seed('Menu', [
-    { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 10, aktiv: 'ja' },
-    { id: 'monster', navn: 'Monster', ikon: '⚡', pris: 20, aktiv: 'ja' },
-    { id: 'kaffe', navn: 'Kaffe to go', ikon: '☕', pris: 30, aktiv: 'ja' },
-    { id: 'is', navn: 'Is', ikon: '🍦', pris: 15, aktiv: 'ja' },
-    { id: 'slik', navn: 'Slikpose', ikon: '🍬', pris: 15, aktiv: 'ja' },
-    { id: 'morgenmad', navn: 'Morgenmad', ikon: '🥐', pris: 40, aktiv: 'ja' }
+    { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 10, kostpris: 8, aktiv: 'ja' },
+    { id: 'monster', navn: 'Monster', ikon: '⚡', pris: 20, kostpris: 15, aktiv: 'ja' },
+    { id: 'kaffe', navn: 'Kaffe to go', ikon: '☕', pris: 30, kostpris: 35, aktiv: 'ja' },
+    { id: 'is', navn: 'Is', ikon: '🍦', pris: 15, kostpris: 12, aktiv: 'ja' },
+    { id: 'slik', navn: 'Slikpose', ikon: '🍬', pris: 15, kostpris: 20, aktiv: 'ja' },
+    { id: 'morgenmad', navn: 'Morgenmad', ikon: '🥐', pris: 40, kostpris: 45, aktiv: 'ja' }
   ]);
   seed('Projekter', [
     { id: 'frokost', navn: 'Teamfrokost', ikon: '🍽️', maal: 1500, aaben: 'ja' },

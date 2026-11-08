@@ -70,6 +70,7 @@
     cart: '<path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 7H6.2"/><circle cx="9" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/>',
     users: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5z"/><circle cx="17" cy="9" r="2.8"/><path d="M16.5 14.2c3 .2 5.5 2 5.5 5.3h-4"/>',
     box: '<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9" stroke="var(--side)" stroke-width="1.4"/>',
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M14.8 9.2a3.2 3.2 0 0 0-2.8-1.4c-1.6 0-2.8.9-2.8 2.1 0 2.9 5.8 1.4 5.8 4.3 0 1.2-1.3 2.1-3 2.1a3.5 3.5 0 0 1-3-1.5M12 6.3v1.5M12 16.3v1.5" fill="none" stroke="var(--side)" stroke-width="1.6" stroke-linecap="round"/>',
     list: '<rect x="3" y="4" width="18" height="3" rx="1"/><rect x="3" y="10.5" width="18" height="3" rx="1"/><rect x="3" y="17" width="12" height="3" rx="1"/>',
     sun: '<circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
     logout: '<path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 8l4 4-4 4M19 12H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -206,6 +207,7 @@
     'regler': { titel: 'Regler', fn: pageRegler },
     'admin/bestillinger': { titel: 'Bestillinger', fn: pageAdminBestillinger, admin: true },
     'admin/brugere': { titel: 'Brugere', fn: pageAdminBrugere, admin: true },
+    'admin/opgoerelse': { titel: 'Opgørelse', fn: pageAdminOpgoerelse, admin: true },
     'admin/sortiment': { titel: 'Sortiment', fn: pageAdminSortiment, admin: true },
     'admin/posteringer': { titel: 'Posteringer', fn: pageAdminPosteringer, admin: true }
   };
@@ -240,6 +242,7 @@
       '<nav class="nav">' + navLink('profil', 'user', 'Min profil') + '</nav>' +
       (me.admin ? '<div class="nav-label">Admin</div><nav class="nav">' +
         navLink('admin/bestillinger', 'cart', 'Bestillinger', nyeBest ? '<span class="badge">' + nyeBest + '</span>' : '') +
+        navLink('admin/opgoerelse', 'coin', 'Opgørelse') +
         navLink('admin/brugere', 'users', 'Brugere') +
         navLink('admin/sortiment', 'box', 'Sortiment') +
         navLink('admin/posteringer', 'list', 'Posteringer') + '</nav>' : '') +
@@ -410,12 +413,31 @@
       }).join('') + '</tbody></table></div></section>';
   }
 
+  function pageAdminOpgoerelse() {
+    var rows = A.opgoerelse;
+    var nuKey = S.nu.slice(0, 7);
+    var denne = rows.filter(function (o) { return o.maaned === nuKey; })[0];
+    return adminHead('Opgørelse') +
+      '<div class="stat-grid">' +
+      statBox('Brugt · ' + cap(MAANEDER[Number(nuKey.slice(5)) - 1]), kr(denne ? denne.kr : 0), denne ? denne.antal + ' bestillinger' + (denne.aabne ? ' · ' + denne.aabne + ' ikke udleveret' : '') : 'Ingen bestillinger') +
+      statBox('Brugt · i alt', kr(rows.reduce(function (s, o) { return s + o.kr; }, 0))) +
+      '</div>' +
+      '<section class="card"><div class="card-head"><h2 class="card-title">Pr. måned</h2></div>' +
+      (rows.length ? '<div class="table-wrap"><table><thead><tr><th>Måned</th><th>Varer</th><th class="r">Bestillinger</th><th class="r">Webcoins</th><th class="r">At trække</th></tr></thead><tbody>' +
+        rows.map(function (o) {
+          return '<tr><td><b>' + esc(maanedLabel(o.maaned)) + '</b>' + (o.aabne ? ' <span class="tag ny">' + o.aabne + ' ikke udleveret</span>' : '') + '</td>' +
+            '<td class="muted" style="font-size:13px">' + o.varer.map(function (v) { return esc(v.antal + '× ' + v.navn); }).join(', ') + '</td>' +
+            '<td class="r num">' + o.antal + '</td><td class="r num">' + fmt(o.wc) + ' WC</td><td class="r num"><b class="plus">' + kr(o.kr) + '</b></td></tr>';
+        }).join('') + '</tbody></table></div>' : '<div class="empty">Ingen bestillinger endnu.</div>') +
+      '</section>';
+  }
+
   function pageAdminSortiment() {
     return adminHead('Sortiment') +
       '<div class="grid-2" style="margin-top:0"><section class="card"><div class="card-head"><h2 class="card-title">Menu</h2><button class="btn primary sm" data-act="ny-vare">Ny vare</button></div>' +
-      '<div class="table-wrap"><table><thead><tr><th></th><th>Navn</th><th class="r">Pris</th><th>Status</th><th></th></tr></thead><tbody>' +
+      '<div class="table-wrap"><table><thead><tr><th></th><th>Navn</th><th class="r">Pris</th><th class="r">Kostpris</th><th>Status</th><th></th></tr></thead><tbody>' +
       A.menu.map(function (v) {
-        return '<tr' + (v.aktiv ? '' : ' style="opacity:.5"') + '><td style="font-size:22px">' + esc(v.ikon) + '</td><td><b>' + esc(v.navn) + '</b></td><td class="r num">' + fmt(v.pris) + ' WC</td><td>' + (v.aktiv ? '<span class="tag udleveret">Aktiv</span>' : '<span class="tag">Skjult</span>') + '</td><td><div class="row-acts"><button class="btn sm" data-act="ret-vare" data-id="' + esc(v.id) + '">Rediger</button></div></td></tr>';
+        return '<tr' + (v.aktiv ? '' : ' style="opacity:.5"') + '><td style="font-size:22px">' + esc(v.ikon) + '</td><td><b>' + esc(v.navn) + '</b></td><td class="r num">' + fmt(v.pris) + ' WC</td><td class="r num">' + (v.kostpris ? kr(v.kostpris) : '<span class="tag ny">Mangler</span>') + '</td><td>' + (v.aktiv ? '<span class="tag udleveret">Aktiv</span>' : '<span class="tag">Skjult</span>') + '</td><td><div class="row-acts"><button class="btn sm" data-act="ret-vare" data-id="' + esc(v.id) + '">Rediger</button></div></td></tr>';
       }).join('') + '</tbody></table></div></section>' +
       '<section class="card"><div class="card-head"><h2 class="card-title">Projekter</h2><button class="btn primary sm" data-act="nyt-projekt">Nyt projekt</button></div>' +
       (A.projekter.length ? A.projekter.map(function (p) {
@@ -532,11 +554,12 @@
   }
 
   function openVare(id) {
-    var v = id ? A.menu.filter(function (x) { return x.id === id; })[0] : { id: '', navn: '', ikon: '', pris: 10, aktiv: true };
+    var v = id ? A.menu.filter(function (x) { return x.id === id; })[0] : { id: '', navn: '', ikon: '', pris: 10, kostpris: 0, aktiv: true };
     openModal('<h2>' + (id ? 'Rediger vare' : 'Ny vare') + '</h2><input type="hidden" id="v-id" value="' + esc(v.id) + '">' +
       '<div class="row-2"><div class="field"><label for="v-navn">Navn</label><input class="input" id="v-navn" value="' + esc(v.navn) + '"></div>' +
       '<div class="field"><label for="v-ikon">Ikon (emoji)</label><input class="input" id="v-ikon" value="' + esc(v.ikon) + '" maxlength="4"></div></div>' +
-      '<div class="field"><label for="v-pris">Pris (WC)</label><input class="input num" id="v-pris" type="number" min="0" value="' + esc(v.pris) + '"></div>' +
+      '<div class="row-2"><div class="field"><label for="v-pris">Pris (WC)</label><input class="input num" id="v-pris" type="number" min="0" value="' + esc(v.pris) + '"></div>' +
+      '<div class="field"><label for="v-kost">Kostpris (kr)</label><input class="input num" id="v-kost" type="number" min="0" step="0.5" value="' + esc(v.kostpris || '') + '"></div></div>' +
       '<label class="check"><input type="checkbox" id="v-aktiv"' + (v.aktiv ? ' checked' : '') + '> Vises i menuen</label>' +
       '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="vare-ok">Gem</button></div>');
   }
@@ -616,7 +639,7 @@
       case 'ny-vare': openVare(''); break;
       case 'ret-vare': openVare(t.dataset.id); break;
       case 'vare-ok':
-        submit(t, 'admin_vare', { id: val('v-id'), navn: val('v-navn'), ikon: val('v-ikon'), pris: val('v-pris'), aktiv: checked('v-aktiv') }, 'Vare gemt');
+        submit(t, 'admin_vare', { id: val('v-id'), navn: val('v-navn'), ikon: val('v-ikon'), pris: val('v-pris'), kostpris: val('v-kost'), aktiv: checked('v-aktiv') }, 'Vare gemt');
         break;
       case 'nyt-projekt': openProjekt(''); break;
       case 'ret-projekt': openProjekt(t.dataset.id); break;

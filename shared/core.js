@@ -15,10 +15,10 @@ var Core = (function () {
   var TABELLER = {
     Config: ['noegle', 'vaerdi'],
     Brugere: ['email', 'initialer', 'navn', 'gruppe', 'aktiv'],
-    Menu: ['id', 'navn', 'ikon', 'pris', 'aktiv'],
+    Menu: ['id', 'navn', 'ikon', 'pris', 'kostpris', 'aktiv'],
     Projekter: ['id', 'navn', 'ikon', 'maal', 'aaben'],
     Posteringer: ['id', 'tid', 'initialer', 'type', 'beloeb', 'tekst', 'ref'],
-    Bestillinger: ['id', 'tid', 'fra', 'til', 'vare', 'pris', 'status'],
+    Bestillinger: ['id', 'tid', 'fra', 'til', 'vare', 'pris', 'kostpris', 'status'],
     Kilder: ['kilde', 'navn', 'sheet_id', 'fane', 'kol_initialer', 'kol_vaerdi', 'kol_dato', 'start_raekke'],
     Regler: ['gruppe', 'kilde', 'sats', 'tekst']
   };
@@ -121,7 +121,7 @@ var Core = (function () {
 
   function menu(db, alle) {
     return db.all('Menu').filter(function (v) { return alle || sand(v.aktiv); }).map(function (v) {
-      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), pris: num(v.pris), aktiv: sand(v.aktiv) };
+      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), pris: num(v.pris), kostpris: num(v.kostpris), aktiv: sand(v.aktiv) };
     });
   }
 
@@ -216,7 +216,7 @@ var Core = (function () {
 
     var id = env.uuid();
     var tid = env.now().toISOString();
-    db.insert('Bestillinger', { id: id, tid: tid, fra: me.initialer, til: modtager.initialer, vare: str(vare.navn), pris: pris, status: 'ny' });
+    db.insert('Bestillinger', { id: id, tid: tid, fra: me.initialer, til: modtager.initialer, vare: str(vare.navn), pris: pris, kostpris: num(vare.kostpris), status: 'ny' });
     db.insert('Posteringer', {
       id: env.uuid(), tid: tid, initialer: me.initialer, type: gave ? 'gave' : 'koeb', beloeb: -pris,
       tekst: gave ? str(vare.navn) + ' til ' + modtager.navn : str(vare.navn), ref: id
@@ -251,6 +251,29 @@ var Core = (function () {
 
   // ---------- Admin ----------
 
+  // Rigtige penge pr. måned: kostpris på alle bestillinger, der ikke er annulleret.
+  function opgoerelse(db) {
+    var m = {};
+    db.all('Bestillinger').forEach(function (b) {
+      if (str(b.status) === 'annulleret') return;
+      var k = maanedKey(b.tid);
+      var o = m[k] = m[k] || { maaned: k, antal: 0, wc: 0, kr: 0, aabne: 0, varer: {} };
+      var kr = num(b.kostpris);
+      o.antal++;
+      o.wc += num(b.pris);
+      o.kr += kr;
+      if (str(b.status) === 'ny') o.aabne++;
+      var v = o.varer[str(b.vare)] = o.varer[str(b.vare)] || { navn: str(b.vare), antal: 0, kr: 0 };
+      v.antal++;
+      v.kr += kr;
+    });
+    return Object.keys(m).sort().reverse().map(function (k) {
+      var o = m[k];
+      o.varer = Object.keys(o.varer).map(function (n) { return o.varer[n]; }).sort(function (a, b) { return b.kr - a.kr; });
+      return o;
+    });
+  }
+
   function adminState(db, me, data, env) {
     kraevAdmin(me);
     var nu = env.now();
@@ -264,8 +287,9 @@ var Core = (function () {
         return { email: str(u.email).toLowerCase(), initialer: i, navn: str(u.navn), gruppe: str(u.gruppe), aktiv: sand(u.aktiv), saldo: st.saldo, optjentMaaned: st.optjentMaaned, optjentTotal: st.optjentTotal, brugt: st.brugt };
       }).sort(function (a, b) { return a.navn.localeCompare(b.navn, 'da'); }),
       bestillinger: db.all('Bestillinger').slice().sort(nyesteFoerst).map(function (b) {
-        return { id: str(b.id), tid: str(b.tid), fra: str(b.fra), fraNavn: navne[b.fra] || b.fra, til: str(b.til), tilNavn: navne[b.til] || b.til, vare: str(b.vare), pris: num(b.pris), status: str(b.status) };
+        return { id: str(b.id), tid: str(b.tid), fra: str(b.fra), fraNavn: navne[b.fra] || b.fra, til: str(b.til), tilNavn: navne[b.til] || b.til, vare: str(b.vare), pris: num(b.pris), kostpris: num(b.kostpris), status: str(b.status) };
       }),
+      opgoerelse: opgoerelse(db),
       posteringer: poster.slice().sort(nyesteFoerst).slice(0, 2000).map(function (p) {
         return { id: str(p.id), tid: str(p.tid), initialer: str(p.initialer), navn: navne[p.initialer] || p.initialer, type: str(p.type), beloeb: num(p.beloeb), tekst: str(p.tekst), maaned: postMaaned(p) };
       }),
@@ -320,7 +344,7 @@ var Core = (function () {
     if (!str(data.navn).trim()) throw err('BAD', 'Navn mangler.');
     var pris = Math.floor(num(data.pris));
     if (!(pris >= 0)) throw err('BAD', 'Ugyldig pris.');
-    var obj = { navn: str(data.navn).trim(), ikon: str(data.ikon).trim(), pris: pris, aktiv: data.aktiv === false ? 'nej' : 'ja' };
+    var obj = { navn: str(data.navn).trim(), ikon: str(data.ikon).trim(), pris: pris, kostpris: Math.max(0, num(data.kostpris)), aktiv: data.aktiv === false ? 'nej' : 'ja' };
     var row = null;
     if (data.id) db.all('Menu').forEach(function (r) { if (str(r.id) === str(data.id)) row = r; });
     if (row) db.update('Menu', row, obj);

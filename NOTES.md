@@ -8,7 +8,7 @@ Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskin
 - Forside: saldo, optjent i måneden + sparkline, brugt, givet væk, menu (bestil/giv), projekter (indskyd), mine bestillinger, teambudget, seneste bevægelser.
 - Min profil: nøgletal + fuld historik med filtre.
 - Regler-side pr. gruppe.
-- Admin: bestillinger (udleveret/annullér med refusion), brugere (opret/ret/gruppe/justér saldo), sortiment (menu + projekter), alle posteringer + "Hent optjening nu".
+- Admin: bestillinger (udleveret/annullér med refusion), **opgørelse** (rigtige kr pr. måned ud fra varernes kostpris – det beløb der skal trækkes), brugere (opret/ret/gruppe/justér saldo), sortiment (menu + projekter), alle posteringer + "Hent optjening nu".
 - Backend-kode i `apps-script/Code.gs` (ikke deployet endnu).
 - Mørkt og lyst tema, mobil-layout.
 
@@ -18,7 +18,7 @@ Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskin
 - Kilder (faktureringsark, anmeldelser) er ikke koblet på – kræver ark-ID'er og kolonner.
 - Teambudget-arket er ikke koblet på.
 - Subdomæne er ikke valgt (`xxx.leksione.dk`). `SIDE_URL` står som `webshoppen.leksione.dk` indtil videre. Ingen `CNAME`-fil endnu.
-- GitHub Pages: repo er privat. Pages på et privat repo kræver GitHub Pro – ellers skal repoet være offentligt (koden indeholder ingen hemmeligheder).
+- Projekter (teamfrokost, biograf) tæller ikke med i opgørelsen endnu – kun menuvarer.
 
 ## Beslutninger
 
@@ -27,6 +27,8 @@ Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskin
 - **Optjening pr. måned** med fast `ref` → synk kan køres igen og igen uden dobbelt-optjening. `OPTJENING_FRA` i Config bestemmer fra hvilken måned der tælles.
 - **Gave = vare** (ikke rå Webcoins). Giveren betaler, admin får besked og leverer til modtageren.
 - Brugere uden for `Brugere`-fanen ser "Du er desværre ikke registreret". Admin styres af `ADMIN_EMAILS` i Config.
+- **Repoet er offentligt** (gratis GitHub Pages). Det er kun frontend – alle data, mails og webhooks ligger i Google-arket.
+- **Kostpris gemmes på bestillingen** i bestillingsøjeblikket, så gamle måneder ikke ændrer sig, hvis prisen på en vare rettes.
 - Notifikationer: Google Chat webhook og/eller mail – begge kan slås til i Config.
 
 ## Sådan sættes backend op
