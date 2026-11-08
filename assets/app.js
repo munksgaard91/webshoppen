@@ -324,12 +324,11 @@
     var lukket = !shop.aaben;
 
     // 1. Saldo + teambudget + regler
-    var saldo = '<section class="saldo-card">' +
+    var saldo = '<section class="saldo-card"><span class="saldo-deco" aria-hidden="true"><span>b</span></span>' +
       '<div class="saldo-top"><span class="hello">' + hilsen() + ', ' + esc(fornavn(me.navn)) + ' 👋</span>' +
       (me.gruppe ? '<span class="info" tabindex="0" data-act="info"><button class="info-btn" aria-label="Sådan optjener du Webcoins">' + ico('info') + '</button>' +
         '<span class="pop" role="tooltip"><b class="pop-title">' + esc(me.gruppe) + '</b>' + mineRegler() + '</span></span>' : '') +
       '</div>' +
-      '<div class="saldo-label">Du har</div>' +
       '<div class="saldo-big num">' + coin('coin-lg') + '<span>' + fmt(st.saldo) + '</span><small>' + enhed(st.saldo) + '</small></div>' +
       (kanKoebe
         ? '<div class="saldo-sub num">Du har optjent +' + wc(st.optjentMaaned) + ' i ' + mNavn + '</div>'
@@ -368,11 +367,11 @@
           '<span class="thumb">' + esc(p.ikon || '🎯') + '</span>' +
           '<div class="row-main"><div class="proj-line"><b>' + esc(p.navn) + '</b><span class="muted num">' + wc(p.indsamlet) + (p.maal ? ' af ' + wc(p.maal) : '') + '</span></div>' +
           '<div class="bar"><i style="width:' + pp.toFixed(0) + '%"></i></div>' +
-          '<div class="top3">' + (p.top.length ? p.top.map(function (t, i) {
-            return '<span class="' + (t.initialer === me.initialer ? 'mig' : '') + '">' + medaljer[i] + ' ' + esc(t.navn) + ' <b class="num">' + wc(t.beloeb) + '</b></span>';
-          }).join('') : '<span class="faint">Ingen bidrag endnu</span>') +
-          (p.mitBidrag ? '<span class="dit num">Dit bidrag: ' + wc(p.mitBidrag) + '</span>' : '') + '</div></div>' +
-          '<div class="row-acts"><button class="btn sm" data-act="indskyd" data-id="' + esc(p.id) + '"' + (kanKoebe && st.saldo > 0 ? '' : ' disabled') + '>Indskyd</button></div></div>';
+          '<ol class="top3-list">' + (p.top.length ? p.top.map(function (t, i) {
+            return '<li class="' + (t.initialer === me.initialer ? 'mig' : '') + '"><span>' + medaljer[i] + '</span>' + esc(t.navn) + '<b class="num">' + wc(t.beloeb) + '</b></li>';
+          }).join('') : '<li class="faint">Ingen bidrag endnu</li>') + '</ol></div>' +
+          '<div class="proj-acts"><button class="btn primary" data-act="indskyd" data-id="' + esc(p.id) + '"' + (kanKoebe && st.saldo > 0 ? '' : ' disabled') + '>Indskyd</button>' +
+          (p.mitBidrag ? '<span class="dit num">Dit bidrag: ' + wc(p.mitBidrag) + '</span>' : '') + '</div></div>';
       }).join('') + '</div>' : '<div class="card empty">Ingen åbne projekter.</div>') + '</section>';
 
     // 4. Statistik – kun dine egne tal

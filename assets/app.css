@@ -172,8 +172,12 @@ a { color: inherit; }
 .row-top { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 20px; }
 .row-top.solo { grid-template-columns: 1fr; }
 .saldo-card { position: relative; background: var(--saldo); color: #fff; border-radius: 26px; padding: 24px 28px 26px; box-shadow: var(--shadow-lg); min-width: 0; }
+.saldo-deco { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none; }
+.saldo-deco span { position: absolute; right: -28px; bottom: -92px; font-size: 300px; font-weight: 900; line-height: 1; letter-spacing: -0.05em; color: #fff; opacity: .09; }
+.saldo-card > :not(.saldo-deco) { position: relative; }
 .saldo-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .hello { font-weight: 600; opacity: .9; }
+.saldo-top + .saldo-big { margin-top: 30px; }
 .saldo-label { margin-top: 26px; font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .75; }
 .saldo-big { display: flex; align-items: center; gap: 14px; margin: 6px 0 6px; flex-wrap: wrap; }
 .saldo-big span { font-size: clamp(44px, 7vw, 64px); font-weight: 900; letter-spacing: -0.03em; line-height: 1; }
@@ -209,9 +213,10 @@ a { color: inherit; }
 .item .acts { display: flex; gap: 8px; }
 
 /* Lister i fuld bredde (bestil + projekter) */
-.list { padding: 6px 20px; }
-.list .row { display: flex; align-items: center; gap: 18px; padding: 14px 0; border-top: 1px solid var(--line); }
-.list .row:first-child { border-top: 0; }
+.list { padding: 0; overflow: hidden; }
+.list .row { display: flex; align-items: center; gap: 18px; padding: 14px 22px; background: var(--card); }
+.list .row:nth-child(even) { background: var(--card-2); }
+.list .row:nth-child(even) .thumb { background: var(--card); }
 .thumb { width: 64px; height: 64px; border-radius: 14px; background: var(--card-2); display: grid; place-items: center; font-size: 34px; flex: none; overflow: hidden; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; }
 .row-main { flex: 1; min-width: 0; }
@@ -220,6 +225,14 @@ a { color: inherit; }
 .list .row-acts { display: flex; gap: 8px; flex: none; }
 .proj-line { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-size: 14px; }
 .proj-line b { font-size: 16px; }
+.proj-item .row-main { max-width: 640px; margin-right: auto; }
+.top3-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13px; color: var(--muted); max-width: 360px; }
+.top3-list li { display: flex; align-items: center; gap: 8px; }
+.top3-list li b { margin-left: auto; color: var(--text); }
+.top3-list li.mig, .top3-list li.mig b { color: var(--brand-2); font-weight: 700; }
+.proj-acts { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: none; min-width: 150px; }
+.proj-acts .btn { padding: 12px 28px; font-size: 15px; border-radius: 14px; }
+.proj-acts .dit { font-size: 13px; color: var(--brand-2); font-weight: 700; }
 .top3 { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; font-size: 13px; color: var(--muted); }
 .top3 b { color: var(--text); }
 .top3 .mig b { color: var(--brand-2); }
