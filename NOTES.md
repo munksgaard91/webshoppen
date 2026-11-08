@@ -4,13 +4,18 @@ Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskin
 
 ## Status (2026-11-08)
 
-**Færdigt (kører i demo-tilstand lokalt):**
-- Forside: saldo, optjent i måneden + sparkline, brugt, givet væk, menu (bestil/giv), projekter (indskyd), mine bestillinger, teambudget, seneste bevægelser.
+**Færdigt (kører i demo-tilstand):**
+- Nyt design adskilt fra salgsdashboardet: lyst, Best One-blå + guld Webcoin-mønt, mørkt tema som valg. Favicon = mønten.
+- Medarbejdere: topmenu (Overblik / Min profil), intet sidepanel. Admin beholder sidepanel.
+- Forside i prioriteret rækkefølge: saldo + teambudget + regler (i-ikon med hover/klik) → Bestil → Projekter → Statistik → Bevægelser + Mine bestillinger.
+- "Webcoins" skrives altid helt ud.
+- Åbningstid 08:00–15:30 på hverdage + lukket når admin har "Ikke til stede" i kalenderen → overlay "Shoppen har lukket" og bestil-knapper slået fra (håndhæves også i backend). Admin ser et banner i stedet.
+- Note om ventetid ved bestilling (personlig levering).
 - Min profil: nøgletal + fuld historik med filtre.
-- Regler-side pr. gruppe.
+- Regler-side for alle grupper (kun admin; medarbejdere ser egne regler via i-ikonet).
 - Admin: bestillinger (udleveret/annullér med refusion), **opgørelse** (rigtige kr pr. måned ud fra varernes kostpris – det beløb der skal trækkes), brugere (opret/ret/gruppe/justér saldo), sortiment (menu + projekter), alle posteringer + "Hent optjening nu".
 - Backend-kode i `apps-script/Code.gs` (ikke deployet endnu).
-- Mørkt og lyst tema, mobil-layout.
+- Mobil-layout.
 
 **Ikke gjort endnu:**
 - Backend er ikke sat op i Google (se tjekliste nedenfor).
@@ -29,6 +34,7 @@ Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskin
 - Brugere uden for `Brugere`-fanen ser "Du er desværre ikke registreret". Admin styres af `ADMIN_EMAILS` i Config.
 - **Repoet er offentligt** (gratis GitHub Pages). Det er kun frontend – alle data, mails og webhooks ligger i Google-arket.
 - **Kostpris gemmes på bestillingen** i bestillingsøjeblikket, så gamle måneder ikke ændrer sig, hvis prisen på en vare rettes.
+- **Fravær læses fra kalenderen** for den konto, der har deployet Apps Script (admin). Både Googles "Ikke til stede"-begivenhedstype og titler med "Ikke til stede"/"Out of office" tæller. Cache 5 min. Projekter kan stadig få indskud, når shoppen er lukket – kun bestillinger blokeres.
 - Notifikationer: Google Chat webhook og/eller mail – begge kan slås til i Config.
 
 ## Sådan sættes backend op
@@ -45,11 +51,13 @@ Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskin
 5. Apps Script → Implementér → Ny implementering → Webapp (kør som: mig, adgang: alle). Kopiér URL'en ind i `assets/config.js` (`API_URL`).
 6. Udfyld fanen `Brugere` (email, initialer, navn, gruppe, aktiv=ja) – eller gør det fra admin-siden.
 7. Udfyld `Kilder` (ark-ID, fane, kolonnebogstaver for initialer/værdi/dato). Tom `kol_vaerdi` = tæl rækker (fx anmeldelser).
-8. Valgfrit: `CHAT_WEBHOOK` (Google Chat → space → Apps & integrations → Webhooks), `NOTIFIKATION_MAIL`, `TEAMBUDGET_*`.
-9. **Webshoppen → Slå automatisk hentning til**.
+8. Åbningstid: `AABNER`, `LUKKER`, `AABNE_DAGE` (1-5 = man–fre), `LUK_VED_FRAVAER` (ja/nej), `KALENDER_ID` (tom = din primære kalender).
+9. Valgfrit: `CHAT_WEBHOOK` (Google Chat → space → Apps & integrations → Webhooks), `NOTIFIKATION_MAIL`, `TEAMBUDGET_*`.
+10. **Webshoppen → Slå automatisk hentning til**.
 
 Ved ændringer i `shared/core.js` eller `Code.gs`: kopiér ind i Apps Script og lav **Administrer implementeringer → Rediger → Ny version** (så URL'en bevares).
 Ved ændringer i assets: bump `?v=` i `index.html`.
+Demo af lukket shop: tilføj `?lukket=fravaer` eller `?lukket=tid` til adressen.
 
 ## Næste skridt
 

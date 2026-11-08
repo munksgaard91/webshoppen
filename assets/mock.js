@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v2';
+  var KEY = 'webshoppen-demo-v3';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -35,14 +35,14 @@ window.Mock = (function () {
         { kilde: 'leverancer', navn: 'Leverancer' }
       ],
       Regler: [
-        { gruppe: 'Hjemmeside', kilde: 'nyfak', sats: 0.001, tekst: '1 WC pr. 1.000 kr' },
-        { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 15, tekst: '15 WC pr. anmeldelse' },
-        { gruppe: 'Redaktør', kilde: 'leverancer', sats: 4, tekst: '4 WC pr. leverance' },
-        { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 15, tekst: '15 WC pr. anmeldelse' },
-        { gruppe: 'Fotograf', kilde: 'leverancer', sats: 6, tekst: '6 WC pr. optagelse' },
-        { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 15, tekst: '15 WC pr. anmeldelse' },
-        { gruppe: 'Support', kilde: 'genfak', sats: 0.002, tekst: '2 WC pr. 1.000 kr' },
-        { gruppe: 'Support', kilde: 'anmeldelser', sats: 15, tekst: '15 WC pr. anmeldelse' }
+        { gruppe: 'Hjemmeside', kilde: 'nyfak', sats: 0.001, tekst: '1 Webcoin pr. 1.000 kr' },
+        { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 15, tekst: '15 Webcoins pr. anmeldelse' },
+        { gruppe: 'Redaktør', kilde: 'leverancer', sats: 4, tekst: '4 Webcoins pr. leverance' },
+        { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 15, tekst: '15 Webcoins pr. anmeldelse' },
+        { gruppe: 'Fotograf', kilde: 'leverancer', sats: 6, tekst: '6 Webcoins pr. optagelse' },
+        { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 15, tekst: '15 Webcoins pr. anmeldelse' },
+        { gruppe: 'Support', kilde: 'genfak', sats: 0.002, tekst: '2 Webcoins pr. 1.000 kr' },
+        { gruppe: 'Support', kilde: 'anmeldelser', sats: 15, tekst: '15 Webcoins pr. anmeldelse' }
       ]
     };
   }
@@ -82,6 +82,13 @@ window.Mock = (function () {
         window.dispatchEvent(new CustomEvent('demo-notify', { detail: b }));
       },
       teambudget: function () { return { budget: 25000, brugt: 8450, rest: 16550 }; },
+      // Demo: åben som standard. ?lukket=tid eller ?lukket=fravaer viser lukket shop.
+      shop: function () {
+        var m = (location.search.match(/[?&]lukket=(\w+)/) || [])[1];
+        if (m === 'fravaer') return { aaben: false, grund: 'fravaer', tekst: 'Tilbage mandag kl. 08:00' };
+        if (m === 'tid') return Core.aabningstider(new Date(new Date().setHours(17, 0)), '08:00', '15:30', '1-5');
+        return { aaben: true };
+      },
       sync: function () { return Core.applyEarnings(db, falskeKilder(new Date()), env()); }
     };
   }

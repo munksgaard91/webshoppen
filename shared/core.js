@@ -68,6 +68,29 @@ var Core = (function () {
     return maanedKey(p.tid);
   }
 
+  // Åbningstid, fx 08:00–15:30 på hverdage (dage "1-5", mandag = 1).
+  var DAGE = ['mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag', 'søndag'];
+  function tilMin(s) { var p = String(s || '0:0').split(':'); return Number(p[0]) * 60 + Number(p[1] || 0); }
+  function aabningstider(nu, aabner, lukker, dage) {
+    aabner = aabner || '08:00'; lukker = lukker || '15:30';
+    var interval = String(dage || '1-5').split('-').map(Number);
+    var fra = interval[0], til = interval[1] || interval[0];
+    var erDag = function (d) { return d >= fra && d <= til; };
+    var d = new Date(nu);
+    var dag = d.getDay() || 7;
+    var min = d.getHours() * 60 + d.getMinutes();
+    if (erDag(dag) && min >= tilMin(aabner) && min < tilMin(lukker)) return { aaben: true };
+    var tekst;
+    if (erDag(dag) && min < tilMin(aabner)) tekst = 'Åbner i dag kl. ' + aabner;
+    else {
+      for (var i = 1; i <= 7; i++) {
+        var n = ((dag - 1 + i) % 7) + 1;
+        if (erDag(n)) { tekst = 'Åbner ' + (i === 1 ? 'i morgen' : DAGE[n - 1]) + ' kl. ' + aabner; break; }
+      }
+    }
+    return { aaben: false, grund: 'tid', tekst: tekst || '', tider: aabner + '–' + lukker };
+  }
+
   function nyesteFoerst(a, b) { return String(b.tid).localeCompare(String(a.tid)); }
 
   function saldoFor(posteringer, initialer) {
@@ -192,7 +215,8 @@ var Core = (function () {
       }),
       regler: regler(db),
       grupper: GRUPPER,
-      teambudget: env.teambudget ? env.teambudget() : null
+      teambudget: env.teambudget ? env.teambudget() : null,
+      shop: env.shop ? env.shop() : { aaben: true }
     };
   }
 
@@ -201,6 +225,8 @@ var Core = (function () {
     var vare = null;
     db.all('Menu').forEach(function (v) { if (str(v.id) === str(data.vareId) && sand(v.aktiv)) vare = v; });
     if (!vare) throw err('BAD', 'Varen findes ikke længere.');
+    var shop = env.shop ? env.shop() : { aaben: true };
+    if (!shop.aaben) throw err('CLOSED', 'Shoppen har lukket. ' + (shop.tekst || ''));
     var pris = num(vare.pris);
     var gave = !!data.til;
     var modtager = { initialer: me.initialer, navn: me.navn };
@@ -231,7 +257,7 @@ var Core = (function () {
       emne: gave ? 'Gave: ' + vare.navn + ' til ' + modtager.navn : 'Bestilling: ' + vare.navn + ' til ' + me.navn,
       tekst: (gave
         ? me.navn + ' (' + me.initialer + ') giver ' + str(vare.ikon) + ' ' + vare.navn + ' til ' + modtager.navn + ' (' + modtager.initialer + ').'
-        : me.navn + ' (' + me.initialer + ') har bestilt ' + str(vare.ikon) + ' ' + vare.navn + '.') + ' Pris: ' + pris + ' WC.'
+        : me.navn + ' (' + me.initialer + ') har bestilt ' + str(vare.ikon) + ' ' + vare.navn + '.') + ' Pris: ' + pris + ' Webcoins.'
     });
     return { id: id };
   }
@@ -245,7 +271,7 @@ var Core = (function () {
     if (!p) throw err('BAD', 'Projektet er lukket.');
     if (saldoFor(db.all('Posteringer'), me.initialer) < beloeb) throw err('FUNDS', 'Du har ikke nok Webcoins.');
     db.insert('Posteringer', { id: env.uuid(), tid: env.now().toISOString(), initialer: me.initialer, type: 'projekt', beloeb: -beloeb, tekst: str(p.navn), ref: str(p.id) });
-    env.notify({ emne: 'Projekt: ' + p.navn, tekst: me.navn + ' (' + me.initialer + ') har lagt ' + beloeb + ' WC i ' + str(p.ikon) + ' ' + p.navn + '.' });
+    env.notify({ emne: 'Projekt: ' + p.navn, tekst: me.navn + ' (' + me.initialer + ') har lagt ' + beloeb + ' Webcoins i ' + str(p.ikon) + ' ' + p.navn + '.' });
     return { ok: true };
   }
 
@@ -445,6 +471,7 @@ var Core = (function () {
     resolveUser: resolveUser,
     handle: handle,
     skriver: function (action) { return !!SKRIVER[action]; },
-    applyEarnings: applyEarnings
+    applyEarnings: applyEarnings,
+    aabningstider: aabningstider
   };
 })();

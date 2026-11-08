@@ -96,6 +96,7 @@ function env_() {
     uuid: function () { return Utilities.getUuid().slice(0, 8); },
     notify: notify_,
     teambudget: teambudget_,
+    shop: shopStatus_,
     sync: syncOptjening
   };
 }
@@ -135,6 +136,48 @@ function teambudget_() {
     console.error('Teambudget kunne ikke læses', e);
     return null;
   }
+}
+
+// ---------- Åbningstid og fravær ----------
+
+var SHOP_ = null;
+function shopStatus_() {
+  if (SHOP_) return SHOP_;
+  var conf = cfg_();
+  var t = Core.aabningstider(new Date(), conf.AABNER, conf.LUKKER, conf.AABNE_DAGE);
+  if (!t.aaben) return (SHOP_ = t);
+  if (String(conf.LUK_VED_FRAVAER || 'ja').toLowerCase() !== 'nej') {
+    var f = fravaer_(conf);
+    if (f) return (SHOP_ = { aaben: false, grund: 'fravaer', tekst: f });
+  }
+  return (SHOP_ = { aaben: true });
+}
+
+// Tjekker kalenderen (som scriptet kører som = admin) for "Ikke til stede" lige nu.
+// Returnerer tekst om hvornår der åbnes igen, eller '' hvis ingen fravær.
+function fravaer_(conf) {
+  var cache = CacheService.getScriptCache();
+  var hit = cache.get('fravaer');
+  if (hit !== null) return hit;
+  var res = '';
+  try {
+    var cal = conf.KALENDER_ID ? CalendarApp.getCalendarById(conf.KALENDER_ID) : CalendarApp.getDefaultCalendar();
+    var nu = new Date();
+    var events = cal.getEvents(new Date(nu.getTime() - 60000), new Date(nu.getTime() + 60000));
+    events.forEach(function (e) {
+      if (res) return;
+      var ooo = false;
+      try { ooo = e.getEventType() === CalendarApp.EventType.OUT_OF_OFFICE; } catch (x) { /* ældre API */ }
+      if (ooo || /ikke til stede|out of office/i.test(e.getTitle())) {
+        var slut = e.getEndTime();
+        res = 'Tilbage ' + Utilities.formatDate(slut, Session.getScriptTimeZone(), 'dd.MM') + ' kl. ' + Utilities.formatDate(slut, Session.getScriptTimeZone(), 'HH:mm');
+      }
+    });
+  } catch (e) {
+    console.error('Kalender kunne ikke læses', e);
+  }
+  cache.put('fravaer', res, 300);
+  return res;
 }
 
 // ---------- Optjening ----------
@@ -280,6 +323,11 @@ function opsaet() {
     { noegle: 'SIDE_URL', vaerdi: 'https://webshoppen.leksione.dk' },
     { noegle: 'CHAT_WEBHOOK', vaerdi: '' },
     { noegle: 'NOTIFIKATION_MAIL', vaerdi: Session.getActiveUser().getEmail() },
+    { noegle: 'AABNER', vaerdi: '08:00' },
+    { noegle: 'LUKKER', vaerdi: '15:30' },
+    { noegle: 'AABNE_DAGE', vaerdi: '1-5' },
+    { noegle: 'LUK_VED_FRAVAER', vaerdi: 'ja' },
+    { noegle: 'KALENDER_ID', vaerdi: '' },
     { noegle: 'OPTJENING_FRA', vaerdi: Core.maanedKey(new Date()) },
     { noegle: 'TEAMBUDGET_ARK_ID', vaerdi: '' },
     { noegle: 'TEAMBUDGET_BUDGET_CELLE', vaerdi: '' },
@@ -305,14 +353,14 @@ function opsaet() {
   ]);
   // Pladsholder-regler – skal regnes igennem før lancering.
   seed('Regler', [
-    { gruppe: 'Hjemmeside', kilde: 'nyfak', sats: 0.001, tekst: '1 WC pr. 1.000 kr' },
-    { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 15, tekst: '15 WC pr. anmeldelse' },
-    { gruppe: 'Redaktør', kilde: 'leverancer', sats: 4, tekst: '4 WC pr. leverance' },
-    { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 15, tekst: '15 WC pr. anmeldelse' },
-    { gruppe: 'Fotograf', kilde: 'leverancer', sats: 6, tekst: '6 WC pr. optagelse' },
-    { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 15, tekst: '15 WC pr. anmeldelse' },
-    { gruppe: 'Support', kilde: 'genfak', sats: 0.002, tekst: '2 WC pr. 1.000 kr' },
-    { gruppe: 'Support', kilde: 'anmeldelser', sats: 15, tekst: '15 WC pr. anmeldelse' }
+    { gruppe: 'Hjemmeside', kilde: 'nyfak', sats: 0.001, tekst: '1 Webcoin pr. 1.000 kr' },
+    { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 15, tekst: '15 Webcoins pr. anmeldelse' },
+    { gruppe: 'Redaktør', kilde: 'leverancer', sats: 4, tekst: '4 Webcoins pr. leverance' },
+    { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 15, tekst: '15 Webcoins pr. anmeldelse' },
+    { gruppe: 'Fotograf', kilde: 'leverancer', sats: 6, tekst: '6 Webcoins pr. optagelse' },
+    { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 15, tekst: '15 Webcoins pr. anmeldelse' },
+    { gruppe: 'Support', kilde: 'genfak', sats: 0.002, tekst: '2 Webcoins pr. 1.000 kr' },
+    { gruppe: 'Support', kilde: 'anmeldelser', sats: 15, tekst: '15 Webcoins pr. anmeldelse' }
   ]);
   var standard = ss.getSheetByName('Ark1') || ss.getSheetByName('Sheet1');
   if (standard && standard.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(standard);
