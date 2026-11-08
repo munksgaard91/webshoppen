@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v3';
+  var KEY = 'webshoppen-demo-v4';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -106,6 +106,10 @@ window.Mock = (function () {
     var dsi = Core.resolveUser(db, { email: 'demo.dsi@best-one.dk' }, ADMINS);
     Core.handle(db, dsi, 'bestil', { vareId: 'kaffe', til: 'JST' }, Object.assign({}, e, { notify: function () {} }));
     Core.handle(db, dsi, 'indskyd', { projektId: 'frokost', beloeb: 120 }, Object.assign({}, e, { notify: function () {} }));
+    var stille = Object.assign({}, e, { notify: function () {} });
+    [['demo.jst@best-one.dk', 'frokost', 80], ['demo.cbo@best-one.dk', 'frokost', 45], ['demo.jfr@best-one.dk', 'biograf', 60], ['demo.cbo@best-one.dk', 'biograf', 25]].forEach(function (x) {
+      Core.handle(db, Core.resolveUser(db, { email: x[0] }, ADMINS), 'indskyd', { projektId: x[1], beloeb: x[2] }, stille);
+    });
     gem();
   }
 

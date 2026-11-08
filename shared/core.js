@@ -15,7 +15,7 @@ var Core = (function () {
   var TABELLER = {
     Config: ['noegle', 'vaerdi'],
     Brugere: ['email', 'initialer', 'navn', 'gruppe', 'aktiv'],
-    Menu: ['id', 'navn', 'ikon', 'pris', 'kostpris', 'aktiv'],
+    Menu: ['id', 'navn', 'ikon', 'billede', 'pris', 'kostpris', 'aktiv'],
     Projekter: ['id', 'navn', 'ikon', 'maal', 'aaben'],
     Posteringer: ['id', 'tid', 'initialer', 'type', 'beloeb', 'tekst', 'ref'],
     Bestillinger: ['id', 'tid', 'fra', 'til', 'vare', 'pris', 'kostpris', 'status'],
@@ -101,8 +101,11 @@ var Core = (function () {
 
   function statsFor(posteringer, initialer, nu) {
     var mk = maanedKey(nu);
-    var st = { saldo: 0, optjentMaaned: 0, optjentTotal: 0, brugt: 0, givet: 0, givetAntal: 0, indskudt: 0, gaverModtaget: 0, forloeb: [] };
+    var st = { saldo: 0, optjentMaaned: 0, optjentTotal: 0, brugt: 0, brugtSelv: 0, givet: 0, givetAntal: 0, indskudt: 0, gaverModtaget: 0, forloeb: [] };
     var perMaaned = {};
+    // Refusion af en gave trækkes fra donationer, ellers fra "til dig selv".
+    var gaveRefs = {};
+    posteringer.forEach(function (p) { if (p.initialer === initialer && p.type === 'gave') gaveRefs[str(p.ref)] = 1; });
     posteringer.forEach(function (p) {
       if (p.initialer !== initialer) return;
       var b = num(p.beloeb);
@@ -113,10 +116,13 @@ var Core = (function () {
         perMaaned[m] = (perMaaned[m] || 0) + b;
         if (m === mk) st.optjentMaaned += b;
       }
-      if (p.type === 'koeb') st.brugt -= b;
+      if (p.type === 'koeb') { st.brugt -= b; st.brugtSelv -= b; }
       if (p.type === 'gave') { st.brugt -= b; st.givet -= b; st.givetAntal++; }
       if (p.type === 'projekt') { st.brugt -= b; st.indskudt -= b; }
-      if (p.type === 'refusion') st.brugt -= b;
+      if (p.type === 'refusion') {
+        st.brugt -= b;
+        if (gaveRefs[str(p.ref)]) { st.givet -= b; st.givetAntal--; } else st.brugtSelv -= b;
+      }
       if (p.type === 'gave_modtaget') st.gaverModtaget++;
     });
     // Seneste 6 måneder til sparkline
@@ -130,21 +136,27 @@ var Core = (function () {
 
   function projekterMedStatus(db, initialer) {
     var poster = db.all('Posteringer');
+    var navne = {};
+    db.all('Brugere').forEach(function (u) { navne[ini(u.initialer)] = str(u.navn); });
     return db.all('Projekter').map(function (p) {
-      var indsamlet = 0, mit = 0;
+      var indsamlet = 0, mit = 0, pr = {};
       poster.forEach(function (x) {
         if (x.type === 'projekt' && str(x.ref) === str(p.id)) {
           indsamlet -= num(x.beloeb);
+          pr[x.initialer] = (pr[x.initialer] || 0) - num(x.beloeb);
           if (initialer && x.initialer === initialer) mit -= num(x.beloeb);
         }
       });
-      return { id: str(p.id), navn: str(p.navn), ikon: str(p.ikon), maal: num(p.maal), aaben: sand(p.aaben), indsamlet: indsamlet, mitBidrag: mit };
+      var top = Object.keys(pr).filter(function (i) { return pr[i] > 0; })
+        .sort(function (a, b) { return pr[b] - pr[a]; }).slice(0, 3)
+        .map(function (i) { return { initialer: i, navn: navne[i] || i, beloeb: pr[i] }; });
+      return { id: str(p.id), navn: str(p.navn), ikon: str(p.ikon), maal: num(p.maal), aaben: sand(p.aaben), indsamlet: indsamlet, mitBidrag: mit, top: top };
     });
   }
 
   function menu(db, alle) {
     return db.all('Menu').filter(function (v) { return alle || sand(v.aktiv); }).map(function (v) {
-      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), pris: num(v.pris), kostpris: num(v.kostpris), aktiv: sand(v.aktiv) };
+      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), billede: str(v.billede), pris: num(v.pris), kostpris: num(v.kostpris), aktiv: sand(v.aktiv) };
     });
   }
 
@@ -370,7 +382,7 @@ var Core = (function () {
     if (!str(data.navn).trim()) throw err('BAD', 'Navn mangler.');
     var pris = Math.floor(num(data.pris));
     if (!(pris >= 0)) throw err('BAD', 'Ugyldig pris.');
-    var obj = { navn: str(data.navn).trim(), ikon: str(data.ikon).trim(), pris: pris, kostpris: Math.max(0, num(data.kostpris)), aktiv: data.aktiv === false ? 'nej' : 'ja' };
+    var obj = { navn: str(data.navn).trim(), ikon: str(data.ikon).trim(), billede: str(data.billede).trim(), pris: pris, kostpris: Math.max(0, num(data.kostpris)), aktiv: data.aktiv === false ? 'nej' : 'ja' };
     var row = null;
     if (data.id) db.all('Menu').forEach(function (r) { if (str(r.id) === str(data.id)) row = r; });
     if (row) db.update('Menu', row, obj);

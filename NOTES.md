@@ -9,6 +9,8 @@ Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskin
 - Medarbejdere: topmenu (Overblik / Min profil), intet sidepanel. Admin beholder sidepanel.
 - Forside i prioriteret rækkefølge: saldo + teambudget + regler (i-ikon med hover/klik) → Bestil → Projekter → Statistik → Bevægelser + Mine bestillinger.
 - "Webcoins" skrives altid helt ud.
+- Forside v2: "Du har" + "Du har optjent +x Webcoins i <måned>". Bestil og Projekter er lister i fuld bredde. Projekter viser top 3 bidragydere + dit bidrag. Statistik = kun dine tal: optjent i måneden + brugt i alt fordelt på til dig selv / donationer / i projekter. Disclaimer under Bevægelser.
+- Varer kan have et billede (kolonne `billede` i Menu-fanen, URL eller sti som `assets/varer/monster.jpg`). Uden billede vises emoji.
 - Åbningstid 08:00–15:30 på hverdage + lukket når admin har "Ikke til stede" i kalenderen → overlay "Shoppen har lukket" og bestil-knapper slået fra (håndhæves også i backend). Admin ser et banner i stedet.
 - Note om ventetid ved bestilling (personlig levering).
 - Min profil: nøgletal + fuld historik med filtre.
@@ -60,6 +62,8 @@ Ved ændringer i assets: bump `?v=` i `index.html`.
 Demo af lukket shop: tilføj `?lukket=fravaer` eller `?lukket=tid` til adressen.
 
 ## Næste skridt
+
+0. **Næste i designet:** Min profil og menuen (bestillingslisten) skal gennemgås. Rasmus har billeder til baggrunde og varer, der skal lægges i `assets/`.
 
 1. Vælg subdomæne → tilføj `CNAME`-fil, opret CNAME hos Curanet → `munksgaard91.github.io`, slå Pages til.
 2. Sæt backend op (tjekliste ovenfor).

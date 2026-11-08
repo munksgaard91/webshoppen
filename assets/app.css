@@ -208,6 +208,24 @@ a { color: inherit; }
 .item b { font-size: 16px; }
 .item .acts { display: flex; gap: 8px; }
 
+/* Lister i fuld bredde (bestil + projekter) */
+.list { padding: 6px 20px; }
+.list .row { display: flex; align-items: center; gap: 18px; padding: 14px 0; border-top: 1px solid var(--line); }
+.list .row:first-child { border-top: 0; }
+.thumb { width: 64px; height: 64px; border-radius: 14px; background: var(--card-2); display: grid; place-items: center; font-size: 34px; flex: none; overflow: hidden; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+.row-main { flex: 1; min-width: 0; }
+.row-main > b { font-size: 16px; }
+.row-price { display: flex; align-items: center; gap: 8px; font-weight: 800; white-space: nowrap; min-width: 150px; }
+.list .row-acts { display: flex; gap: 8px; flex: none; }
+.proj-line { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-size: 14px; }
+.proj-line b { font-size: 16px; }
+.top3 { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; font-size: 13px; color: var(--muted); }
+.top3 b { color: var(--text); }
+.top3 .mig b { color: var(--brand-2); }
+.top3 .dit { margin-left: auto; color: var(--brand-2); font-weight: 700; }
+.disclaimer { margin: 14px 0 0; font-size: 12px; color: var(--faint); }
+
 /* 3. Projekter */
 .proj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
 .proj-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
@@ -223,6 +241,10 @@ a { color: inherit; }
 .stat .val { font-size: 26px; font-weight: 900; letter-spacing: -0.01em; margin: 8px 0 4px; }
 .stat .val small { font-size: 14px; color: var(--muted); font-weight: 700; }
 .stat .sub { font-size: 13px; color: var(--muted); }
+.stats.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.breakdown { display: grid; gap: 6px; margin-top: 12px; font-size: 14px; }
+.breakdown div { display: flex; justify-content: space-between; gap: 12px; padding-top: 6px; border-top: 1px solid var(--line); }
+.breakdown span { color: var(--muted); }
 .spark { display: block; width: 100%; max-width: 200px; height: 44px; margin-top: 8px; overflow: visible; }
 
 /* 5. Bevægelser */
@@ -334,7 +356,9 @@ td.r, th.r { text-align: right; }
   .item { padding: 12px; }
   .item .ico { width: 46px; height: 46px; font-size: 30px; }
   .proj-grid { grid-template-columns: 1fr; }
-  .stats { grid-template-columns: 1fr; }
+  .stats, .stats.two { grid-template-columns: 1fr; }
+  .list .row { flex-wrap: wrap; }
+  .row-price { min-width: 0; }
   .row-2 { grid-template-columns: 1fr; }
   .search { max-width: none; width: 100%; }
 }

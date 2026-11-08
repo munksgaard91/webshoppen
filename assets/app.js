@@ -310,11 +310,18 @@
     return r.map(function (x) { return '<div class="rule"><span>' + esc(x.kildeNavn) + '</span><b>' + esc(x.tekst || x.sats) + '</b></div>'; }).join('');
   }
 
+  function vareBillede(v) {
+    if (v.billede) return '<span class="thumb"><img src="' + esc(v.billede) + '" alt="" loading="lazy"></span>';
+    return '<span class="thumb">' + esc(v.ikon || '🛍️') + '</span>';
+  }
+
   function pageOverblik() {
     var me = S.me, st = S.stats, nu = new Date(S.nu);
     var mNavn = MAANEDER[nu.getMonth()];
     var kanKoebe = !!me.initialer;
     var tb = S.teambudget;
+    var shop = S.shop || { aaben: true };
+    var lukket = !shop.aaben;
 
     // 1. Saldo + teambudget + regler
     var saldo = '<section class="saldo-card">' +
@@ -322,10 +329,11 @@
       (me.gruppe ? '<span class="info" tabindex="0" data-act="info"><button class="info-btn" aria-label="Sådan optjener du Webcoins">' + ico('info') + '</button>' +
         '<span class="pop" role="tooltip"><b class="pop-title">' + esc(me.gruppe) + '</b>' + mineRegler() + '</span></span>' : '') +
       '</div>' +
-      '<div class="saldo-label">Din saldo</div>' +
+      '<div class="saldo-label">Du har</div>' +
       '<div class="saldo-big num">' + coin('coin-lg') + '<span>' + fmt(st.saldo) + '</span><small>' + enhed(st.saldo) + '</small></div>' +
-      '<div class="saldo-sub num">+' + wc(st.optjentMaaned) + ' optjent i ' + mNavn + '</div>' +
-      (kanKoebe ? '' : '<div class="saldo-sub">Din konto er ikke tilknyttet initialer endnu.</div>') +
+      (kanKoebe
+        ? '<div class="saldo-sub num">Du har optjent +' + wc(st.optjentMaaned) + ' i ' + mNavn + '</div>'
+        : '<div class="saldo-sub">Din konto er ikke tilknyttet initialer endnu.</div>') +
       '</section>';
 
     var team = tb ? '<section class="card tb-card"><div class="eyebrow">Teambudget</div>' +
@@ -336,37 +344,46 @@
 
     var top = '<div class="row-top' + (team ? '' : ' solo') + '">' + saldo + team + '</div>';
 
-    // 2. Bestillingsliste (menuen)
-    var shop = S.shop || { aaben: true };
-    var lukket = !shop.aaben;
+    // 2. Bestil – liste i fuld bredde
     var menu = '<section class="block"><div class="block-head"><h2 class="block-title">Bestil</h2>' +
       (lukket ? '<span class="tag annulleret">Lukket' + (shop.tekst ? ' · ' + esc(shop.tekst) : '') + '</span>' : '') +
       '<span class="note">Personlig levering, så der kan være lidt ventetid.</span></div>' +
-      (S.menu.length ? '<div class="menu-grid">' + S.menu.map(function (v) {
+      (S.menu.length ? '<div class="card list">' + S.menu.map(function (v) {
         var raad = st.saldo >= v.pris && kanKoebe && !lukket;
-        return '<div class="item"><span class="ico">' + esc(v.ikon || '🛍️') + '</span>' +
-          '<div><b>' + esc(v.navn) + '</b><div class="price num">' + coin() + wc(v.pris) + '</div></div>' +
-          '<div class="acts"><button class="btn primary sm grow" data-act="koeb" data-id="' + esc(v.id) + '"' + (raad ? '' : ' disabled') + '>Bestil</button>' +
-          '<button class="btn sm" data-act="giv" data-id="' + esc(v.id) + '" title="Giv til en kollega" aria-label="Giv ' + esc(v.navn) + ' til en kollega"' + (raad && S.kolleger.length ? '' : ' disabled') + '>' + ico('gift') + '</button></div></div>';
+        return '<div class="row">' + vareBillede(v) +
+          '<div class="row-main"><b>' + esc(v.navn) + '</b></div>' +
+          '<div class="row-price num">' + coin() + wc(v.pris) + '</div>' +
+          '<div class="row-acts">' +
+          '<button class="btn sm" data-act="giv" data-id="' + esc(v.id) + '"' + (raad && S.kolleger.length ? '' : ' disabled') + '>' + ico('gift') + 'Giv</button>' +
+          '<button class="btn primary sm" data-act="koeb" data-id="' + esc(v.id) + '"' + (raad ? '' : ' disabled') + '>Bestil</button></div></div>';
       }).join('') + '</div>' : '<div class="card empty">Menuen er tom.</div>') +
       '</section>';
 
-    // 3. Projekter
+    // 3. Projekter – liste i fuld bredde med top 3
+    var medaljer = ['🥇', '🥈', '🥉'];
     var projekter = '<section class="block"><h2 class="block-title">Projekter</h2>' +
-      (S.projekter.length ? '<div class="proj-grid">' + S.projekter.map(function (p) {
+      (S.projekter.length ? '<div class="card list">' + S.projekter.map(function (p) {
         var pp = p.maal > 0 ? Math.min(100, (p.indsamlet / p.maal) * 100) : 0;
-        return '<div class="card proj"><div class="proj-top"><span class="ico">' + esc(p.ikon || '🎯') + '</span><div class="t"><b>' + esc(p.navn) + '</b>' +
-          (p.mitBidrag ? '<small class="num">Dit bidrag: ' + wc(p.mitBidrag) + '</small>' : '<small>&nbsp;</small>') + '</div>' +
-          '<button class="btn sm" data-act="indskyd" data-id="' + esc(p.id) + '"' + (kanKoebe && st.saldo > 0 ? '' : ' disabled') + '>Indskyd</button></div>' +
+        return '<div class="row proj-item">' +
+          '<span class="thumb">' + esc(p.ikon || '🎯') + '</span>' +
+          '<div class="row-main"><div class="proj-line"><b>' + esc(p.navn) + '</b><span class="muted num">' + wc(p.indsamlet) + (p.maal ? ' af ' + wc(p.maal) : '') + '</span></div>' +
           '<div class="bar"><i style="width:' + pp.toFixed(0) + '%"></i></div>' +
-          '<div class="meta num"><span>' + wc(p.indsamlet) + '</span><span>' + (p.maal ? 'mål ' + wc(p.maal) : '') + '</span></div></div>';
+          '<div class="top3">' + (p.top.length ? p.top.map(function (t, i) {
+            return '<span class="' + (t.initialer === me.initialer ? 'mig' : '') + '">' + medaljer[i] + ' ' + esc(t.navn) + ' <b class="num">' + wc(t.beloeb) + '</b></span>';
+          }).join('') : '<span class="faint">Ingen bidrag endnu</span>') +
+          (p.mitBidrag ? '<span class="dit num">Dit bidrag: ' + wc(p.mitBidrag) + '</span>' : '') + '</div></div>' +
+          '<div class="row-acts"><button class="btn sm" data-act="indskyd" data-id="' + esc(p.id) + '"' + (kanKoebe && st.saldo > 0 ? '' : ' disabled') + '>Indskyd</button></div></div>';
       }).join('') + '</div>' : '<div class="card empty">Ingen åbne projekter.</div>') + '</section>';
 
-    // 4. Statistik
-    var stats = '<section class="block"><h2 class="block-title">Statistik</h2><div class="stats">' +
-      '<div class="card stat"><div class="eyebrow">Optjent i ' + mNavn + '</div><div class="val num">' + wcSmall(st.optjentMaaned) + '</div>' + spark(st.forloeb.map(function (f) { return f.beloeb; })) + '</div>' +
-      '<div class="card stat"><div class="eyebrow">Brugt i alt</div><div class="val num">' + wcSmall(st.brugt) + '</div><div class="sub num">' + wc(st.indskudt) + ' i projekter</div></div>' +
-      '<div class="card stat"><div class="eyebrow">Givet væk</div><div class="val num">' + st.givetAntal + ' <small>' + (st.givetAntal === 1 ? 'gave' : 'gaver') + '</small></div><div class="sub num">' + wc(st.givet) + ' · ' + st.gaverModtaget + ' modtaget</div></div>' +
+    // 4. Statistik – kun dine egne tal
+    var stats = '<section class="block"><h2 class="block-title">Statistik</h2><div class="stats two">' +
+      '<div class="card stat"><div class="eyebrow">Du har optjent i ' + mNavn + '</div><div class="val num">' + wcSmall(st.optjentMaaned) + '</div>' + spark(st.forloeb.map(function (f) { return f.beloeb; })) + '</div>' +
+      '<div class="card stat"><div class="eyebrow">Du har brugt i alt</div><div class="val num">' + wcSmall(st.brugt) + '</div>' +
+      '<div class="breakdown num">' +
+      '<div><span>Til dig selv</span><b>' + wc(st.brugtSelv) + '</b></div>' +
+      '<div><span>Donationer</span><b>' + wc(st.givet) + '</b></div>' +
+      '<div><span>I projekter</span><b>' + wc(st.indskudt) + '</b></div>' +
+      '</div></div>' +
       '</div></section>';
 
     // 5. Bevægelser (+ mine bestillinger)
@@ -374,7 +391,8 @@
     var bevaeg = '<section class="card"><div class="card-head"><h2 class="card-title">Bevægelser</h2><a class="link" href="#/profil">Se alt</a></div>' +
       (seneste.length ? '<div class="mini-list">' + seneste.map(function (p) {
         return '<div class="mini"><div class="t">' + esc(p.tekst) + '<small>' + esc(TYPER[p.type] || p.type) + ' · ' + dato(p.tid) + '</small></div>' + beloebCell(p.beloeb) + '</div>';
-      }).join('') + '</div>' : '<div class="empty">Ingen bevægelser endnu.</div>') + '</section>';
+      }).join('') + '</div>' : '<div class="empty">Ingen bevægelser endnu.</div>') +
+      '<p class="disclaimer">Tallene kan ændre sig, hvis der bliver rettet fejl.</p></section>';
 
     var mineBest = S.bestillinger.slice(0, 6);
     var bestillinger = '<section class="card"><div class="card-head"><h2 class="card-title">Mine bestillinger</h2></div>' +
@@ -617,6 +635,7 @@
     openModal('<h2>' + (id ? 'Rediger vare' : 'Ny vare') + '</h2><input type="hidden" id="v-id" value="' + esc(v.id) + '">' +
       '<div class="row-2"><div class="field"><label for="v-navn">Navn</label><input class="input" id="v-navn" value="' + esc(v.navn) + '"></div>' +
       '<div class="field"><label for="v-ikon">Ikon (emoji)</label><input class="input" id="v-ikon" value="' + esc(v.ikon) + '" maxlength="4"></div></div>' +
+      '<div class="field"><label for="v-billede">Billede (URL eller sti, valgfrit)</label><input class="input" id="v-billede" value="' + esc(v.billede || '') + '" placeholder="assets/varer/monster.jpg"></div>' +
       '<div class="row-2"><div class="field"><label for="v-pris">Pris (Webcoins)</label><input class="input num" id="v-pris" type="number" min="0" value="' + esc(v.pris) + '"></div>' +
       '<div class="field"><label for="v-kost">Kostpris (kr)</label><input class="input num" id="v-kost" type="number" min="0" step="0.5" value="' + esc(v.kostpris || '') + '"></div></div>' +
       '<label class="check"><input type="checkbox" id="v-aktiv"' + (v.aktiv ? ' checked' : '') + '> Vises i menuen</label>' +
@@ -703,7 +722,7 @@
       case 'ny-vare': openVare(''); break;
       case 'ret-vare': openVare(t.dataset.id); break;
       case 'vare-ok':
-        submit(t, 'admin_vare', { id: val('v-id'), navn: val('v-navn'), ikon: val('v-ikon'), pris: val('v-pris'), kostpris: val('v-kost'), aktiv: checked('v-aktiv') }, 'Vare gemt');
+        submit(t, 'admin_vare', { id: val('v-id'), navn: val('v-navn'), ikon: val('v-ikon'), billede: val('v-billede'), pris: val('v-pris'), kostpris: val('v-kost'), aktiv: checked('v-aktiv') }, 'Vare gemt');
         break;
       case 'nyt-projekt': openProjekt(''); break;
       case 'ret-projekt': openProjekt(t.dataset.id); break;
