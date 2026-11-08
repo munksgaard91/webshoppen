@@ -241,6 +241,10 @@ a { color: inherit; }
 .stat .val { font-size: 26px; font-weight: 900; letter-spacing: -0.01em; margin: 8px 0 4px; }
 .stat .val small { font-size: 14px; color: var(--muted); font-weight: 700; }
 .stat .sub { font-size: 13px; color: var(--muted); }
+.stats.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.saldo-pill.big { margin-left: auto; font-size: 16px; padding: 10px 18px 10px 12px; }
+.month-name { width: 150px; flex: none; }
+.list .row.slim { padding: 12px 0; }
 .stats.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .breakdown { display: grid; gap: 6px; margin-top: 12px; font-size: 14px; }
 .breakdown div { display: flex; justify-content: space-between; gap: 12px; padding-top: 6px; border-top: 1px solid var(--line); }
@@ -356,7 +360,11 @@ td.r, th.r { text-align: right; }
   .item { padding: 12px; }
   .item .ico { width: 46px; height: 46px; font-size: 30px; }
   .proj-grid { grid-template-columns: 1fr; }
-  .stats, .stats.two { grid-template-columns: 1fr; }
+  .stats, .stats.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.saldo-pill.big { margin-left: auto; font-size: 16px; padding: 10px 18px 10px 12px; }
+.month-name { width: 150px; flex: none; }
+.list .row.slim { padding: 12px 0; }
+.stats.two { grid-template-columns: 1fr; }
   .list .row { flex-wrap: wrap; }
   .row-price { min-width: 0; }
   .row-2 { grid-template-columns: 1fr; }

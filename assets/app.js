@@ -408,7 +408,56 @@
   }
 
   function pageProfil() {
-    var me = S.me, st = S.stats;
+    var me = S.me, st = S.stats, nu = new Date(S.nu);
+    var mNavn = MAANEDER[nu.getMonth()];
+
+    // Optjent pr. måned, fordelt på kilde (teksten er "Kilde · måned år")
+    var maaneder = {};
+    S.historik.forEach(function (p) {
+      if (p.type !== 'optjent') return;
+      var m = maaneder[p.maaned] = maaneder[p.maaned] || { maaned: p.maaned, total: 0, kilder: {} };
+      var kilde = String(p.tekst).split(' · ')[0];
+      m.total += p.beloeb;
+      m.kilder[kilde] = (m.kilder[kilde] || 0) + p.beloeb;
+    });
+    var mRows = Object.keys(maaneder).sort().reverse().map(function (k) { return maaneder[k]; });
+    var maxM = Math.max.apply(null, mRows.map(function (m) { return m.total; }).concat([1]));
+
+    var head = '<div class="profile-head">' + avatar(me, true) +
+      '<div><div class="eyebrow">' + esc([me.gruppe, me.initialer].filter(Boolean).join(' · ')) + '</div><h1>' + esc(me.navn) + '</h1></div>' +
+      '<span class="saldo-pill big num">' + coin() + 'Du har ' + wc(st.saldo) + '</span></div>';
+
+    var stats = '<div class="stats three">' +
+      '<div class="card stat"><div class="eyebrow">Du har optjent i alt</div><div class="val num">' + wcSmall(st.optjentTotal) + '</div>' +
+      '<div class="breakdown num"><div><span>Heraf i ' + mNavn + '</span><b>' + wc(st.optjentMaaned) + '</b></div></div></div>' +
+      '<div class="card stat"><div class="eyebrow">Du har brugt i alt</div><div class="val num">' + wcSmall(st.brugt) + '</div>' +
+      '<div class="breakdown num">' +
+      '<div><span>Til dig selv</span><b>' + wc(st.brugtSelv) + '</b></div>' +
+      '<div><span>Donationer</span><b>' + wc(st.givet) + '</b></div>' +
+      '<div><span>I projekter</span><b>' + wc(st.indskudt) + '</b></div></div></div>' +
+      '<div class="card stat"><div class="eyebrow">Gaver</div><div class="val num">' + st.gaverModtaget + ' <small>modtaget</small></div>' +
+      '<div class="breakdown num"><div><span>Givet væk</span><b>' + st.givetAntal + (st.givetAntal === 1 ? ' gave' : ' gaver') + '</b></div></div></div>' +
+      '</div>';
+
+    var optjent = '<section class="block"><h2 class="block-title">Optjent pr. måned</h2>' +
+      (mRows.length ? '<div class="card list">' + mRows.map(function (m) {
+        return '<div class="row month-row"><div class="month-name"><b>' + esc(maanedLabel(m.maaned)) + '</b></div>' +
+          '<div class="row-main"><div class="bar"><i style="width:' + ((m.total / maxM) * 100).toFixed(0) + '%"></i></div>' +
+          '<div class="top3">' + Object.keys(m.kilder).map(function (k) { return '<span>' + esc(k) + ' <b class="num">' + wc(m.kilder[k]) + '</b></span>'; }).join('') + '</div></div>' +
+          '<div class="row-price num plus">+' + wc(m.total) + '</div></div>';
+      }).join('') + '</div>' : '<div class="card empty">Intet optjent endnu.</div>') + '</section>';
+
+    var bestillinger = '<section class="block"><h2 class="block-title">Mine bestillinger</h2>' +
+      (S.bestillinger.length ? '<div class="card list">' + S.bestillinger.map(function (b) {
+        var tekst = b.fra === me.initialer
+          ? (b.til !== b.fra ? b.vare + ' til ' + b.tilNavn : b.vare)
+          : b.vare + ' fra ' + b.fraNavn;
+        var b2 = b.fra === me.initialer ? -b.pris : 0;
+        return '<div class="row slim"><div class="row-main"><b>' + esc(tekst) + '</b><small class="faint" style="display:block">' + dato(b.tid) + '</small></div>' +
+          '<span class="tag ' + esc(b.status) + '">' + esc(cap(b.status)) + '</span>' +
+          '<div class="row-price num" style="justify-content:flex-end">' + (b2 ? beloebCell(b2) : '<span class="zero">Gave</span>') + '</div></div>';
+      }).join('') + '</div>' : '<div class="card empty">Intet bestilt endnu.</div>') + '</section>';
+
     var filtre = { alle: 'Alle', optjent: 'Optjent', koeb: 'Køb', gave: 'Gaver', projekt: 'Projekter', andet: 'Andet' };
     var match = {
       alle: function () { return true; },
@@ -420,23 +469,16 @@
     }[ui.profilFilter] || function () { return true; };
     var rows = S.historik.filter(match);
 
-    return '<div class="profile-head">' + avatar(me, true) + '<div><div class="eyebrow">' + esc([me.gruppe, me.initialer].filter(Boolean).join(' · ')) + '</div><h1>' + esc(me.navn) + '</h1></div></div>' +
-      '<div class="stat-grid">' +
-      statBox('I banken', wcSmall(st.saldo)) +
-      statBox('Optjent i alt', wcSmall(st.optjentTotal)) +
-      statBox('Brugt i alt', wcSmall(st.brugt)) +
-      statBox('Doneret', wcSmall(st.givet), st.givetAntal + (st.givetAntal === 1 ? ' gave' : ' gaver')) +
-      statBox('I projekter', wcSmall(st.indskudt)) +
-      statBox('Gaver modtaget', String(st.gaverModtaget)) +
-      '</div>' +
-      '<section class="card"><div class="card-head"><h2 class="card-title">Historik</h2><div class="chips">' +
+    var historik = '<section class="block"><div class="block-head"><h2 class="block-title">Alle bevægelser</h2><div class="chips" style="margin-left:auto">' +
       Object.keys(filtre).map(function (k) { return '<button class="chip' + (ui.profilFilter === k ? ' on' : '') + '" data-act="pfilter" data-f="' + k + '">' + filtre[k] + '</button>'; }).join('') +
-      '</div></div>' +
+      '</div></div><section class="card">' +
       (rows.length ? '<div class="table-wrap"><table><thead><tr><th>Dato</th><th>Type</th><th>Tekst</th><th class="r">Beløb</th></tr></thead><tbody>' +
         rows.map(function (p) {
           return '<tr><td class="faint">' + dato(p.tid) + '</td><td><span class="tag">' + esc(TYPER[p.type] || p.type) + '</span></td><td>' + esc(p.tekst) + '</td><td class="r">' + beloebCell(p.beloeb) + '</td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty">Intet at vise.</div>') +
-      '</section>';
+      '<p class="disclaimer">Tallene kan ændre sig, hvis der bliver rettet fejl.</p></section></section>';
+
+    return head + stats + optjent + bestillinger + historik;
   }
 
   function statBox(label, val, sub) {
