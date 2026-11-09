@@ -396,12 +396,13 @@
     var mNavn = MAANEDER[Number(m.maaned.slice(5)) - 1];
     var kandidater = S.kolleger.filter(function (u) { return u.gruppe; });
     var stem = m.minStemme
-      ? '<div class="voted"><span class="voted-ico">✓</span><div>Du har stemt på <b>' + esc(m.minStemme.navn) + '</b> i ' + mNavn + '.<small>Vinderen findes, når måneden er slut.</small></div></div>'
+      ? '<div class="voted"><span class="voted-ico">✓</span><div>Du har stemt på <b>' + esc(m.minStemme.navn) + '</b> i ' + mNavn + '.' + (m.minStemme.begrundelse ? '<q>' + esc(m.minStemme.begrundelse) + '</q>' : '') + '<small>Vinderen findes, når måneden er slut.</small></div></div>'
       : (kanKoebe ? '<div class="vote-form"><select class="input" id="mdk-til"><option value="">Vælg en kollega …</option>' +
           kandidater.map(function (u) { return '<option value="' + esc(u.initialer) + '">' + esc(u.navn) + ' · ' + esc(u.gruppe) + '</option>'; }).join('') +
-          '</select><button class="btn primary" data-act="stem">Stem</button></div><small class="faint">Du kan stemme én gang i ' + mNavn + '. Stemmerne er hemmelige.</small>' : '');
+          '</select></div><textarea class="input vote-why" id="mdk-hvorfor" rows="2" maxlength="500" placeholder="Begrundelse: Hvad har vedkommende gjort?"></textarea>' +
+          '<div class="vote-form"><button class="btn primary" data-act="stem">Stem</button></div><small class="faint">Du kan stemme én gang i ' + mNavn + '. Stemmerne er hemmelige.</small>' : '');
     return '<section class="block"><h2 class="block-title">Månedens kollega</h2><div class="card mdk">' +
-      '<div class="mdk-main"><p class="mdk-why">Stem på en kollega, der har gjort noget godt, hjulpet med noget bestemt eller bare skabt god stemning i hverdagen.</p>' + stem + '</div>' +
+      '<div class="mdk-main"><p class="mdk-why">Stem på en kollega, der har gjort noget godt, hjulpet med noget bestemt eller bare skabt god stemning i hverdagen. Resultater som salg og fakturering tæller ikke med.</p>' + stem + '</div>' +
       '<div class="mdk-side"><div class="mdk-prize"><span class="eyebrow">Præmie</span><b>🎁 ' + esc(m.praemie) + '</b></div>' +
       (m.sidste ? '<div class="mdk-last"><span class="eyebrow">' + cap(MAANEDER[Number(m.sidste.maaned.slice(5)) - 1]) + 's kollega</span><b>🏆 ' + esc(m.sidste.navn) + '</b></div>' : '') +
       '</div></div></section>';
@@ -652,9 +653,11 @@
       '<div class="grid-2 top0"><section class="card"><div class="card-head"><h2 class="card-title">Stilling i ' + mNavn + '</h2><span class="tag">' + m.afgivet + ' stemmer</span></div>' +
       (m.stilling.length ? '<div class="table-wrap"><table><thead><tr><th>#</th><th>Kollega</th><th class="r">Stemmer</th><th class="r">Første stemme</th></tr></thead><tbody>' +
         m.stilling.map(function (x, i) {
-          return '<tr><td>' + (i === 0 ? '🏆' : i + 1) + '</td><td><b>' + esc(x.navn) + '</b></td><td class="r num">' + x.stemmer + '</td><td class="r faint">' + dato(x.foerste) + '</td></tr>';
+          return '<tr><td>' + (i === 0 ? '🏆' : i + 1) + '</td><td><b>' + esc(x.navn) + '</b>' +
+            (x.begrundelser.length ? '<ul class="why-list">' + x.begrundelser.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + '</ul>' : '') +
+            '</td><td class="r num" style="vertical-align:top">' + x.stemmer + '</td><td class="r faint" style="vertical-align:top">' + dato(x.foerste) + '</td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty">Ingen stemmer endnu.</div>') +
-      '<small class="faint">Kun synlig for admin. Ved lighed vinder den, der fik sin første stemme først.</small></section>' +
+      '<small class="faint">Kun synlig for admin. Begrundelserne vises uden navn på den, der har stemt. Ved lighed vinder den, der fik sin første stemme først.</small></section>' +
       '<section class="card"><div class="card-head"><h2 class="card-title">Tidligere vindere</h2></div>' +
       (m.historik.length ? '<div class="mini-list">' + m.historik.map(function (h) {
         return '<div class="mini"><div class="t"><b>' + esc(h.vinder.navn) + '</b><small>' + esc(maanedLabel(h.maaned)) + '</small></div><span class="muted num">' + h.vinder.stemmer + ' af ' + h.stemmer + ' stemmer</span></div>';
@@ -896,10 +899,12 @@
       case 'nyt-hjul': openHjulFelt(''); break;
       case 'stem': {
         var til = val('mdk-til');
+        var hvorfor = val('mdk-hvorfor').trim();
         if (!til) { toast('Vælg en kollega', '', true); break; }
+        if (hvorfor.length < 10) { toast('Skriv en kort begrundelse', 'Fortæl hvad vedkommende har gjort.', true); break; }
         var navn = (S.kolleger.filter(function (u) { return u.initialer === til; })[0] || {}).navn || til;
         if (!confirm('Stem på ' + navn + '? Du kan kun stemme én gang i denne måned.')) break;
-        submit(t, 'stem', { til: til }, 'Tak for din stemme');
+        submit(t, 'stem', { til: til, begrundelse: hvorfor }, 'Tak for din stemme');
         break;
       }
       case 'mdk-praemie-ok':

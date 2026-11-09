@@ -62,7 +62,7 @@ body {
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
 }
-button, input, select { font: inherit; color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 a { color: inherit; }
 .num { font-variant-numeric: tabular-nums; }
@@ -463,3 +463,9 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .mdk-prize { background: var(--gold-soft); }
 .mdk-side b { font-size: 16px; }
 @media (max-width: 720px) { .mdk { flex-direction: column; } .mdk-side { width: auto; } }
+
+.vote-why { max-width: 560px; display: block; margin-bottom: 10px; resize: vertical; min-height: 64px; font-size: 14px; }
+.vote-form + .vote-why { margin-top: 0; }
+.mdk .vote-form:first-of-type { margin-bottom: 10px; }
+.voted q { display: block; font-style: italic; color: var(--muted); margin-top: 4px; font-size: 14px; }
+.why-list { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: var(--muted); display: grid; gap: 2px; }

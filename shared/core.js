@@ -16,7 +16,7 @@ var Core = (function () {
     Config: ['noegle', 'vaerdi'],
     Brugere: ['email', 'initialer', 'navn', 'gruppe', 'aktiv'],
     Menu: ['id', 'navn', 'ikon', 'billede', 'pris', 'kostpris', 'varianter', 'snart', 'aktiv'],
-    Stemmer: ['id', 'tid', 'maaned', 'fra', 'til'],
+    Stemmer: ['id', 'tid', 'maaned', 'fra', 'til', 'begrundelse'],
     Hjul: ['id', 'navn', 'ikon', 'type', 'beloeb', 'kostpris', 'vaegt', 'aktiv'],
     Projekter: ['id', 'navn', 'ikon', 'maal', 'aaben'],
     Posteringer: ['id', 'tid', 'initialer', 'type', 'beloeb', 'tekst', 'ref'],
@@ -250,10 +250,10 @@ var Core = (function () {
       shop: env.shop ? env.shop() : { aaben: true },
       mdk: (function () {
         var mk = maanedKey(nu), sidst = forrigeMaaned(mk);
-        var min = null;
-        db.all('Stemmer').forEach(function (v) { if (str(v.maaned) === mk && ini(v.fra) === me.initialer) min = ini(v.til); });
+        var min = null, minHvorfor = '';
+        db.all('Stemmer').forEach(function (v) { if (str(v.maaned) === mk && ini(v.fra) === me.initialer) { min = ini(v.til); minHvorfor = str(v.begrundelse); } });
         var vinder = mdkStilling(db, sidst)[0] || null;
-        return { maaned: mk, minStemme: min ? { initialer: min, navn: navne[min] || min } : null, praemie: mdkPraemie(db),
+        return { maaned: mk, minStemme: min ? { initialer: min, navn: navne[min] || min, begrundelse: minHvorfor } : null, praemie: mdkPraemie(db),
           sidste: vinder ? { maaned: sidst, initialer: vinder.initialer, navn: vinder.navn } : null };
       })(),
       hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 15))), felter: hjulFelter(db, false).map(function (f) { return { id: f.id, navn: f.navn, ikon: f.ikon }; }) }
@@ -324,8 +324,9 @@ var Core = (function () {
     db.all('Stemmer').forEach(function (v) {
       if (str(v.maaned) !== mk) return;
       var t = ini(v.til);
-      var o = m[t] = m[t] || { initialer: t, navn: navne[t] || t, stemmer: 0, foerste: str(v.tid) };
+      var o = m[t] = m[t] || { initialer: t, navn: navne[t] || t, stemmer: 0, foerste: str(v.tid), begrundelser: [] };
       o.stemmer++;
+      if (str(v.begrundelse).trim()) o.begrundelser.push(str(v.begrundelse).trim());
       if (str(v.tid) < o.foerste) o.foerste = str(v.tid);
     });
     return Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, b) {
@@ -343,7 +344,9 @@ var Core = (function () {
     if (!t || t === me.initialer) throw err('BAD', 'Vælg en kollega.');
     var ok = aktiveBrugere(db).some(function (u) { return ini(u.initialer) === t && str(u.gruppe); });
     if (!ok) throw err('BAD', 'Kollegaen findes ikke.');
-    db.insert('Stemmer', { id: env.uuid(), tid: env.now().toISOString(), maaned: mk, fra: me.initialer, til: t });
+    var hvorfor = str(data.begrundelse).trim().slice(0, 500);
+    if (hvorfor.length < 10) throw err('BAD', 'Skriv en kort begrundelse.');
+    db.insert('Stemmer', { id: env.uuid(), tid: env.now().toISOString(), maaned: mk, fra: me.initialer, til: t, begrundelse: hvorfor });
     return { ok: true };
   }
 
