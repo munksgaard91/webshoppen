@@ -846,12 +846,12 @@
       }).join('') + '</div>' : '<div class="empty">Ingen aktivitet endnu.</div>') +
       '</section>';
 
-    var opg = '<section class="card"><div class="card-head"><h2 class="card-title">Opgørelse pr. måned</h2><span class="faint">Brugt i alt ' + kr(rows.reduce(function (sum, o) { return sum + o.kr; }, 0)) + '</span></div>' +
-      (rows.length ? '<div class="table-wrap"><table><thead><tr><th>Måned</th><th>Varer</th><th class="r">Bestillinger</th><th class="r">Webcoins</th><th class="r">At trække</th></tr></thead><tbody>' +
+    var opg = '<section class="card"><div class="card-head"><h2 class="card-title">Opgørelse pr. måned</h2><span class="faint">Sendes til RAB ved månedens udgang · i alt ' + kr(rows.reduce(function (sum, o) { return sum + o.kr; }, 0)) + '</span></div>' +
+      (rows.length ? '<div class="table-wrap"><table><thead><tr><th>Måned</th><th>Varer</th><th class="r">Bestillinger</th><th class="r">Til RAB</th></tr></thead><tbody>' +
         rows.map(function (o) {
           return '<tr><td><b>' + esc(maanedLabel(o.maaned)) + '</b>' + (o.aabne ? ' <span class="tag ny">' + o.aabne + ' ikke udleveret</span>' : '') + '</td>' +
             '<td class="muted" style="font-size:13px">' + o.varer.map(function (v) { return esc(v.antal + '× ' + v.navn); }).join(', ') + '</td>' +
-            '<td class="r num">' + o.antal + '</td><td class="r num">' + wc(o.wc) + '</td><td class="r num"><b>' + kr(o.kr) + '</b></td></tr>';
+            '<td class="r num">' + o.antal + '</td><td class="r num"><b>' + kr(o.kr) + '</b></td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty">Ingen bestillinger endnu.</div>') +
       '</section>';
 
