@@ -335,18 +335,18 @@
     return '<span class="tag ' + esc(b.status) + '">' + (forud ? 'Forudbestilt' : esc(cap(b.status))) + '</span>';
   }
 
-  // Projekter: kun nr. 1 vises ("Top donator"); resten (top 10) ses ved hover på "Se resten"
+  // Projekter: kun nr. 1 vises ("Top contributor"); resten (top 10) ses ved hover på "Se resten"
   function topRaekke(t, i, me) {
     var med = ['🥇', '🥈', '🥉'][i] || (i + 1) + '.';
     return '<li class="' + (t.initialer === me.initialer ? 'mig' : '') + '"><span class="t3-med">' + med + '</span><span class="t3-navn">' + esc(t.navn) + '</span>' +
       '<span class="t3-beloeb num"><b>' + fmt(t.beloeb) + '</b> ' + enhed(t.beloeb) + '</span></li>';
   }
   function topDonator(p, me) {
-    if (!p.top.length) return '<div class="top-don"><span class="top-don-titel">Top donator</span><div class="faint" style="font-size:13px">Ingen bidrag endnu</div></div>';
-    return '<div class="top-don"><span class="top-don-titel">Top donator</span>' +
+    if (!p.top.length) return '<div class="top-don"><span class="top-don-titel">Top contributors</span><div class="faint" style="font-size:13px">Ingen bidrag endnu</div></div>';
+    return '<div class="top-don"><span class="top-don-titel">Top contributors</span>' +
       '<ol class="top3-list">' + topRaekke(p.top[0], 0, me) + '</ol>' +
       (p.top.length > 1 ? '<span class="info top10" tabindex="0"><span class="se-resten">Se resten</span>' +
-        '<span class="pop" role="tooltip"><b class="pop-title">Top 10 donatorer</b><ol class="top3-list">' + p.top.map(function (t, i) { return topRaekke(t, i, me); }).join('') + '</ol></span></span>' : '') +
+        '<span class="pop" role="tooltip"><b class="pop-title">Top 10 contributors</b><ol class="top3-list">' + p.top.map(function (t, i) { return topRaekke(t, i, me); }).join('') + '</ol></span></span>' : '') +
       '</div>';
   }
 
