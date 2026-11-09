@@ -319,7 +319,7 @@ function opsaet() {
   seed('Config', [
     { noegle: 'CLIENT_ID', vaerdi: '' },
     { noegle: 'ADMIN_EMAILS', vaerdi: Session.getActiveUser().getEmail() },
-    { noegle: 'TILLADT_DOMAENE', vaerdi: 'bestone.dk' },
+    { noegle: 'TILLADT_DOMAENE', vaerdi: 'best-one.dk' },
     { noegle: 'SIDE_URL', vaerdi: 'https://webshoppen.leksione.dk' },
     { noegle: 'CHAT_WEBHOOK', vaerdi: '' },
     { noegle: 'NOTIFIKATION_MAIL', vaerdi: Session.getActiveUser().getEmail() },

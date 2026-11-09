@@ -44,7 +44,7 @@ Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskin
 
 ## Sådan sættes backend op
 
-1. Opret et nyt Google Sheet "Webshoppen DB" (på din bestone.dk-konto).
+1. Opret et nyt Google Sheet "Webshoppen DB" (på din best-one.dk-konto).
 2. Udvidelser → Apps Script. Opret filerne:
    - `Code.gs` ← indholdet af `apps-script/Code.gs`
    - `Core.gs` ← indholdet af `shared/core.js`
