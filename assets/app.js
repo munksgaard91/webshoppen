@@ -220,8 +220,6 @@
 
   function renderNotReg() {
     app.innerHTML = '<div class="center-screen"><div class="login-card">' +
-      coin('coin-xl') +
-      boLogo('logo-login') +
       '<h1>Ikke registreret</h1>' +
       '<p>Du er desværre ikke registreret i Webshoppen.</p>' +
       '<button class="btn" data-act="logout">' + ico('logout') + 'Log ud</button>' +
