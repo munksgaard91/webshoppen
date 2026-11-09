@@ -847,9 +847,12 @@
       '</section>';
 
     var opg = '<section class="card"><div class="card-head"><h2 class="card-title">Opgørelse pr. måned</h2><span class="faint">Sendes til RAB ved månedens udgang · i alt ' + kr(rows.reduce(function (sum, o) { return sum + o.kr; }, 0)) + '</span></div>' +
-      (rows.length ? '<div class="table-wrap"><table><thead><tr><th>Måned</th><th class="r">Bestillinger</th><th class="r">Webcoins brugt</th><th class="r">Kr i alt</th></tr></thead><tbody>' +
+      (rows.length ? '<div class="table-wrap"><table><thead><tr><th>Måned</th><th class="r">Bestillinger</th><th class="r">Webcoins brugt</th><th class="r">Kr i alt</th><th class="r">Sendt til RAB</th></tr></thead><tbody>' +
         rows.map(function (o) {
-          return '<tr><td><b>' + esc(maanedLabel(o.maaned)) + '</b></td><td class="r num">' + o.antal + '</td><td class="r num">' + wc(o.wc) + '</td><td class="r num"><b>' + kr(o.kr) + '</b></td></tr>';
+          var rab = o.sendt
+            ? '<span class="tag ok">✓ Sendt' + (o.sendtTid ? ' ' + esc(dato(o.sendtTid).split(' · ')[0]) : '') + '</span> <button class="btn sm" data-act="afregnet" data-m="' + esc(o.maaned) + '" data-s="0">Fortryd</button>'
+            : '<button class="btn primary sm" data-act="afregnet" data-m="' + esc(o.maaned) + '" data-s="1">Markér som sendt</button>';
+          return '<tr' + (o.sendt ? ' class="afregnet"' : '') + '><td><b>' + esc(maanedLabel(o.maaned)) + '</b></td><td class="r num">' + o.antal + '</td><td class="r num">' + wc(o.wc) + '</td><td class="r num"><b>' + kr(o.kr) + '</b></td><td class="r"><div class="row-acts rab">' + rab + '</div></td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty">Ingen bestillinger endnu.</div>') +
       '</section>';
 
@@ -1156,6 +1159,9 @@
         store('webshoppen-tema', cur ? null : 'dark');
         break;
       }
+      case 'afregnet':
+        submit(t, 'admin_afregnet', { maaned: t.dataset.m, sendt: t.dataset.s === '1' }, t.dataset.s === '1' ? 'Markeret som sendt til RAB' : 'Markering fjernet');
+        break;
       case 'bsort': {
         var nb = ui.brugerSort || { k: 'navn', op: true };
         // Saldo sorteres højeste først ved første klik, tekst A–Å

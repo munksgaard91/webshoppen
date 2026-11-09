@@ -23,7 +23,8 @@ var Core = (function () {
     Posteringer: ['id', 'tid', 'initialer', 'type', 'beloeb', 'tekst', 'ref'],
     Bestillinger: ['id', 'tid', 'fra', 'til', 'vare', 'pris', 'kostpris', 'status', 'forud', 'oenske'],
     Kilder: ['kilde', 'navn', 'sheet_id', 'fane', 'kol_initialer', 'kol_vaerdi', 'kol_dato', 'start_raekke'],
-    Regler: ['gruppe', 'kilde', 'sats', 'tekst']
+    Regler: ['gruppe', 'kilde', 'sats', 'tekst'],
+    Afregning: ['maaned', 'sendt', 'tid']
   };
 
   function err(code, msg) {
@@ -384,6 +385,18 @@ var Core = (function () {
     return { ok: true };
   }
 
+  // Kryds en måned af som sendt til RAB (eller fortryd)
+  function adminAfregnet(db, me, data, env) {
+    kraevAdmin(me);
+    var mk = str(data.maaned);
+    if (!/^\d{4}-\d{2}$/.test(mk)) throw err('BAD', 'Ugyldig måned.');
+    var sendt = !!data.sendt, row = null;
+    db.all('Afregning').forEach(function (r) { if (str(r.maaned) === mk) row = r; });
+    var v = { sendt: sendt ? 'ja' : 'nej', tid: sendt ? env.now().toISOString() : '' };
+    if (row) db.update('Afregning', row, v); else db.insert('Afregning', { maaned: mk, sendt: v.sendt, tid: v.tid });
+    return { ok: true };
+  }
+
   function adminMdkPraemie(db, me, data, env) {
     kraevAdmin(me);
     var tekst = str(data.praemie).trim();
@@ -489,8 +502,13 @@ var Core = (function () {
       v.antal++;
       v.kr += kr;
     });
+    // Afregning: hvilke måneder admin har krydset af som sendt til RAB (fanen mangler i ældre ark → tom)
+    var afr = {};
+    try { db.all('Afregning').forEach(function (r) { if (sand(r.sendt)) afr[str(r.maaned)] = str(r.tid); }); } catch (e) { afr = {}; }
     return Object.keys(m).sort().reverse().map(function (k) {
       var o = m[k];
+      o.sendt = !!afr[k];
+      o.sendtTid = afr[k] || '';
       o.varer = Object.keys(o.varer).map(function (n) { return o.varer[n]; }).sort(function (a, b) { return b.kr - a.kr; });
       return o;
     });
@@ -680,6 +698,7 @@ var Core = (function () {
     stem: stem,
     forslag: forslag,
     admin_mdk_praemie: adminMdkPraemie,
+    admin_afregnet: adminAfregnet,
     admin_hjul: adminHjulFelt,
     admin_hjul_pris: adminHjulPris,
     admin_state: adminState,
@@ -690,7 +709,7 @@ var Core = (function () {
     admin_justering: adminJustering,
     admin_sync: function (db, me, data, env) { kraevAdmin(me); return env.sync(); }
   };
-  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_hjul: 1, admin_hjul_pris: 1, admin_bestilling: 1, admin_bruger: 1, admin_vare: 1, admin_projekt: 1, admin_justering: 1, admin_sync: 1 };
+  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_afregnet: 1, admin_hjul: 1, admin_hjul_pris: 1, admin_bestilling: 1, admin_bruger: 1, admin_vare: 1, admin_projekt: 1, admin_justering: 1, admin_sync: 1 };
 
   function handle(db, me, action, data, env) {
     var fn = HANDLINGER[action];

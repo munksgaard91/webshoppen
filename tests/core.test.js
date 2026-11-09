@@ -140,6 +140,17 @@ t('præmie: Coming soon ved ny måned, indtil admin vælger', function () {
   data.Config.forEach(function (r) { if (r.noegle === 'MDK_PRAEMIE_MAANED') r.vaerdi = '2026-10'; });
   eq(Core.handle(db, B, 'state', {}, env).mdk.praemie, '');
 });
+t('afregning: admin krydser måned af som sendt til RAB', function () {
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var mk = Core.maanedKey(env.now());
+  var opg = function () { return Core.handle(db, adm, 'admin_state', {}, env).opgoerelse.filter(function (o) { return o.maaned === mk; })[0]; };
+  eq(opg().sendt, false);
+  Core.handle(db, adm, 'admin_afregnet', { maaned: mk, sendt: true }, env);
+  eq(opg().sendt, true);
+  Core.handle(db, adm, 'admin_afregnet', { maaned: mk, sendt: false }, env);
+  eq(opg().sendt, false);
+  kaster(function () { Core.handle(db, B, 'admin_afregnet', { maaned: mk, sendt: true }, env); }, 'admin');
+});
 t('optjening er idempotent', function () {
   data.Regler.push({ gruppe: 'Support', kilde: 'genfak', sats: 0.002 });
   var k = { genfak: { 'BBB|2026-11': 10000 } };
