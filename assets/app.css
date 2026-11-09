@@ -95,11 +95,11 @@ a { color: inherit; }
 /* ---------- Brand ---------- */
 
 .bo-logo { display: block; height: 22px; width: auto; color: var(--brand); flex: none; }
-:root[data-theme="dark"] .bo-logo { color: #fff; }
+:root[data-theme="dark"] .bo-logo, :root[data-theme="dark"] .brand-name { color: #fff; }
 .bo-logo.logo-login { height: 30px; margin: 0 auto 6px; }
 .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; min-width: 0; }
 .brand-sep { width: 1px; height: 22px; background: var(--line-2); }
-.brand-name { font-weight: 800; color: var(--brand-2); font-size: 18px; line-height: 1; letter-spacing: -0.02em; white-space: nowrap; }
+.brand-name { font-weight: 800; color: var(--brand); font-size: 18px; line-height: 1; letter-spacing: -0.02em; white-space: nowrap; }
 
 /* ---------- Topmenu (medarbejder) ---------- */
 
