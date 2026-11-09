@@ -471,7 +471,7 @@
     var maxM = Math.max.apply(null, mRows.map(function (m) { return m.total; }).concat([1]));
 
     var head = '<div class="profile-head">' + avatar(me, true) +
-      '<div><div class="eyebrow">' + esc([me.gruppe, me.initialer].filter(Boolean).join(' · ')) + '</div><h1>' + esc(me.navn) + '</h1></div>' +
+      '<div>' + (me.gruppe ? '<div class="eyebrow">' + esc(me.gruppe) + '</div>' : '') + '<h1>' + esc(me.navn) + '</h1></div>' +
       '<span class="saldo-pill big num">' + 'Du har ' + wc(st.saldo) + coin() + '</span></div>';
 
     var stats = '<div class="stats three">' +
