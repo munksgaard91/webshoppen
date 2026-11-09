@@ -469,7 +469,7 @@
           '<div class="mdk-winner"><span class="mdk-crown">🏆</span><span class="mdk-avatar">' + esc(m.sidste.initialer || forkort(m.sidste.navn)) + '</span></div>' +
           '<b class="mdk-name">' + esc(m.sidste.navn) + '</b>'
         : '<span class="mdk-eyebrow">Månedens kollega</span><div class="mdk-winner"><span class="mdk-avatar empty">?</span></div><b class="mdk-name">Bliv den første</b>') +
-      '<div class="mdk-facts"><span>🎁 ' + esc(m.praemie) + '</span><span>⏳ ' + (dageTilbage === 0 ? 'Sidste dag i ' + mNavn : dageTilbage + (dageTilbage === 1 ? ' dag' : ' dage') + ' tilbage') + '</span></div></div>';
+      '<div class="mdk-facts"><span>' + (/webcoin/i.test(m.praemie) ? coin() : '🎁') + ' ' + esc(m.praemie) + '</span><span>⏳ ' + (dageTilbage === 0 ? 'Sidste dag i ' + mNavn : dageTilbage + (dageTilbage === 1 ? ' dag' : ' dage') + ' tilbage') + '</span></div></div>';
 
     // Højre: afstemning
     var hoejre;
