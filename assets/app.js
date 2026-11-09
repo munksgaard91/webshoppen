@@ -491,7 +491,8 @@
 
   function reelKort(f) {
     var cls = (f.hoved ? 'hoved' : f.type === 'intet' ? 'nitte' : f.type === 'vare' ? 'vare' : 'coins') + ' ' + reelSjaelden(f);
-    var indhold = (f.ikon ? '<span class="rico">' + esc(f.ikon) + '</span>' : '') + (f.type === 'webcoins'
+    var ikon = f.type === 'webcoins' ? coin('coin-reel') : (f.ikon ? esc(f.ikon) : '');
+    var indhold = (ikon ? '<span class="rico">' + ikon + '</span>' : '') + (f.type === 'webcoins'
       ? '<b class="num">' + fmt(f.beloeb) + '</b><small>' + enhed(f.beloeb) + '</small>'
       : '<b class="txt">' + esc(f.navn) + '</b>');
     return '<div class="reel-card ' + cls + '">' + indhold + '</div>';
@@ -511,6 +512,17 @@
     return kort.slice(0, 24);
   }
 
+  // Lille i-ikon med chancerne (vises ved hover), samlet pr. præmie og sorteret efter chance
+  function chancePop(felter) {
+    var samlet = {};
+    felter.forEach(function (f) { var k = f.navn; samlet[k] = samlet[k] || { navn: k, ikon: f.type === 'webcoins' ? coin() : esc(f.ikon || ''), andel: 0 }; samlet[k].andel += f.andel || 0; });
+    var rk = Object.keys(samlet).map(function (k) { return samlet[k]; }).sort(function (a, b) { return b.andel - a.andel; });
+    return '<span class="info chance-info" tabindex="0"><span class="info-mini" aria-label="Se chancerne">' + ico('info') + '</span>' +
+      '<span class="pop" role="tooltip"><b class="pop-title">Chancer pr. drej</b>' + rk.map(function (x) {
+        return '<div class="rule"><span class="chance-navn">' + x.ikon + ' ' + esc(x.navn) + '</span><b class="num">' + (x.andel * 100).toFixed(1).replace('.', ',').replace(',0', '') + ' %</b></div>';
+      }).join('') + '</span></span>';
+  }
+
   function lucky(kanKoebe) {
     var h = S.hjul;
     if (!h || !h.felter.length) return '';
@@ -525,7 +537,7 @@
     var x = ui.reel ? ui.reel.x : 0;
     return '<section class="block"><h2 class="block-title">Feelin\' Lucky?</h2><div class="card lucky2">' +
       '<div class="reel" id="reel-box"><span class="reel-marker"></span><div class="reel-track" id="reel" style="transform:translateX(' + x + 'px)">' + spor + '</div></div>' +
-      '<div class="lucky-bund"><div class="lucky-price"><span class="lp-label">Drej hjulet for</span>' +
+      '<div class="lucky-bund"><div class="lucky-price"><span class="lp-label">Drej hjulet</span>' + chancePop(h.felter) +
       '<span class="row-price num"><span class="amt">' + fmt(h.pris) + '</span><span class="unit">' + enhed(h.pris) + '</span>' + coin() + '</span></div>' +
       knapper + '</div></div></section>';
   }

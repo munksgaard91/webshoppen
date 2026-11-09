@@ -620,3 +620,15 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .btn-emoji { font-size: 18px; line-height: 1; }
 .reel-card .rico { font-size: 24px; line-height: 1; margin-bottom: 6px; }
 .reel-card b.num { font-size: 24px; }
+.chance-info { display: inline-flex; margin-left: -6px; }
+.info-mini { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); cursor: help; }
+.info-mini:hover { color: var(--brand); }
+.info-mini svg { width: 18px; height: 18px; }
+.chance-info .pop { left: 0; right: auto; top: calc(100% + 8px); bottom: auto; z-index: 30; }
+.chance-info:focus-within .pop { opacity: 1; visibility: visible; transform: none; }
+.coin.coin-reel { width: 26px; height: 26px; vertical-align: 0; }
+.reel-card .rico { display: flex; align-items: center; justify-content: center; height: 26px; }
+.reel-card.hoved .coin-reel { filter: drop-shadow(0 0 0 1px #3d2a00); }
+.chance-navn { display: inline-flex; align-items: center; gap: 6px; }
+.chance-info .pop { width: 240px; }
+.lucky-bund { position: relative; z-index: 5; }
