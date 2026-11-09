@@ -15,6 +15,7 @@ Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskin
 - Åbningstid 08:00–15:30 på hverdage + lukket når admin har "Ikke til stede" i kalenderen → overlay "Shoppen har lukket". Bestil bliver til **Forudbestil**: bestillingen gemmes med `forud = ja` (ny kolonne i Bestillinger), admin får "Forudbestilling · …" og den vises som "Forudbestilt", indtil den er udleveret. Admin ser et banner i stedet for overlay.
 - Topmenu (2026-11-09): rigtigt Best One-logo (SVG fra salgsdashboardet, `boLogo()` i app.js, farves med `currentColor`), Overblik/Min profil centreret, ingen Webcoins-saldo i toppen, "Log ud" ligger i dropdown under brugerens badge.
 - Forside v3 (2026-11-09): kompakt bestil-liste, højere projektrækker med samme kolonner som menuen, "Du har optjent …" fjernet fra saldo-kortet, teambudget viser rest i alt som stort tal, derunder "Brugt i sæsonen: kr x" og sæsonen som tag (Config `TEAMBUDGET_SAESON`, fx `2026/27`). Statistik, bevægelser og bestillinger er flyttet helt til Min profil.
+- Projekter (2026-11-09): knappen hedder **Donér** (handlingen hedder stadig `indskyd` i koden). Beløb og mål står inde i en større progressbar ("245 Webcoins af 1.500 Webcoins" + procent), så rækken ikke har en separat beløbskolonne. "Dit bidrag" står småt under knappen.
 - Note om ventetid ved bestilling (personlig levering).
 - Min profil: nøgletal + fuld historik med filtre.
 - Regler-side for alle grupper (kun admin; medarbejdere ser egne regler via i-ikonet).

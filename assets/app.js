@@ -369,13 +369,13 @@
         return '<div class="row proj-item">' +
           '<span class="thumb">' + esc(p.ikon || '🎯') + '</span>' +
           '<div class="row-main"><b>' + esc(p.navn) + '</b>' +
-          '<div class="bar"><i style="width:' + pp.toFixed(0) + '%"></i></div>' +
+          '<div class="bar bar-big"><i style="width:' + pp.toFixed(0) + '%"></i>' +
+          '<span class="bar-label num"><span><b>' + wc(p.indsamlet) + '</b>' + (p.maal ? ' af ' + wc(p.maal) : '') + '</span>' + (p.maal ? '<span>' + pp.toFixed(0) + ' %</span>' : '') + '</span></div>' +
           '<ol class="top3-list">' + (p.top.length ? p.top.map(function (t, i) {
             return '<li class="' + (t.initialer === me.initialer ? 'mig' : '') + '"><span>' + medaljer[i] + '</span>' + esc(t.navn) + '<b class="num">' + wc(t.beloeb) + '</b></li>';
           }).join('') : '<li class="faint">Ingen bidrag endnu</li>') + '</ol></div>' +
-          '<div class="row-price num">' + coin() + '<span>' + wc(p.indsamlet) + (p.maal ? '<small>af ' + wc(p.maal) + '</small>' : '') + '</span></div>' +
-          '<div class="proj-acts"><button class="btn primary" data-act="indskyd" data-id="' + esc(p.id) + '"' + (kanKoebe && st.saldo > 0 ? '' : ' disabled') + '>Indskyd</button>' +
-          (p.mitBidrag ? '<span class="dit num">Dit bidrag: ' + wc(p.mitBidrag) + '</span>' : '') + '</div></div>';
+          '<div class="proj-acts"><div class="donate"><button class="btn primary" data-act="indskyd" data-id="' + esc(p.id) + '"' + (kanKoebe && st.saldo > 0 ? '' : ' disabled') + '>Donér</button>' +
+          (p.mitBidrag ? '<span class="dit num">Dit bidrag<br>' + wc(p.mitBidrag) + '</span>' : '') + '</div></div></div>';
       }).join('') + '</div>' : '<div class="card empty">Ingen åbne projekter.</div>') + '</section>';
 
     var banner = lukket && me.admin ? '<div class="banner">Shoppen er lukket for medarbejderne lige nu' + (shop.grund === 'fravaer' ? ' (du er ikke til stede)' : '') + '. ' + esc(shop.tekst || '') + '</div>' : '';
@@ -623,7 +623,7 @@
       '<div class="field"><label for="ind-beloeb">Antal Webcoins</label><input class="input num" id="ind-beloeb" type="number" min="1" max="' + Math.max(0, S.stats.saldo) + '" inputmode="numeric" placeholder="0"></div>' +
       (forslag.length ? '<div class="chips" style="margin-bottom:14px">' + forslag.map(function (n) { return '<button class="chip" data-act="ind-forslag" data-n="' + n + '">' + n + '</button>'; }).join('') + '</div>' : '') +
       '<div class="sum"><span class="muted">Din saldo</span><b class="num">' + wc(S.stats.saldo) + '</b></div>' +
-      '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="ind-ok">Indskyd</button></div>');
+      '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="ind-ok">Donér</button></div>');
   }
 
   function openBruger(email) {
@@ -721,7 +721,7 @@
       case 'indskyd': openIndskyd(t.dataset.id); break;
       case 'ind-forslag': document.getElementById('ind-beloeb').value = t.dataset.n; break;
       case 'ind-ok':
-        submit(t, 'indskyd', { projektId: indskydState.p.id, beloeb: val('ind-beloeb') }, 'Tak! Dine Webcoins er lagt i ' + indskydState.p.navn);
+        submit(t, 'indskyd', { projektId: indskydState.p.id, beloeb: val('ind-beloeb') }, 'Tak for din donation til ' + indskydState.p.navn);
         break;
 
       case 'pfilter': ui.profilFilter = t.dataset.f; render(); break;
