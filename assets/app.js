@@ -385,7 +385,10 @@
     var menu = '<section class="block"><div class="block-head"><h2 class="block-title">Bestil</h2>' +
       (lukket ? '<span class="tag annulleret">Lukket' + (shop.tekst ? ' · ' + esc(shop.tekst) : '') + '</span>' : '') +
       '<span class="note">' + (lukket ? 'Forudbestil, så leveres det, når shoppen åbner.' : 'Personlig levering, forvent lidt ventetid.') + '</span></div>' +
-      (S.menu.length ? '<div class="card list compact">' + S.menu.map(function (v) {
+      (S.menu.length ? '<div class="card list compact">' + S.menu.slice().sort(function (a, b) {
+        // Billigst først; "Andet?" (kommer snart) altid til sidst
+        return (a.snart - b.snart) || (a.pris - b.pris);
+      }).map(function (v) {
         var raad = st.saldo >= v.pris && kanKoebe && !v.snart;
         if (v.snart) return forslagRaekke(vareBillede(v), v.navn, '', 'vare', kanKoebe);
         return '<div class="row">' + vareBillede(v) +
@@ -399,7 +402,10 @@
 
     // 3. Projekter – liste i fuld bredde med top 3
     var projekter = '<section class="block"><h2 class="block-title">Projekter</h2>' +
-      (S.projekter.length ? '<div class="card list">' + S.projekter.map(function (p) {
+      (S.projekter.length ? '<div class="card list">' + S.projekter.slice().sort(function (a, b) {
+        // Billigst mål først; projekter uden mål til sidst
+        return ((a.maal || 1e9) - (b.maal || 1e9));
+      }).map(function (p) {
         var pp = p.maal > 0 ? Math.min(100, (p.indsamlet / p.maal) * 100) : 0;
         return '<div class="row proj-item">' +
           '<span class="thumb">' + esc(p.ikon || '🎯') + '</span>' +
