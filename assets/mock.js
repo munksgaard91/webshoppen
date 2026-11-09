@@ -1,16 +1,26 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v30';
+  var KEY = 'webshoppen-demo-v31';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
     { email: 'demo.jst@best-one.dk', initialer: 'JST', navn: 'Demo Hjemmeside', gruppe: 'Hjemmeside', aktiv: 'ja' },
     { email: 'demo.dsi@best-one.dk', initialer: 'DSI', navn: 'Demo Redaktør', gruppe: 'Redaktør', aktiv: 'ja' },
     { email: 'demo.cbo@best-one.dk', initialer: 'CBO', navn: 'Demo Fotograf', gruppe: 'Fotograf', aktiv: 'ja' },
-    { email: 'demo.jfr@best-one.dk', initialer: 'JFR', navn: 'Demo Support', gruppe: 'Support', aktiv: 'ja' }
+    { email: 'demo.jfr@best-one.dk', initialer: 'JFR', navn: 'Demo Support', gruppe: 'Support', aktiv: 'ja' },
+    // Pladsholdere, så demoen har lige så mange kolleger som det rigtige hold (13). Opdigtede navne/initialer.
+    { email: 'ade@best-one.dk', initialer: 'ADE', navn: 'Anders Demo', gruppe: 'Hjemmeside', aktiv: 'ja', ekstra: true },
+    { email: 'bde@best-one.dk', initialer: 'BDE', navn: 'Bente Demo', gruppe: 'Hjemmeside', aktiv: 'ja', ekstra: true },
+    { email: 'cde@best-one.dk', initialer: 'CDE', navn: 'Camilla Demo', gruppe: 'Hjemmeside', aktiv: 'ja', ekstra: true },
+    { email: 'dde@best-one.dk', initialer: 'DDE', navn: 'Dennis Demo', gruppe: 'Hjemmeside', aktiv: 'ja', ekstra: true },
+    { email: 'ede@best-one.dk', initialer: 'EDE', navn: 'Eva Demo', gruppe: 'Hjemmeside', aktiv: 'ja', ekstra: true },
+    { email: 'fde@best-one.dk', initialer: 'FDE', navn: 'Frederik Demo', gruppe: 'Hjemmeside', aktiv: 'ja', ekstra: true },
+    { email: 'gde@best-one.dk', initialer: 'GDE', navn: 'Gitte Demo', gruppe: 'Redaktør', aktiv: 'ja', ekstra: true },
+    { email: 'hde@best-one.dk', initialer: 'HDE', navn: 'Henrik Demo', gruppe: 'Redaktør', aktiv: 'ja', ekstra: true },
+    { email: 'ide@best-one.dk', initialer: 'IDE', navn: 'Ida Demo', gruppe: 'Support', aktiv: 'ja', ekstra: true }
   ];
 
-  var DEMO_ALLE = [{ email: 'demo.admin@best-one.dk', initialer: 'RMU', navn: 'Demo Admin', gruppe: '' }].concat(BRUGERE, [{ email: 'ukendt@best-one.dk', initialer: '?', navn: 'Ikke registreret', gruppe: '' }]);
+  var DEMO_ALLE = [{ email: 'demo.admin@best-one.dk', initialer: 'RMU', navn: 'Demo Admin', gruppe: '' }].concat(BRUGERE.filter(function (b) { return !b.ekstra; }), [{ email: 'ukendt@best-one.dk', initialer: '?', navn: 'Ikke registreret', gruppe: '' }]);
 
   function seed() {
     return {

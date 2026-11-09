@@ -31,7 +31,7 @@ Bestillinger (udleveret / annullér med refusion / fortryd) · **Opgørelse** (k
 Lyst tema som standard, mørkt som valg. **Kun blå eller hvid/grå/mørk** – guld findes kun i Webcoin-mønten. Logo = officielt "best One"-SVG i blå (hvid i mørkt tema); en fortegnsfejl i O'ets indre kurve er rettet (det var derfor, logoet så forkert ud). b-mærket ligger halvskjult i saldo- og profilkortet. "Webshoppen" i 18px fed i samme blå som logoet (`--brand` #225581, hvid i mørkt tema). Let animeret baggrund (to blå/grå farveskyer, kun CSS-transform, stopper ved "Reducer bevægelse"). Lykkehjulets rulle er hvid med blå/hvide/grå kort – undtagen hovedpræmien i guld. Favicon = W-mønten.
 
 ## Brugere
-Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den private Mac. Filen er **gitignored** (`*.local.*`), fordi repoet er offentligt – den skal kopieres ind i fanen `Brugere`, når arket sættes op. Fordelingen pr. gruppe står i filen og i fanen `Brugere`. Demoen bruger stadig opdigtede "Demo …"-navne. Alle demobrugere starter med 67 Webcoins (en "Demo-saldo"-justering i mock.js).
+Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den private Mac. Filen er **gitignored** (`*.local.*`), fordi repoet er offentligt – den skal kopieres ind i fanen `Brugere`, når arket sættes op. Fordelingen pr. gruppe står i filen og i fanen `Brugere`. Demoen har **13 testbrugere** som det rigtige hold (7 Hjemmeside, 3 Redaktør, 2 Support, 1 Fotograf): de fire "Demo …"-brugere på login-listen + 9 pladsholdere med opdigtede navne ("Anders Demo" …, initialer ADE–IDE, `ekstra: true` i mock.js), som kun ses i lister som Månedens kollega og Donér til en kollega. Alle demobrugere starter med 67 Webcoins (en "Demo-saldo"-justering i mock.js).
 
 ## Ikke gjort endnu
 - Backend er ikke sat op i Google (tjekliste nedenfor).
@@ -70,7 +70,7 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 7. **Webshoppen → Slå automatisk hentning til**.
 
 Ændringer i `shared/core.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=108`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=109`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test
