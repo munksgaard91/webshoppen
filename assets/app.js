@@ -491,10 +491,10 @@
 
   function reelKort(f) {
     var cls = (f.hoved ? 'hoved' : f.type === 'intet' ? 'nitte' : f.type === 'vare' ? 'vare' : 'coins') + ' ' + reelSjaelden(f);
-    var indhold = f.type === 'webcoins'
+    var indhold = (f.ikon ? '<span class="rico">' + esc(f.ikon) + '</span>' : '') + (f.type === 'webcoins'
       ? '<b class="num">' + fmt(f.beloeb) + '</b><small>' + enhed(f.beloeb) + '</small>'
-      : '<b class="txt">' + esc(f.navn) + '</b>';
-    return '<div class="reel-card ' + cls + '">' + indhold + '<i class="rar"></i></div>';
+      : '<b class="txt">' + esc(f.navn) + '</b>');
+    return '<div class="reel-card ' + cls + '">' + indhold + '</div>';
   }
 
   // Tilfældigt kort efter chancen – kun til at fylde rullen ud, ikke til at afgøre gevinsten
@@ -535,7 +535,7 @@
     var box = document.getElementById('reel-box'), spor = document.getElementById('reel');
     var felter = S.hjul.felter;
     var vinder = felter.filter(function (f) { return f.id === res.id; })[0] || res;
-    var VINDER = 42, ANTAL = 48;
+    var VINDER = 62, ANTAL = 68;
     var kort = [];
     for (var i = 0; i < ANTAL; i++) kort.push(i === VINDER ? vinder : reelTraek(felter));
     var html = kort.map(reelKort).join('');
@@ -550,18 +550,19 @@
     spor.style.transform = 'translateX(0px)';
     void spor.offsetWidth; // tving browseren til at tegne startpositionen
     box.classList.remove('stoppet');
-    spor.style.transition = 'transform 6s cubic-bezier(.08,.6,.12,1)';
+    // 8,5 sek. med en lang, langsom afslutning
+    spor.style.transition = 'transform 8.5s cubic-bezier(.06,.62,.04,1)';
     spor.style.transform = 'translateX(' + forbi + 'px)';
     setTimeout(function () {
-      spor.style.transition = 'transform .45s ease-in-out';
+      spor.style.transition = 'transform .5s ease-in-out';
       spor.style.transform = 'translateX(' + slut + 'px)';
-    }, 6050);
+    }, 8550);
     setTimeout(function () {
       var k = spor.children[VINDER];
       if (k) k.classList.add('vinder');
       box.classList.add('stoppet');
       setTimeout(faerdig, 900);
-    }, 6550);
+    }, 9100);
   }
 
   function visGevinst(res) {

@@ -606,16 +606,10 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .reel-marker::before { top: 0; border-top: 12px solid #fff; }
 .reel-marker::after { bottom: 0; border-bottom: 12px solid #fff; }
 .reel-track { display: flex; gap: 8px; padding-left: 8px; will-change: transform; }
-.reel-card { position: relative; overflow: hidden; flex: none; width: 120px; height: 92px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 6px 8px 12px; background: linear-gradient(180deg, #1d3354, #172a46); color: #eef4fb; transition: transform .35s, box-shadow .35s, opacity .35s, filter .35s; }
+.reel-card { position: relative; overflow: hidden; flex: none; width: 120px; height: 108px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 8px; background: linear-gradient(180deg, #1d3354, #172a46); color: #eef4fb; transition: transform .35s, box-shadow .35s, opacity .35s, filter .35s; }
 .reel-card b.num { font-size: 28px; font-weight: 900; line-height: 1; }
 .reel-card small { font-size: 12px; font-weight: 700; opacity: .75; margin-top: 3px; }
 .reel-card b.txt { font-size: 15px; font-weight: 800; line-height: 1.15; }
-.reel-card .rar { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; }
-.reel-card.r0 .rar { background: #8b97ab; }
-.reel-card.r1 .rar { background: #a9c6e6; }
-.reel-card.r2 .rar { background: #4f8fd6; }
-.reel-card.r3 .rar { background: #225581; box-shadow: 0 0 10px rgba(79, 143, 214, .8); }
-.reel-card.r-guld .rar { background: #f6c344; box-shadow: 0 0 12px rgba(246, 195, 68, .9); }
 .reel-card.nitte { color: #93a7bf; }
 .reel-card.hoved { background: linear-gradient(180deg, #f8d26b, #f6c344); color: #3d2a00; }
 .reel.stoppet .reel-card { opacity: .35; filter: saturate(.5); }
@@ -624,3 +618,5 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .lucky-bund { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 18px; }
 .lucky-bund .lucky-price { margin: 0; }
 .btn-emoji { font-size: 18px; line-height: 1; }
+.reel-card .rico { font-size: 24px; line-height: 1; margin-bottom: 6px; }
+.reel-card b.num { font-size: 24px; }
