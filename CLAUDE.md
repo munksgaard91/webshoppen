@@ -21,7 +21,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
 - **Login:** Google Identity Services i browseren giver et ID-token. Backend verificerer det mod `oauth2.googleapis.com/tokeninfo` (aud = CLIENT_ID, domæne = best-one.dk) og slår mailen op i fanen `Brugere`. Ukendt mail → "Du er desværre ikke registreret".
 - **Grupper:** Hjemmeside, Redaktør, Fotograf, Support. Alle ser samme dashboard; tallene afhænger af bruger og gruppe (optjeningsregler pr. gruppe i fanen `Regler`).
 - **Webcoins er en posteringslog** (fanen `Posteringer`). Saldo = sum af posteringer. Typer: `optjent`, `koeb`, `gave`, `gave_modtaget` (0 Webcoins, kun historik), `projekt` (donation til projekt), `refusion`, `justering`, `hjul` (betaling for lykkehjul), `gevinst`.
-- **Lykkehjulet er to trin:** `koeb_drej` (betaling, gemmes i fanen `Spil`) og `spin` (resultat). Drej-knappen er låst, indtil der er købt et drej.
+- **Lykkehjulet er to trin:** `koeb_drej` (betaling, gemmes i fanen `Spil`) og `spin` (resultat). Drej-knappen er låst, indtil der er købt et drej. Hvert resultat registreres i `Spil`, og admin får **altid** besked med "via lykkehjulet".
 - **Tilfældighed og afstemninger afgøres altid i backend** (`spin` og `stem` i core.js) – aldrig i browseren. Hjulets vægte og stemmetal sendes kun til admin.
 - **Optjening er idempotent:** én postering pr. `optjent:<kilde>:<YYYY-MM>:<initialer>` (feltet `ref`), som opdateres ved hver synk.
 - Personer identificeres **altid med initialer** (JST, DSI …) i kildeark.

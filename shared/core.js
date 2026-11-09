@@ -407,15 +407,22 @@ var Core = (function () {
     }
     var tid = env.now().toISOString();
     var ref = str(spil.id);
+    // Resultatet registreres altid i fanen Spil, og admin får altid besked – også ved Webcoins og ingen gevinst.
     db.update('Spil', spil, { status: 'drejet', resultat: vinder.navn });
+    var hvem = me.navn + ' (' + me.initialer + ')';
+    var besked;
     if (vinder.type === 'webcoins' && vinder.beloeb > 0) {
-      db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'gevinst', beloeb: Math.floor(vinder.beloeb), tekst: 'Gevinst: ' + vinder.navn, ref: ref });
+      db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'gevinst', beloeb: Math.floor(vinder.beloeb), tekst: 'Hjulgevinst: ' + vinder.navn, ref: ref });
+      besked = { emne: 'Hjulgevinst: ' + vinder.navn + ' til ' + me.navn, tekst: hvem + ' har vundet ' + vinder.navn + " via lykkehjulet (Feelin' Lucky?). Beløbet er lagt på saldoen automatisk." };
     } else if (vinder.type === 'vare') {
       var shop = env.shop ? env.shop() : { aaben: true };
-      db.insert('Bestillinger', { id: env.uuid(), tid: tid, fra: me.initialer, til: me.initialer, vare: 'Gevinst: ' + vinder.navn, pris: 0, kostpris: vinder.kostpris, status: 'ny', forud: shop.aaben ? '' : 'ja' });
-      db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'gevinst', beloeb: 0, tekst: 'Gevinst: ' + vinder.navn, ref: ref });
-      env.notify({ emne: 'Gevinst: ' + vinder.navn + ' til ' + me.navn, tekst: me.navn + ' (' + me.initialer + ") har vundet " + vinder.ikon + ' ' + vinder.navn + " på Feelin' Lucky?." });
+      db.insert('Bestillinger', { id: env.uuid(), tid: tid, fra: me.initialer, til: me.initialer, vare: 'Hjulgevinst: ' + vinder.navn, pris: 0, kostpris: vinder.kostpris, status: 'ny', forud: shop.aaben ? '' : 'ja' });
+      db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'gevinst', beloeb: 0, tekst: 'Hjulgevinst: ' + vinder.navn, ref: ref });
+      besked = { emne: 'Hjulgevinst: ' + vinder.navn + ' til ' + me.navn, tekst: hvem + ' har vundet ' + str(vinder.ikon) + ' ' + vinder.navn + " via lykkehjulet (Feelin' Lucky?). Spørg om de vil have den med det samme." };
+    } else {
+      besked = { emne: 'Hjulet: ingen gevinst til ' + me.navn, tekst: hvem + " har drejet lykkehjulet (Feelin' Lucky?) og vandt ingenting denne gang." };
     }
+    env.notify(besked);
     return { id: vinder.id, navn: vinder.navn, ikon: vinder.ikon, type: vinder.type, beloeb: vinder.beloeb };
   }
 

@@ -97,7 +97,10 @@ t('lykkehjul: vare, webcoins og intet', function () {
   kaster(function () { Core.handle(db, B, 'koeb_drej', {}, env); }, 'allerede');
   tal = 0.9; Core.handle(db, B, 'spin', {}, env); foer -= 15;
   eq(saldo(B), foer - 45 + 25, 'saldo efter 3 drej');
-  eq(data.Bestillinger.filter(function (b) { return b.vare === 'Gevinst: Candybar'; }).length, 1);
+  eq(data.Bestillinger.filter(function (b) { return b.vare === 'Hjulgevinst: Candybar'; }).length, 1);
+  beskeder = []; Core.handle(db, B, 'koeb_drej', {}, env); tal = 0.9; Core.handle(db, B, 'spin', {}, env); foer -= 15;
+  eq(beskeder.length, 1, 'besked ved ingen gevinst');
+  eq(data.Spil.filter(function (x) { return x.status === 'drejet'; }).length, 5, 'alle drej registreret');
 });
 t('hjulets vægte vises ikke for brugere', function () {
   var f = Core.handle(db, B, 'state', {}, env).hjul.felter[0];

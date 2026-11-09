@@ -11,7 +11,7 @@ Alt kører i **demo-tilstand** (tom `API_URL`) på https://munksgaard91.github.i
 Rækkefølge (se også CLAUDE.md):
 1. **Saldo-kort** (blåt, halvskjult "b" i højre side) med hilsen, saldo og "Hvordan optjener jeg?" + i-ikon i hjørnet: hover viser en lille boble, klik åbner en boks med gruppens optjeningsregler. Ved siden af **Teambudget**: rest i alt som stort tal, "Brugt i sæsonen: kr x" i mild rød, sæson som tag (`TEAMBUDGET_SAESON`).
 2. **Bestil** – kompakt liste med skiftevis hvid/lysegrå rækker. Priser er højrestillede tal (1–3 cifre flugter) + "Webcoins" + mønt til sidst. Knapper: **Donér til en kollega** (gave – hed før "Giv") og Bestil. Note: "Personlig levering, forvent lidt ventetid." Knapkolonnen er 280px i både Bestil og Projekter, så de flugter. Varer med `varianter` åbner et valg (Sodavand, Candybar); én variant vælges automatisk (Monster → Hvid Monster). `snart = ja` → rækken bliver en **"Andet?"-række** med én hvid knap "Send forslag" (kan ikke bestilles). Note om ventetid (personlig levering).
-3. **Feelin' Lucky?** – lykkehjul i **to trin**: "Køb et drej" (betaler `HJUL_PRIS`, prisen står som i Bestil: tal + Webcoins + mønt) → "Drej hjulet" låses op (hængelås-ikon) → drej → låst igen. Man kan højst have ét købt drej ad gangen. Købte drej ligger i ny fane `Spil` (id, tid, initialer, status koebt/drejet, resultat). Gevinsten afgøres i backend; browseren animerer kun hjulet hen til resultatet.
+3. **Feelin' Lucky?** – lykkehjul i **to trin**: "Køb et drej" (betaler `HJUL_PRIS`, prisen står som i Bestil: tal + Webcoins + mønt) → "Drej hjulet" låses op (hængelås-ikon) → drej → låst igen. Man kan højst have ét købt drej ad gangen. Købte drej ligger i ny fane `Spil` (id, tid, initialer, status koebt/drejet, resultat). Gevinsten afgøres i backend; browseren animerer kun hjulet hen til resultatet. **Hvert drej registreres** (fanen `Spil`: status `drejet` + resultat), og **admin får altid besked** (mail/Chat) med "via lykkehjulet (Feelin' Lucky?)" – også ved Webcoins og ingen gevinst. Vare-gevinster kommer på Admin → Bestillinger som "Hjulgevinst: <vare>" med beskeden "Spørg om de vil have den med det samme".
 4. **Projekter** – liste med skiftevis baggrund. Stor progressbar med "**245** af 1.500 Webcoins 🪙" og fed procent. Top 3 under hinanden med beløb tæt på navnet. Blå **Donér**-knap (handlingen hedder `indskyd` i koden), "Dit bidrag" småt under knappen.
    Under projekterne er der også en "Andet?"-række med "Send forslag". Forslag sendes via backend (`forslag` i core.js → `env.notify` → `NOTIFIKATION_MAIL` + evt. Google Chat) – ikke via mailto, så det virker uanset mailprogram.
 5. **Månedens kollega** – stem én gang pr. måned på en kollega (ikke sig selv) med påkrævet begrundelse. Tekst: godt arbejde, hjælp eller god stemning – resultater (salg, fakturering) tæller ikke. Viser præmie og sidste måneds vinder.
@@ -69,7 +69,7 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 7. **Webshoppen → Slå automatisk hentning til**.
 
 Ændringer i `shared/core.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=50`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=51`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test
