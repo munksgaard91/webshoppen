@@ -497,7 +497,7 @@
   function reelSjaelden(f) {
     if (f.hoved) return 'r-guld';
     if (f.type === 'intet') return 'r0';
-    var vaerdi = f.type === 'webcoins' ? f.beloeb : ({ 'Hvid Monster': 20, 'Sodavand': 10, 'Candybar': 8 }[f.navn] || 10);
+    var vaerdi = f.type === 'webcoins' ? f.beloeb : ({ 'Hvid Monster': 15, 'Sodavand': 10, 'Candybar': 5 }[f.navn] || 10);
     return vaerdi >= 20 ? 'r3' : vaerdi >= 10 ? 'r2' : 'r1';
   }
 
