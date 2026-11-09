@@ -475,52 +475,40 @@
     return '<section class="block"><h2 class="block-title">Månedens kollega</h2><div class="card mdk2">' + spot + '<div class="mdk-vote">' + hoejre + '</div></div></section>';
   }
 
-  // ---------- Feelin' Lucky? ----------
+  // ---------- Feelin' Lucky? – tombola ----------
+  // En vandret rulle med præmiekort kører forbi markøren, sætter farten ned og stopper på gevinsten.
+  // Gevinsten afgøres i backend (spin); rullen bygges bare, så vinderkortet lander under markøren.
 
-  var HJUL_FARVER = [['#225581', '#fff'], ['#e6edf5', '#225581'], ['#2f74b5', '#fff'], ['#f7f9fc', '#225581']];
-  // Nabofelter må aldrig få samme farve – heller ikke sidste og første.
-  function farveIdx(i, n) {
-    var k = HJUL_FARVER.length, idx = i % k;
-    if (n > 1 && i === n - 1 && idx === 0) {
-      for (var j = 1; j < k; j++) if (j !== (n - 2) % k) return j;
-    }
-    return idx;
-  }
-  // Vinkler pr. felt efter chancen, med en minimumsstørrelse så små præmier kan ses (ca. 5 %).
-  function hjulVinkler(felter) {
-    var MIN = 0.05, n = felter.length;
-    var andele = felter.map(function (f) { return f.andel > 0 ? f.andel : 1 / n; });
-    var sum = andele.reduce(function (a, b) { return a + b; }, 0) || 1;
-    andele = andele.map(function (a) { return a / sum; });
-    var smaa = andele.filter(function (a) { return a < MIN; }).length;
-    var rest = andele.filter(function (a) { return a >= MIN; }).reduce(function (a, b) { return a + b; }, 0) || 1;
-    var skal = (1 - smaa * MIN) / rest;
-    var start = 0;
-    return andele.map(function (a) {
-      var v = (a < MIN ? MIN : a * skal) * 360;
-      var o = { a0: start, a1: start + v };
-      start += v;
-      return o;
-    });
+  var KORT_B = 128; // kortets bredde + mellemrum (px) – skal matche CSS (.reel-card 120px + 8px gap)
+
+  // Sjældenhed som i CS-kasser: farvet stribe i bunden af kortet (grå → blå nuancer → guld)
+  function reelSjaelden(f) {
+    if (f.hoved) return 'r-guld';
+    if (f.type === 'intet') return 'r0';
+    var vaerdi = f.type === 'webcoins' ? f.beloeb : ({ 'Hvid Monster': 20, 'Sodavand': 10, 'Candybar': 8 }[f.navn] || 10);
+    return vaerdi >= 20 ? 'r3' : vaerdi >= 10 ? 'r2' : 'r1';
   }
 
-  function hjulSvg(felter) {
-    var n = felter.length, c = 120, rr = 114;
-    var vinkler = hjulVinkler(felter);
-    var pt = function (deg, rad) { var a = deg * Math.PI / 180; return [(c + rad * Math.sin(a)).toFixed(2), (c - rad * Math.cos(a)).toFixed(2)]; };
-    var dele = felter.map(function (f, i) {
-      var a0 = vinkler[i].a0, a1 = vinkler[i].a1, seg = a1 - a0, p0 = pt(a0, rr), p1 = pt(a1, rr), midt = a0 + seg / 2;
-      var farve = f.hoved ? ['#f6c344', '#3d2a00'] : HJUL_FARVER[farveIdx(i, n)];
-      // Teksten skrives langs feltet (radialt), så den også kan være i smalle felter
-      var tekst = f.navn.replace(/^Hvid /, '');
-      return '<path d="M' + c + ' ' + c + ' L' + p0[0] + ' ' + p0[1] + ' A' + rr + ' ' + rr + ' 0 ' + (seg > 180 ? 1 : 0) + ' 1 ' + p1[0] + ' ' + p1[1] + ' Z" fill="' + farve[0] + '"><title>' + esc(f.navn) + '</title></path>' +
-        '<g transform="rotate(' + midt.toFixed(2) + ' ' + c + ' ' + c + ')"><text x="' + c + '" y="' + (c - 72) + '" transform="rotate(-90 ' + c + ' ' + (c - 72) + ')" text-anchor="middle" dominant-baseline="central" font-size="' + (seg < 24 ? 9 : 10.5) + '" font-weight="800" fill="' + farve[1] + '">' + esc(tekst) + '</text></g>';
-    }).join('');
-    return '<div class="wheel-wrap"><span class="wheel-pointer"></span>' +
-      '<svg class="wheel" id="wheel" viewBox="0 0 240 240" style="transform:rotate(' + (ui.hjulRot || 0) + 'deg)">' +
-      '<circle cx="120" cy="120" r="118" fill="var(--card)"/>' + dele +
-      '<circle cx="120" cy="120" r="117" fill="none" stroke="var(--card)" stroke-width="4"/></svg>' +
-      '<span class="wheel-hub">' + coin() + '</span></div>';
+  function reelKort(f) {
+    var cls = (f.hoved ? 'hoved' : f.type === 'intet' ? 'nitte' : f.type === 'vare' ? 'vare' : 'coins') + ' ' + reelSjaelden(f);
+    var indhold = f.type === 'webcoins'
+      ? '<b class="num">' + fmt(f.beloeb) + '</b><small>' + enhed(f.beloeb) + '</small>'
+      : '<b class="txt">' + esc(f.navn) + '</b>';
+    return '<div class="reel-card ' + cls + '">' + indhold + '<i class="rar"></i></div>';
+  }
+
+  // Tilfældigt kort efter chancen – kun til at fylde rullen ud, ikke til at afgøre gevinsten
+  function reelTraek(felter) {
+    var x = Math.random(), acc = 0;
+    for (var i = 0; i < felter.length; i++) { acc += felter[i].andel || 0; if (x < acc) return felter[i]; }
+    return felter[felter.length - 1];
+  }
+
+  function reelStart(felter) {
+    // Viser alle præmier i rækkefølge, gentaget så rullen er fyldt ud
+    var kort = [];
+    while (kort.length < 24) kort = kort.concat(felter);
+    return kort.slice(0, 24);
   }
 
   function lucky(kanKoebe) {
@@ -532,12 +520,48 @@
       (klar
         ? '<span class="tag ny">' + ico('unlock') + 'Dit drej er klar</span>'
         : '<button class="btn lg" data-act="koeb-drej"' + (kanKoebeDrej ? '' : ' disabled') + '>Køb et drej</button>') +
-      '<button class="btn primary lg' + (klar ? '' : ' locked') + '" data-act="spin"' + (klar && kanKoebe ? '' : ' disabled') + '>' + ico(klar ? 'unlock' : 'lock') + 'Drej hjulet</button></div>';
-    return '<section class="block"><h2 class="block-title">Feelin\' Lucky?</h2><div class="card lucky">' + hjulSvg(h.felter) +
-      '<div class="lucky-main"><div class="lucky-price"><span class="lp-label">Drej hjulet for</span>' +
+      '<button class="btn primary lg' + (klar ? '' : ' locked') + '" data-act="spin"' + (klar && kanKoebe ? '' : ' disabled') + '>' + (klar ? '<span class="btn-emoji">🎰</span>' : ico('lock')) + 'Drej hjulet</button></div>';
+    var spor = ui.reel ? ui.reel.html : reelStart(h.felter).map(reelKort).join('');
+    var x = ui.reel ? ui.reel.x : 0;
+    return '<section class="block"><h2 class="block-title">Feelin\' Lucky?</h2><div class="card lucky2">' +
+      '<div class="reel" id="reel-box"><span class="reel-marker"></span><div class="reel-track" id="reel" style="transform:translateX(' + x + 'px)">' + spor + '</div></div>' +
+      '<div class="lucky-bund"><div class="lucky-price"><span class="lp-label">Drej hjulet for</span>' +
       '<span class="row-price num"><span class="amt">' + fmt(h.pris) + '</span><span class="unit">' + enhed(h.pris) + '</span>' + coin() + '</span></div>' +
-      '<div class="prizes">' + h.felter.filter(function (f, i, alle) { return alle.map(function (x) { return x.navn; }).indexOf(f.navn) === i; }).map(function (f) { return '<span class="tag' + (f.hoved ? ' hoved' : '') + '">' + esc(f.navn) + '</span>'; }).join('') + '</div>' +
       knapper + '</div></div></section>';
+  }
+
+  // Bygger en ny rulle med vinderen på plads nr. VINDER og animerer den ind under markøren
+  function reelKoer(res, faerdig) {
+    var box = document.getElementById('reel-box'), spor = document.getElementById('reel');
+    var felter = S.hjul.felter;
+    var vinder = felter.filter(function (f) { return f.id === res.id; })[0] || res;
+    var VINDER = 42, ANTAL = 48;
+    var kort = [];
+    for (var i = 0; i < ANTAL; i++) kort.push(i === VINDER ? vinder : reelTraek(felter));
+    var html = kort.map(reelKort).join('');
+    var bredde = box ? box.clientWidth : 600;
+    var jitter = (Math.random() - 0.5) * 70; // stopper ikke altid præcis midt på kortet
+    var slut = -(VINDER * KORT_B + 60 - bredde / 2 + jitter);
+    var forbi = slut - (14 + Math.random() * 16); // glider lidt for langt og retter sig ind, som i CS
+    ui.reel = { html: html, x: slut };
+    if (!spor || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) { faerdig(); return; }
+    spor.style.transition = 'none';
+    spor.innerHTML = html;
+    spor.style.transform = 'translateX(0px)';
+    void spor.offsetWidth; // tving browseren til at tegne startpositionen
+    box.classList.remove('stoppet');
+    spor.style.transition = 'transform 6s cubic-bezier(.08,.6,.12,1)';
+    spor.style.transform = 'translateX(' + forbi + 'px)';
+    setTimeout(function () {
+      spor.style.transition = 'transform .45s ease-in-out';
+      spor.style.transform = 'translateX(' + slut + 'px)';
+    }, 6050);
+    setTimeout(function () {
+      var k = spor.children[VINDER];
+      if (k) k.classList.add('vinder');
+      box.classList.add('stoppet');
+      setTimeout(faerdig, 900);
+    }, 6550);
   }
 
   function visGevinst(res) {
@@ -999,15 +1023,7 @@
         ui.spinning = true;
         busy(t, true);
         api('spin').then(function (res) {
-          var felter = S.hjul.felter, vinkler = hjulVinkler(felter);
-          var i = Math.max(0, felter.map(function (f) { return f.id; }).indexOf(res.id));
-          var midt = (vinkler[i].a0 + vinkler[i].a1) / 2, bredde = vinkler[i].a1 - vinkler[i].a0;
-          var cur = ui.hjulRot || 0;
-          var maal = cur - (cur % 360) + 360 * 6 + (360 - midt) + (Math.random() - 0.5) * bredde * 0.6;
-          ui.hjulRot = maal;
-          var w = document.getElementById('wheel');
-          if (w) { w.style.transition = 'transform 4.2s cubic-bezier(.15,.7,.2,1)'; w.style.transform = 'rotate(' + maal + 'deg)'; }
-          setTimeout(function () { ui.spinning = false; visGevinst(res); refresh(); }, w ? 4400 : 0);
+          reelKoer(res, function () { ui.spinning = false; visGevinst(res); refresh(); });
         }).catch(function (e) {
           ui.spinning = false; busy(t, false);
           if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true);

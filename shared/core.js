@@ -263,7 +263,7 @@ var Core = (function () {
         var tot = fs.reduce(function (sum, f) { return sum + Math.max(0, f.vaegt); }, 0) || 1;
         // Hovedpræmien = den største Webcoins-gevinst (får guld-baggrund på hjulet)
         var top = fs.filter(function (f) { return f.type === 'webcoins'; }).reduce(function (m, f) { return f.beloeb > m ? f.beloeb : m; }, 0);
-        return fs.map(function (f) { return { id: f.id, navn: f.navn, ikon: f.ikon, andel: Math.round(Math.max(0, f.vaegt) / tot * 1000) / 1000, hoved: top > 0 && f.type === 'webcoins' && f.beloeb === top }; });
+        return fs.map(function (f) { return { id: f.id, navn: f.navn, ikon: f.ikon, type: f.type, beloeb: f.beloeb, andel: Math.round(Math.max(0, f.vaegt) / tot * 1000) / 1000, hoved: top > 0 && f.type === 'webcoins' && f.beloeb === top }; });
       })() }
     };
   }

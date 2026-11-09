@@ -429,12 +429,6 @@ td.r, th.r { text-align: right; }
 
 /* Feelin' Lucky? */
 .lucky { display: flex; align-items: center; gap: 40px; padding: 28px 32px; }
-.wheel-wrap { position: relative; width: 240px; height: 240px; flex: none; }
-.wheel { width: 240px; height: 240px; display: block; border-radius: 50%; box-shadow: 0 10px 30px rgba(16, 35, 61, .18); }
-.wheel text { pointer-events: none; }
-.wheel-pointer { position: absolute; left: 50%; top: -10px; transform: translateX(-50%); width: 0; height: 0; border-left: 13px solid transparent; border-right: 13px solid transparent; border-top: 24px solid var(--text); z-index: 2; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .25)); }
-.wheel-hub { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 46px; height: 46px; border-radius: 50%; background: var(--card); display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0, 0, 0, .2); }
-.wheel-hub .coin { width: 32px; height: 32px; }
 .lucky-main { flex: 1; min-width: 0; }
 .lucky-price { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; }
 .lp-label { font-size: 16px; font-weight: 700; }
@@ -598,6 +592,35 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 @media (max-width: 720px) { .mdk2 { grid-template-columns: 1fr; } }
 
 /* Hjulet: tekst i felterne, hovedpræmie i guld, ens knapper */
-.wheel text { font-family: 'Montserrat', system-ui, sans-serif; letter-spacing: -0.01em; }
 .prizes .tag.hoved { background: #f6c344; color: #3d2a00; }
 .lucky-acts .btn.lg, .lucky-acts .tag { min-width: 170px; height: 48px; justify-content: center; padding: 0 22px; font-size: 15px; border-radius: 14px; }
+
+/* Feelin' Lucky? – tombola-rulle i CS-kasse-stil (mørk rulle, sjældenhedsstriber, markørstreg) */
+.lucky2 { padding: 22px 24px; }
+.reel { position: relative; overflow: hidden; border-radius: 16px; background: #0f1e33; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06), inset 0 10px 30px rgba(0, 0, 0, .35); padding: 16px 0; }
+.reel::before, .reel::after { content: ''; position: absolute; top: 0; bottom: 0; width: 110px; z-index: 2; pointer-events: none; }
+.reel::before { left: 0; background: linear-gradient(90deg, #0f1e33, rgba(15, 30, 51, 0)); }
+.reel::after { right: 0; background: linear-gradient(-90deg, #0f1e33, rgba(15, 30, 51, 0)); }
+.reel-marker { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: rgba(255, 255, 255, .85); box-shadow: 0 0 8px rgba(121, 176, 255, .9); z-index: 3; }
+.reel-marker::before, .reel-marker::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); border-left: 9px solid transparent; border-right: 9px solid transparent; }
+.reel-marker::before { top: 0; border-top: 12px solid #fff; }
+.reel-marker::after { bottom: 0; border-bottom: 12px solid #fff; }
+.reel-track { display: flex; gap: 8px; padding-left: 8px; will-change: transform; }
+.reel-card { position: relative; overflow: hidden; flex: none; width: 120px; height: 92px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 6px 8px 12px; background: linear-gradient(180deg, #1d3354, #172a46); color: #eef4fb; transition: transform .35s, box-shadow .35s, opacity .35s, filter .35s; }
+.reel-card b.num { font-size: 28px; font-weight: 900; line-height: 1; }
+.reel-card small { font-size: 12px; font-weight: 700; opacity: .75; margin-top: 3px; }
+.reel-card b.txt { font-size: 15px; font-weight: 800; line-height: 1.15; }
+.reel-card .rar { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; }
+.reel-card.r0 .rar { background: #8b97ab; }
+.reel-card.r1 .rar { background: #a9c6e6; }
+.reel-card.r2 .rar { background: #4f8fd6; }
+.reel-card.r3 .rar { background: #225581; box-shadow: 0 0 10px rgba(79, 143, 214, .8); }
+.reel-card.r-guld .rar { background: #f6c344; box-shadow: 0 0 12px rgba(246, 195, 68, .9); }
+.reel-card.nitte { color: #93a7bf; }
+.reel-card.hoved { background: linear-gradient(180deg, #f8d26b, #f6c344); color: #3d2a00; }
+.reel.stoppet .reel-card { opacity: .35; filter: saturate(.5); }
+.reel.stoppet .reel-card.vinder { opacity: 1; filter: none; transform: scale(1.1); box-shadow: 0 0 0 2px #fff, 0 0 26px rgba(121, 176, 255, .8); z-index: 1; }
+.reel.stoppet .reel-card.vinder.hoved { box-shadow: 0 0 0 2px #fff, 0 0 30px rgba(246, 195, 68, .95); }
+.lucky-bund { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 18px; }
+.lucky-bund .lucky-price { margin: 0; }
+.btn-emoji { font-size: 18px; line-height: 1; }
