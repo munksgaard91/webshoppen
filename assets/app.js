@@ -16,7 +16,7 @@
   var MAANEDER = ['januar', 'februar', 'marts', 'april', 'maj', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'december'];
   var TYPER = {
     optjent: 'Optjent', koeb: 'Køb', gave: 'Gave givet', gave_modtaget: 'Gave modtaget',
-    projekt: 'Projekt', refusion: 'Refusion', justering: 'Justering',
+    projekt: 'Event', refusion: 'Refusion', justering: 'Justering',
     hjul: "Feelin' Lucky?", gevinst: 'Gevinst'
   };
 
@@ -401,7 +401,7 @@
       '</section>';
 
     // 3. Projekter – liste i fuld bredde med top 3
-    var projekter = '<section class="block"><h2 class="block-title">Projekter</h2>' +
+    var projekter = '<section class="block"><h2 class="block-title">Events</h2>' +
       (S.projekter.length ? '<div class="card list">' + S.projekter.slice().sort(function (a, b) {
         // Billigst mål først; projekter uden mål til sidst
         return ((a.maal || 1e9) - (b.maal || 1e9));
@@ -419,7 +419,7 @@
             ? '<button class="btn primary yehaw" data-act="yehaw">Yehaw! 🎉</button><span class="dit event">Event loading..</span>'
             : '<button class="btn primary" data-act="indskyd" data-id="' + esc(p.id) + '"' + (kanKoebe && st.saldo > 0 ? '' : ' disabled') + '>Donér</button>') +
           (p.mitBidrag ? '<span class="dit num">Dit bidrag<br>' + wc(p.mitBidrag) + '</span>' : '') + '</div></div></div>';
-      }).join('') + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et projekt?', 'projekt', kanKoebe) + '</div>' : '<div class="card list">' + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et projekt?', 'projekt', kanKoebe) + '</div>') + '</section>';
+      }).join('') + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et event?', 'projekt', kanKoebe) + '</div>' : '<div class="card list">' + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et event?', 'projekt', kanKoebe) + '</div>') + '</section>';
 
     var banner = lukket && me.admin ? '<div class="banner">Shoppen er lukket for medarbejderne lige nu' + (shop.grund === 'fravaer' ? ' (du er ikke til stede)' : '') + '. ' + esc(shop.tekst || '') + '</div>' : '';
     return banner + top + menu + lucky(kanKoebe) + projekter + kollega(kanKoebe);
@@ -434,7 +434,7 @@
 
   // Konfetti i Best One-farver. Ren DOM + CSS-animation, ryddes op efter 4 sek.
   function konfetti() {
-    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { toast('Yehaw! 🎉', 'Projektet er fuldt.'); return; }
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { toast('Yehaw! 🎉', 'Eventet er fuldt.'); return; }
     var farver = ['#225581', '#2f74b5', '#79b0ff', '#c9dcf2', '#ffffff', '#8b97ab'];
     var boks = document.createElement('div');
     boks.className = 'confetti';
@@ -693,7 +693,7 @@
       '<div class="pstat"><div class="pstat-top"><span class="pico out">' + ico('cart') + '</span><span>Brugt i alt</span></div>' +
       '<b class="num">' + wc(st.brugt) + '</b>' +
       '<div class="split"><i class="s1" style="width:' + del(st.brugtSelv).toFixed(1) + '%"></i><i class="s2" style="width:' + del(st.givet).toFixed(1) + '%"></i><i class="s3" style="width:' + del(st.indskudt).toFixed(1) + '%"></i><i class="s4" style="width:' + del(st.spins).toFixed(1) + '%"></i></div>' +
-      '<div class="legend num"><span><i class="s1"></i>Selv ' + fmt(st.brugtSelv) + '</span><span><i class="s2"></i>Donationer ' + fmt(st.givet) + '</span><span><i class="s3"></i>Projekter ' + fmt(st.indskudt) + '</span><span><i class="s4"></i>Spins ' + fmt(st.spins) + '</span></div></div>' +
+      '<div class="legend num"><span><i class="s1"></i>Selv ' + fmt(st.brugtSelv) + '</span><span><i class="s2"></i>Donationer ' + fmt(st.givet) + '</span><span><i class="s3"></i>Events ' + fmt(st.indskudt) + '</span><span><i class="s4"></i>Spins ' + fmt(st.spins) + '</span></div></div>' +
       '<div class="pstat"><div class="pstat-top"><span class="pico gift">' + ico('gift') + '</span><span>Donationer</span></div>' +
       '<b class="num">' + st.givetAntal + ' givet</b>' +
       '<div class="gift-row">' + giftDots(st.givetAntal, 'giv') + '</div>' +
@@ -834,12 +834,12 @@
       A.menu.map(function (v) {
         return '<tr' + (v.aktiv ? '' : ' style="opacity:.5"') + '><td style="font-size:22px">' + esc(v.ikon) + '</td><td><b>' + esc(v.navn) + '</b>' + (v.varianter.length ? '<small class="variants">' + v.varianter.map(esc).join(' · ') + '</small>' : '') + (v.snart ? ' <span class="tag">Kommer snart</span>' : '') + '</td><td class="r num">' + wc(v.pris) + '</td><td class="r num">' + (v.kostpris ? kr(v.kostpris) : '<span class="tag ny">Mangler</span>') + '</td><td>' + (v.aktiv ? '<span class="tag udleveret">Aktiv</span>' : '<span class="tag">Skjult</span>') + '</td><td><div class="row-acts"><button class="btn sm" data-act="ret-vare" data-id="' + esc(v.id) + '">Rediger</button></div></td></tr>';
       }).join('') + '</tbody></table></div></section>' +
-      '<section class="card"><div class="card-head"><h2 class="card-title">Projekter</h2><button class="btn primary sm" data-act="nyt-projekt">Nyt projekt</button></div>' +
+      '<section class="card"><div class="card-head"><h2 class="card-title">Events</h2><button class="btn primary sm" data-act="nyt-projekt">Nyt event</button></div>' +
       (A.projekter.length ? A.projekter.map(function (p) {
         var pp = p.maal > 0 ? Math.min(100, (p.indsamlet / p.maal) * 100) : 0;
         return '<div class="proj-row"' + (p.aaben ? '' : ' style="opacity:.55"') + '><div class="proj-top"><span class="ico">' + esc(p.ikon || '🎯') + '</span><div class="t"><b>' + esc(p.navn) + '</b><small>' + (p.aaben ? 'Åben' : 'Lukket') + '</small></div><button class="btn sm" data-act="ret-projekt" data-id="' + esc(p.id) + '">Rediger</button></div>' +
           '<div class="bar"><i style="width:' + pp.toFixed(0) + '%"></i></div><div class="meta num"><span>' + wc(p.indsamlet) + '</span><span>' + (p.maal ? 'mål ' + wc(p.maal) : '') + '</span></div></div>';
-      }).join('') : '<div class="empty">Ingen projekter.</div>') +
+      }).join('') : '<div class="empty">Ingen events.</div>') +
       '</section></div>' + adminHjul();
   }
 
@@ -1031,7 +1031,7 @@
 
   function openProjekt(id) {
     var p = id ? A.projekter.filter(function (x) { return x.id === id; })[0] : { id: '', navn: '', ikon: '', maal: 1000, aaben: true };
-    openModal('<h2>' + (id ? 'Rediger projekt' : 'Nyt projekt') + '</h2><input type="hidden" id="p-id" value="' + esc(p.id) + '">' +
+    openModal('<h2>' + (id ? 'Rediger event' : 'Nyt event') + '</h2><input type="hidden" id="p-id" value="' + esc(p.id) + '">' +
       '<div class="row-2"><div class="field"><label for="p-navn">Navn</label><input class="input" id="p-navn" value="' + esc(p.navn) + '"></div>' +
       '<div class="field"><label for="p-ikon">Ikon (emoji)</label><input class="input" id="p-ikon" value="' + esc(p.ikon) + '" maxlength="4"></div></div>' +
       '<div class="field"><label for="p-maal">Mål (Webcoins)</label><input class="input num" id="p-maal" type="number" min="0" value="' + esc(p.maal) + '"></div>' +
@@ -1207,7 +1207,7 @@
         break;
       case 'ret-projekt': openProjekt(t.dataset.id); break;
       case 'projekt-ok':
-        submit(t, 'admin_projekt', { id: val('p-id'), navn: val('p-navn'), ikon: val('p-ikon'), maal: val('p-maal'), aaben: checked('p-aaben') }, 'Projekt gemt');
+        submit(t, 'admin_projekt', { id: val('p-id'), navn: val('p-navn'), ikon: val('p-ikon'), maal: val('p-maal'), aaben: checked('p-aaben') }, 'Event gemt');
         break;
       case 'sync':
         busy(t, true);

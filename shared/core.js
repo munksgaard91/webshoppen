@@ -379,7 +379,7 @@ var Core = (function () {
       env.notify({ emne: 'Feedback på Webshoppen fra ' + me.navn, tekst: me.navn + ' (' + me.initialer + ') har feedback til Webshoppen:\n\n' + tekst });
       return { ok: true };
     }
-    var hvad = str(data.type) === 'projekt' ? 'projekt' : 'menuen';
+    var hvad = str(data.type) === 'projekt' ? 'events' : 'menuen';
     env.notify({ emne: 'Forslag til ' + hvad + ' fra ' + me.navn, tekst: me.navn + ' (' + me.initialer + ') foreslår til ' + hvad + ':\n\n' + tekst });
     return { ok: true };
   }
@@ -455,19 +455,19 @@ var Core = (function () {
     if (!(beloeb > 0)) throw err('BAD', 'Angiv et beløb.');
     var p = null;
     db.all('Projekter').forEach(function (x) { if (str(x.id) === str(data.projektId) && sand(x.aaben)) p = x; });
-    if (!p) throw err('BAD', 'Projektet er lukket.');
+    if (!p) throw err('BAD', 'Eventet er lukket.');
     // Et fuldt projekt kan ikke få flere donationer, og man kan ikke donere mere, end der mangler.
     var maal = num(p.maal);
     if (maal > 0) {
       var indsamlet = 0;
       db.all('Posteringer').forEach(function (x) { if (x.type === 'projekt' && str(x.ref) === str(p.id)) indsamlet -= num(x.beloeb); });
       var mangler = Math.max(0, maal - indsamlet);
-      if (mangler <= 0) throw err('BAD', 'Projektet er fuldt. Yehaw!');
+      if (mangler <= 0) throw err('BAD', 'Eventet er fuldt. Yehaw!');
       if (beloeb > mangler) throw err('BAD', 'Der mangler kun ' + mangler + (mangler === 1 ? ' Webcoin.' : ' Webcoins.'));
     }
     if (saldoFor(db.all('Posteringer'), me.initialer) < beloeb) throw err('FUNDS', 'Du har ikke nok Webcoins.');
     db.insert('Posteringer', { id: env.uuid(), tid: env.now().toISOString(), initialer: me.initialer, type: 'projekt', beloeb: -beloeb, tekst: str(p.navn), ref: str(p.id) });
-    env.notify({ emne: 'Projekt: ' + p.navn, tekst: me.navn + ' (' + me.initialer + ') har lagt ' + beloeb + ' Webcoins i ' + str(p.ikon) + ' ' + p.navn + '.' });
+    env.notify({ emne: 'Event: ' + p.navn, tekst: me.navn + ' (' + me.initialer + ') har lagt ' + beloeb + ' Webcoins i ' + str(p.ikon) + ' ' + p.navn + '.' });
     return { ok: true };
   }
 

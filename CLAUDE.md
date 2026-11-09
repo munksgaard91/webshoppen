@@ -54,21 +54,22 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
 - **Logo = det officielle "best One"-ordmærke som SVG** (`boLogo()`, `LOGO_PATHS` i app.js). Må **kun** vises i blå (`--brand`) eller hvid (mørkt tema). Ikke en tekst-efterligning. "Webshoppen" ved siden af er fed og en anelse mindre end logoet.
 - **b-mærket** (`bMark()`, samme glyf som b'et i logoet) bruges som halvskjult dekoration i højre side af saldo-kortet og profilkortet – hvidt, lav opacitet.
 - Min profil: topkort (gruppe, navn, saldo uden ordet "Saldo"), tre visuelle nøgletal (Optjent, Brugt, Donationer) og faner Aktivitet / Optjening / Bestillinger. Ingen initialer i toppen.
-- "Donationer" = gaver givet til kolleger; projekter bruger knappen "Donér".
+- "Donationer" = gaver givet til kolleger; events bruger knappen "Donér".
+- **"Projekter" hedder "Events" i hele UI'et.** I koden og arket hedder det stadig `Projekter`/`projekt` (fane, posteringstype, funktioner) – det ændres ikke, så eksisterende data virker.
 - **Admin (rmu) deltager ikke**: står kun i `ADMIN_EMAILS`, ikke i `Brugere`. Ingen bestilling, hjul, donation, stemme eller profil – kun moderering.
 - **Demo-saldo er altid 67 Webcoins** for alle testbrugere (justering til sidst i seed i `mock.js`). Ændres demo-data, skal saldoen stadig ende på 67 – og bump `KEY` i mock.js, så demoen nulstilles.
 - **Ingen rigtige navne/mails i repoet** (det er offentligt). Rigtig brugerliste ligger i `brugere.local.csv` (gitignored). Demo bruger "Demo …"-navne.
 - Forsidens prioritet: 1) saldo + teambudget (stort tal = rest i alt, derunder kun "Brugt i sæsonen", sæson som tag fra `TEAMBUDGET_SAESON`) + regler (i-ikon), 2) menu/bestil (kompakt liste), 3) Feelin' Lucky?, 4) projekter, 5) Månedens kollega (nederst). Optjent, forbrug, bevægelser og bestillinger ligger **kun** på Min profil.
-- Bestil- og projektlisten deler kolonner (billede | indhold | beløb | knapper) – hold dem aligned.
+- Bestil- og eventlisten deler kolonner (billede | indhold | beløb | knapper) – hold dem aligned.
 ### Faste tekster og farver (aftalt med Rasmus)
-- Gave til kollega hedder **"Donér til en kollega"** (knap og dialog); bekræftelse "Din donation er sendt 🎁". Projekter bruger knappen **"Donér"**.
+- Gave til kollega hedder **"Donér til en kollega"** (knap og dialog); bekræftelse "Din donation er sendt 🎁". Events bruger knappen **"Donér"**.
 - Ventetid: **"Personlig levering, forvent lidt ventetid."**
 - Bestil-listen har **ingen små undertekster** under varenavne og bruger **emojis**, ikke produktfotos. I bestillingsvinduet styres det pr. vare: `varianter` → valgknapper, `oenske = ja` → "Dit ønske"-felt, ellers direkte bestilling.
-- "Andet?"-rækker (menu: "Har du en idé?", projekter: "Har du en idé til et projekt?") har én hvid knap **"Send forslag"**. Forslag sendes via backend (`forslag` → `env.notify` → `NOTIFIKATION_MAIL`/Chat), ikke mailto.
+- "Andet?"-rækker (menu: "Har du en idé?", events: "Har du en idé til et event?") har én hvid knap **"Send forslag"**. Forslag sendes via backend (`forslag` → `env.notify` → `NOTIFIKATION_MAIL`/Chat), ikke mailto.
 - Saldo-kortet: **"Hvordan optjener jeg?"** + i-ikon; klik åbner en boks med gruppens regler, hover viser en boble.
 - Teambudget: rest i alt som stort tal; "Brugt i sæsonen" står i **mild rød** (`.tb-sub .brugt`).
 - Månedens kollega: begrundelse frivillig (alt godtages, også tomt); præmien er "Coming soon" ved ny måned, indtil admin vælger en (`MDK_PRAEMIE_MAANED`); tekst: "Stem på en kollega, der har hjulpet dig, gjort noget ekstra eller løftet stemningen. Det handler om mennesker, ikke salgstal."
-- Røde tal = brugt/minus, grønne = optjent/plus. Grøn bruges også til progressbaren og Yehaw!-knappen på et projekt, der er nået 100 %. Ellers kun blå, hvid, grå og mørk.
+- Røde tal = brugt/minus, grønne = optjent/plus. Grøn bruges også til progressbaren og Yehaw!-knappen på et event, der er nået 100 %. Ellers kun blå, hvid, grå og mørk.
 
 - Escape altid brugerdata med `esc()` i app.js før det sættes ind i HTML.
 - Danske Google Sheets bruger `;` i formler.
