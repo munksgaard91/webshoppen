@@ -783,3 +783,6 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
   .shell.foldet .me .who { display: none; }
 }
 @media (max-width: 960px) { .side-fold { display: none; } }
+.adm-first { margin-bottom: 20px; }
+.adm-stak { display: flex; flex-direction: column; gap: 20px; margin-top: 20px; }
+.stat-grid.to { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -803,26 +803,21 @@
     var rows = A.opgoerelse;
     var denne = rows.filter(function (o) { return o.maaned === nuKey; })[0];
     var nye = A.bestillinger.filter(function (b) { return b.status === 'ny'; });
-    var omloeb = A.brugere.filter(function (u) { return u.aktiv; }).reduce(function (sum, u) { return sum + u.saldo; }, 0);
     var tb = S.teambudget;
-    var shop = S.shop || { aaben: true };
     var m = A.mdk;
 
-    var status = '<span class="tag' + (shop.aaben ? ' ok' : '') + '">' + (shop.aaben ? 'Shoppen er åben' : 'Shoppen er lukket' + (shop.grund === 'fravaer' ? ' (ikke til stede)' : '')) + '</span>';
 
-    var stats = '<div class="stat-grid">' +
-      statBox('Nye bestillinger', String(nye.length), nye.length ? 'Venter på levering' : 'Alt er leveret') +
+    var stats = '<div class="stat-grid to">' +
       statBox('Brugt i ' + mNavn, kr(denne ? denne.kr : 0), denne ? denne.antal + ' bestillinger' : 'Ingen bestillinger') +
-      statBox('Webcoins hos holdet', fmt(omloeb), A.brugere.filter(function (u) { return u.aktiv; }).length + ' brugere') +
       (tb ? statBox('Teambudget tilbage', kr(tb.rest), 'Brugt i sæsonen: ' + kr(tb.brugt)) : '') +
       '</div>';
 
-    var best = '<section class="card"><div class="card-head"><h2 class="card-title">Nye bestillinger</h2><a class="link" href="#/admin/bestillinger">Se alle</a></div>' +
-      (nye.length ? '<div class="adm-list">' + nye.slice(0, 6).map(function (b) {
+    var best = '<section class="card"><div class="card-head"><h2 class="card-title">Nye bestillinger' + (nye.length ? ' <span class="badge">' + nye.length + '</span>' : '') + '</h2><a class="link" href="#/admin/bestillinger">Se alle</a></div>' +
+      (nye.length ? '<div class="adm-list">' + nye.slice(0, 10).map(function (b) {
         return '<div class="adm-row"><div class="adm-main"><b>' + esc(b.vare) + '</b>' + (b.oenske ? ' <span class="faint">· ' + esc(b.oenske) + '</span>' : '') +
           '<small class="faint">' + esc(b.fraNavn) + (b.til !== b.fra ? ' → 🎁 ' + esc(b.tilNavn) : '') + ' · ' + dato(b.tid) + (b.forud ? ' · forudbestilt' : '') + '</small></div>' +
           '<div class="row-acts"><button class="btn primary sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="udleveret">Udleveret</button><button class="btn danger sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="annulleret">Annullér</button></div></div>';
-      }).join('') + '</div>' + (nye.length > 6 ? '<small class="faint">+ ' + (nye.length - 6) + ' flere</small>' : '') : '<div class="empty">Ingen nye bestillinger.</div>') +
+      }).join('') + '</div>' + (nye.length > 10 ? '<small class="faint">+ ' + (nye.length - 10) + ' flere</small>' : '') : '<div class="empty">Ingen nye bestillinger.</div>') +
       '</section>';
 
     var top = m.stilling.slice(0, 3);
@@ -858,10 +853,10 @@
         }).join('') + '</tbody></table></div>' : '<div class="empty">Ingen bestillinger endnu.</div>') +
       '</section>';
 
-    return adminHead('Overblik', status) + stats +
-      '<div class="grid-2 top0">' + best + kollega + '</div>' +
-      '<div class="grid-2">' + ev + akt + '</div>' +
-      '<div style="margin-top:20px">' + opg + '</div>';
+    // Rækkefølge: det der skal klares (nye bestillinger) øverst, så økonomi, derefter resten
+    return adminHead('Overblik') + '<div class="adm-first">' + best + '</div>' + stats +
+      '<div class="grid-2 top0">' + ev + kollega + '</div>' +
+      '<div class="adm-stak">' + akt + opg + '</div>';
   }
 
   function pageAdminBrugere() {
