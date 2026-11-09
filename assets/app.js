@@ -416,7 +416,7 @@
             : '<b>' + fmt(p.indsamlet) + '</b> ' + enhed(p.indsamlet) + coin()) + '</span>' + (p.maal ? '<b>' + pp.toFixed(0) + ' %</b>' : '') + '</span></div>' +
           topDonator(p, me) + '</div>' +
           '<div class="proj-acts"><div class="donate">' + (p.maal > 0 && p.indsamlet >= p.maal
-            ? '<button class="btn primary yehaw" data-act="yehaw">Yehaw! 🎉</button>'
+            ? '<button class="btn primary yehaw" data-act="yehaw">Yehaw! 🎉</button><span class="dit event">Event loading..</span>'
             : '<button class="btn primary" data-act="indskyd" data-id="' + esc(p.id) + '"' + (kanKoebe && st.saldo > 0 ? '' : ' disabled') + '>Donér</button>') +
           (p.mitBidrag ? '<span class="dit num">Dit bidrag<br>' + wc(p.mitBidrag) + '</span>' : '') + '</div></div></div>';
       }).join('') + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et projekt?', 'projekt', kanKoebe) + '</div>' : '<div class="card list">' + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et projekt?', 'projekt', kanKoebe) + '</div>') + '</section>';

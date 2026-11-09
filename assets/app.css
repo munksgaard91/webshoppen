@@ -725,3 +725,4 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .beloeb-chips { margin-bottom: 14px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
 .beloeb-chips .chip { padding: 8px 0; text-align: center; }
 .beloeb-chips .chip:disabled { opacity: .35; cursor: not-allowed; }
+.proj-acts .dit.event { color: #2fa36f; }
