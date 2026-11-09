@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v32';
+  var KEY = 'webshoppen-demo-v33';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -25,30 +25,30 @@ window.Mock = (function () {
   function seed() {
     return {
       Brugere: BRUGERE.map(function (b) { return Object.assign({}, b); }),
-      Config: [{ noegle: 'HJUL_PRIS', vaerdi: 15 }, { noegle: 'MDK_PRAEMIE', vaerdi: '25 Webcoins' }, { noegle: 'MDK_PRAEMIE_MAANED', vaerdi: Core.maanedKey(new Date()) }],
+      Config: [{ noegle: 'HJUL_PRIS', vaerdi: 30 }, { noegle: 'MDK_PRAEMIE', vaerdi: '50 Webcoins' }, { noegle: 'MDK_PRAEMIE_MAANED', vaerdi: Core.maanedKey(new Date()) }],
       Stemmer: [],
       Spil: [],
       Menu: [
-        { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 10, kostpris: 8, oenske: 'ja', aktiv: 'ja' },
-        { id: 'monster', navn: 'Hvid Monster', ikon: '⚡', pris: 15, kostpris: 15, aktiv: 'ja' },
-        { id: 'candybar', navn: 'Candybar', ikon: '🍫', pris: 5, kostpris: 6, varianter: 'Marsbar, Snickers', aktiv: 'ja' },
+        { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 20, kostpris: 8, oenske: 'ja', aktiv: 'ja' },
+        { id: 'monster', navn: 'Hvid Monster', ikon: '⚡', pris: 30, kostpris: 15, aktiv: 'ja' },
+        { id: 'candybar', navn: 'Candybar', ikon: '🍫', pris: 10, kostpris: 6, varianter: 'Marsbar, Snickers', aktiv: 'ja' },
         { id: 'andet', navn: 'Andet?', ikon: '💡', pris: 0, kostpris: 0, snart: 'ja', aktiv: 'ja' }
       ],
       Hjul: [
-        { id: 'h-50', navn: '50 Webcoins', ikon: '🏆', type: 'webcoins', beloeb: 50, kostpris: 0, vaegt: 30, aktiv: 'ja' },
+        { id: 'h-100', navn: '100 Webcoins', ikon: '🏆', type: 'webcoins', beloeb: 100, kostpris: 0, vaegt: 30, aktiv: 'ja' },
         { id: 'h-nitte', navn: 'Nitte', ikon: '🙈', type: 'intet', beloeb: 0, kostpris: 0, vaegt: 100, aktiv: 'ja' },
-        { id: 'h-5', navn: '5 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 5, kostpris: 0, vaegt: 80, aktiv: 'ja' },
+        { id: 'h-10', navn: '10 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 10, kostpris: 0, vaegt: 80, aktiv: 'ja' },
         { id: 'h-sodavand', navn: 'Sodavand', ikon: '🥤', type: 'vare', beloeb: 0, kostpris: 8, vaegt: 120, aktiv: 'ja' },
-        { id: 'h-10', navn: '10 Webcoins', ikon: '💫', type: 'webcoins', beloeb: 10, kostpris: 0, vaegt: 180, aktiv: 'ja' },
+        { id: 'h-20', navn: '20 Webcoins', ikon: '💫', type: 'webcoins', beloeb: 20, kostpris: 0, vaegt: 180, aktiv: 'ja' },
         { id: 'h-candybar', navn: 'Candybar', ikon: '🍫', type: 'vare', beloeb: 0, kostpris: 6, vaegt: 80, aktiv: 'ja' },
-        { id: 'h-15', navn: '15 Webcoins', ikon: '💎', type: 'webcoins', beloeb: 15, kostpris: 0, vaegt: 200, aktiv: 'ja' },
+        { id: 'h-30', navn: '30 Webcoins', ikon: '💎', type: 'webcoins', beloeb: 30, kostpris: 0, vaegt: 200, aktiv: 'ja' },
         { id: 'h-monster', navn: 'Hvid Monster', ikon: '⚡', type: 'vare', beloeb: 0, kostpris: 15, vaegt: 70, aktiv: 'ja' },
-        { id: 'h-20', navn: '20 Webcoins', ikon: '💰', type: 'webcoins', beloeb: 20, kostpris: 0, vaegt: 140, aktiv: 'ja' }
+        { id: 'h-40', navn: '40 Webcoins', ikon: '💰', type: 'webcoins', beloeb: 40, kostpris: 0, vaegt: 140, aktiv: 'ja' }
       ],
       Projekter: [
-        { id: 'frokost', navn: 'Teamfrokost', ikon: '🍽️', maal: 1500, aaben: 'ja' },
-        { id: 'biograf', navn: 'Tur i biografen', ikon: '🎬', maal: 800, aaben: 'ja' },
-        { id: 'kage', navn: 'Kagefredag', ikon: '🍰', maal: 200, aaben: 'ja' }
+        { id: 'frokost', navn: 'Teamfrokost', ikon: '🍽️', maal: 3000, aaben: 'ja' },
+        { id: 'biograf', navn: 'Tur i biografen', ikon: '🎬', maal: 1600, aaben: 'ja' },
+        { id: 'kage', navn: 'Kagefredag', ikon: '🍰', maal: 400, aaben: 'ja' }
       ],
       Posteringer: [],
       Bestillinger: [],
@@ -59,14 +59,14 @@ window.Mock = (function () {
         { kilde: 'leverancer', navn: 'Leverancer' }
       ],
       Regler: [
-        { gruppe: 'Hjemmeside', kilde: 'nyfak', sats: 0.001, tekst: '1 Webcoin pr. 1.000 kr' },
-        { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 15, tekst: '15 Webcoins pr. anmeldelse' },
-        { gruppe: 'Redaktør', kilde: 'leverancer', sats: 4, tekst: '4 Webcoins pr. leverance' },
-        { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 15, tekst: '15 Webcoins pr. anmeldelse' },
-        { gruppe: 'Fotograf', kilde: 'leverancer', sats: 6, tekst: '6 Webcoins pr. optagelse' },
-        { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 15, tekst: '15 Webcoins pr. anmeldelse' },
-        { gruppe: 'Support', kilde: 'genfak', sats: 0.002, tekst: '2 Webcoins pr. 1.000 kr' },
-        { gruppe: 'Support', kilde: 'anmeldelser', sats: 15, tekst: '15 Webcoins pr. anmeldelse' }
+        { gruppe: 'Hjemmeside', kilde: 'nyfak', sats: 0.002, tekst: '2 Webcoins pr. 1.000 kr' },
+        { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 30, tekst: '30 Webcoins pr. anmeldelse' },
+        { gruppe: 'Redaktør', kilde: 'leverancer', sats: 8, tekst: '8 Webcoins pr. leverance' },
+        { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 30, tekst: '30 Webcoins pr. anmeldelse' },
+        { gruppe: 'Fotograf', kilde: 'leverancer', sats: 12, tekst: '12 Webcoins pr. optagelse' },
+        { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 30, tekst: '30 Webcoins pr. anmeldelse' },
+        { gruppe: 'Support', kilde: 'genfak', sats: 0.004, tekst: '4 Webcoins pr. 1.000 kr' },
+        { gruppe: 'Support', kilde: 'anmeldelser', sats: 30, tekst: '30 Webcoins pr. anmeldelse' }
       ]
     };
   }
@@ -130,12 +130,12 @@ window.Mock = (function () {
     Core.handle(db, jst, 'bestil', { vareId: 'monster' }, Object.assign({}, e, { notify: function () {} }));
     var dsi = Core.resolveUser(db, { email: 'demo.dsi@best-one.dk' }, ADMINS);
     Core.handle(db, dsi, 'bestil', { vareId: 'candybar', variant: 'Snickers', til: 'JST' }, Object.assign({}, e, { notify: function () {} }));
-    Core.handle(db, dsi, 'indskyd', { projektId: 'frokost', beloeb: 120 }, Object.assign({}, e, { notify: function () {} }));
+    Core.handle(db, dsi, 'indskyd', { projektId: 'frokost', beloeb: 240 }, Object.assign({}, e, { notify: function () {} }));
     var stille = Object.assign({}, e, { notify: function () {} });
     var HV = ["Hjalp mig med en svær Bricks-opsætning", "Altid god stemning på kontoret", "Tog en ekstra supportvagt for mig", "Skaffede kage til hele afdelingen", "Gav mig gode råd om en kunde"];
     var nu0 = new Date(), sidst = new Date(nu0.getFullYear(), nu0.getMonth() - 1, 12, 10);
     data.Stemmer.push({ id: 's9', tid: new Date().toISOString(), maaned: Core.maanedKey(nu0), fra: 'JST', til: 'CBO', begrundelse: HV[4] });
-    [['demo.jst@best-one.dk', 'frokost', 80], ['demo.cbo@best-one.dk', 'frokost', 45], ['demo.jfr@best-one.dk', 'biograf', 60], ['demo.cbo@best-one.dk', 'biograf', 25], ['demo.jst@best-one.dk', 'kage', 80], ['demo.dsi@best-one.dk', 'kage', 70], ['demo.jfr@best-one.dk', 'kage', 50]].forEach(function (x) {
+    [['demo.jst@best-one.dk', 'frokost', 160], ['demo.cbo@best-one.dk', 'frokost', 90], ['demo.jfr@best-one.dk', 'biograf', 120], ['demo.cbo@best-one.dk', 'biograf', 50], ['demo.jst@best-one.dk', 'kage', 160], ['demo.dsi@best-one.dk', 'kage', 140], ['demo.jfr@best-one.dk', 'kage', 100]].forEach(function (x) {
       Core.handle(db, Core.resolveUser(db, { email: x[0] }, ADMINS), 'indskyd', { projektId: x[1], beloeb: x[2] }, stille);
     });
     // Demo: alle testbrugere starter med en saldo på 67 Webcoins (resten af historikken bevares).

@@ -847,18 +847,16 @@
       '</section>';
 
     var opg = '<section class="card"><div class="card-head"><h2 class="card-title">Opgørelse pr. måned</h2><span class="faint">Sendes til RAB ved månedens udgang · i alt ' + kr(rows.reduce(function (sum, o) { return sum + o.kr; }, 0)) + '</span></div>' +
-      (rows.length ? '<div class="table-wrap"><table><thead><tr><th>Måned</th><th>Varer</th><th class="r">Bestillinger</th><th class="r">Til RAB</th></tr></thead><tbody>' +
+      (rows.length ? '<div class="table-wrap"><table><thead><tr><th>Måned</th><th class="r">Bestillinger</th><th class="r">Webcoins brugt</th><th class="r">Kr i alt</th></tr></thead><tbody>' +
         rows.map(function (o) {
-          return '<tr><td><b>' + esc(maanedLabel(o.maaned)) + '</b>' + (o.aabne ? ' <span class="tag ny">' + o.aabne + ' ikke udleveret</span>' : '') + '</td>' +
-            '<td class="muted" style="font-size:13px">' + o.varer.map(function (v) { return esc(v.antal + '× ' + v.navn); }).join(', ') + '</td>' +
-            '<td class="r num">' + o.antal + '</td><td class="r num"><b>' + kr(o.kr) + '</b></td></tr>';
+          return '<tr><td><b>' + esc(maanedLabel(o.maaned)) + '</b></td><td class="r num">' + o.antal + '</td><td class="r num">' + wc(o.wc) + '</td><td class="r num"><b>' + kr(o.kr) + '</b></td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty">Ingen bestillinger endnu.</div>') +
       '</section>';
 
     // Rækkefølge: det der skal klares (nye bestillinger) øverst, så økonomi, derefter resten
     return adminHead('Overblik') + '<div class="adm-first">' + best + '</div>' + stats +
       '<div class="grid-2 top0">' + ev + kollega + '</div>' +
-      '<div class="adm-stak">' + akt + opg + '</div>';
+      '<div class="adm-stak">' + opg + akt + '</div>';
   }
 
   function pageAdminBrugere() {
@@ -923,7 +921,7 @@
     var mNavn = MAANEDER[Number(m.maaned.slice(5)) - 1];
     return adminHead('Månedens kollega') +
       '<section class="card" style="margin-bottom:20px"><div class="card-head"><h2 class="card-title">Præmie</h2></div>' +
-      '<div class="vote-form"><input class="input" id="mdk-praemie" value="' + esc(m.praemie) + '" placeholder="fx 25 Webcoins"><button class="btn primary" data-act="mdk-praemie-ok">Gem</button></div>' +
+      '<div class="vote-form"><input class="input" id="mdk-praemie" value="' + esc(m.praemie) + '" placeholder="fx 50 Webcoins"><button class="btn primary" data-act="mdk-praemie-ok">Gem</button></div>' +
       '<small class="faint">' + (m.praemie ? 'Gælder ' + mNavn + '.' : 'Ingen præmie for ' + mNavn + ' endnu – medarbejderne ser "Coming soon".') + ' Præmien nulstilles hver måned og gives manuelt (Brugere → Justér).</small></section>' +
       '<div class="grid-2 top0"><section class="card"><div class="card-head"><h2 class="card-title">Stilling i ' + mNavn + '</h2><span class="tag">' + m.afgivet + ' stemmer</span></div>' +
       (m.stilling.length ? '<div class="table-wrap"><table><thead><tr><th>#</th><th>Kollega</th><th class="r">Stemmer</th><th class="r">Første stemme</th></tr></thead><tbody>' +
@@ -1029,7 +1027,7 @@
     if (!p) return;
     indskydState = { p: p };
     var maks = p.maal > 0 ? Math.min(S.stats.saldo, Math.max(0, p.maal - p.indsamlet)) : S.stats.saldo;
-    var forslag = [5, 10, 15, 20, 25, 50]; // beløb man ikke har råd til (eller som overstiger det der mangler) er slået fra
+    var forslag = [10, 20, 30, 40, 50, 100]; // beløb man ikke har råd til (eller som overstiger det der mangler) er slået fra
     openModal('<h2><span class="ico">' + esc(p.ikon || '🎯') + '</span>' + esc(p.navn) + '</h2>' +
       '<div class="field"><label for="ind-beloeb">Antal Webcoins' + (p.maal > 0 ? ' (der mangler ' + wc(Math.max(0, p.maal - p.indsamlet)) + ')' : '') + '</label><input class="input num" id="ind-beloeb" type="number" min="1" max="' + Math.max(0, maks) + '" inputmode="numeric" placeholder="0"></div>' +
       '<div class="chips beloeb-chips">' + forslag.map(function (n) { return '<button class="chip" data-act="ind-forslag" data-n="' + n + '"' + (n > maks ? ' disabled' : '') + '>' + n + '</button>'; }).join('') + '</div>' +

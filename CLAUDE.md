@@ -25,6 +25,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
 - **Lykkehjulet er to trin:** `koeb_drej` (betaling, gemmes i fanen `Spil`) og `spin` (resultat). Drej-knappen er låst, indtil der er købt et drej. Hvert resultat registreres i `Spil`, og admin får **altid** besked med "via lykkehjulet". **Visningen er en tombola-rulle i CS-kasse-stil** (ikke et hjul): hvid rulle (passer til siden), præmiekort med ikon + tekst (Webcoins-gevinster bruger `coin()`, varer/Nitte emoji; ingen bjælke i bunden; hovedpræmien er et guld-kort), hvid markørstreg. Rullen fyldes med kort trukket efter chancen, vinderen (fra backend) lægges på plads 62, ca. 8,5 sek. med langsom afslutning, og rullen glider lidt forbi og retter sig ind (`reelKoer()`). "Køb et drej" og "Drej hjulet" er lige store; åben Drej-knap har 🎰.
 - **Tilfældighed og afstemninger afgøres altid i backend** (`spin` og `stem` i core.js) – aldrig i browseren. Hjulets vægte og stemmetal sendes kun til admin.
 - **Optjening er idempotent:** én postering pr. `optjent:<kilde>:<YYYY-MM>:<initialer>` (feltet `ref`), som opdateres ved hver synk.
+- **Økonomi: 1 kr = 2 Webcoins.** Priser, gevinster, præmier og optjeningsregler er sat efter det (kostpris i kr er uændret).
 - Personer identificeres **altid med initialer** (JST, DSI …) i kildeark.
 
 ## Filer
