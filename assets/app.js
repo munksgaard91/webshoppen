@@ -815,7 +815,7 @@
     var best = '<section class="card"><div class="card-head"><h2 class="card-title">Nye bestillinger' + (nye.length ? ' <span class="badge">' + nye.length + '</span>' : '') + '</h2><a class="link" href="#/admin/bestillinger">Se alle</a></div>' +
       (nye.length ? '<div class="adm-list">' + nye.slice(0, 10).map(function (b) {
         return '<div class="adm-row"><div class="adm-main"><b>' + esc(b.vare) + '</b>' + (b.oenske ? ' <span class="faint">· ' + esc(b.oenske) + '</span>' : '') +
-          '<small class="faint">' + esc(b.fraNavn) + (b.til !== b.fra ? ' → 🎁 ' + esc(b.tilNavn) : '') + ' · ' + dato(b.tid) + (b.forud ? ' · forudbestilt' : '') + '</small></div>' +
+          '<small class="faint">Til ' + esc(b.til !== b.fra ? b.tilNavn : b.fraNavn) + (b.til !== b.fra ? ' · 🎁 gave fra ' + esc(b.fraNavn) : '') + ' · ' + dato(b.tid) + (b.forud ? ' · forudbestilt' : '') + '</small></div>' +
           '<div class="row-acts"><button class="btn primary sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="udleveret">Udleveret</button><button class="btn danger sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="annulleret">Annullér</button></div></div>';
       }).join('') + '</div>' + (nye.length > 10 ? '<small class="faint">+ ' + (nye.length - 10) + ' flere</small>' : '') : '<div class="empty">Ingen nye bestillinger.</div>') +
       '</section>';
