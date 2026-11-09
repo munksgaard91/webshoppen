@@ -257,7 +257,14 @@ var Core = (function () {
         return { maaned: mk, minStemme: min ? { initialer: min, navn: navne[min] || min, begrundelse: minHvorfor } : null, praemie: mdkPraemie(db),
           sidste: vinder ? { maaned: sidst, initialer: vinder.initialer, navn: vinder.navn } : null };
       })(),
-      hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 20))), klar: me.initialer ? ubrugteDrej(db, me.initialer) : 0, felter: hjulFelter(db, false).map(function (f) { return { id: f.id, navn: f.navn, ikon: f.ikon }; }) }
+      hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 20))), klar: me.initialer ? ubrugteDrej(db, me.initialer) : 0, felter: (function () {
+        // Felternes størrelse på hjulet følger chancen (andel 0–1), så hjulet viser de rigtige odds.
+        var fs = hjulFelter(db, false);
+        var tot = fs.reduce(function (sum, f) { return sum + Math.max(0, f.vaegt); }, 0) || 1;
+        // Hovedpræmien = den største Webcoins-gevinst (får guld-baggrund på hjulet)
+        var top = fs.filter(function (f) { return f.type === 'webcoins'; }).reduce(function (m, f) { return f.beloeb > m ? f.beloeb : m; }, 0);
+        return fs.map(function (f) { return { id: f.id, navn: f.navn, ikon: f.ikon, andel: Math.round(Math.max(0, f.vaegt) / tot * 1000) / 1000, hoved: top > 0 && f.type === 'webcoins' && f.beloeb === top }; });
+      })() }
     };
   }
 

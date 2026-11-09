@@ -486,14 +486,35 @@
     }
     return idx;
   }
+  // Vinkler pr. felt efter chancen, med en minimumsstørrelse så små præmier kan ses (ca. 5 %).
+  function hjulVinkler(felter) {
+    var MIN = 0.05, n = felter.length;
+    var andele = felter.map(function (f) { return f.andel > 0 ? f.andel : 1 / n; });
+    var sum = andele.reduce(function (a, b) { return a + b; }, 0) || 1;
+    andele = andele.map(function (a) { return a / sum; });
+    var smaa = andele.filter(function (a) { return a < MIN; }).length;
+    var rest = andele.filter(function (a) { return a >= MIN; }).reduce(function (a, b) { return a + b; }, 0) || 1;
+    var skal = (1 - smaa * MIN) / rest;
+    var start = 0;
+    return andele.map(function (a) {
+      var v = (a < MIN ? MIN : a * skal) * 360;
+      var o = { a0: start, a1: start + v };
+      start += v;
+      return o;
+    });
+  }
+
   function hjulSvg(felter) {
-    var n = felter.length, c = 120, rr = 114, seg = 360 / n;
+    var n = felter.length, c = 120, rr = 114;
+    var vinkler = hjulVinkler(felter);
     var pt = function (deg, rad) { var a = deg * Math.PI / 180; return [(c + rad * Math.sin(a)).toFixed(2), (c - rad * Math.cos(a)).toFixed(2)]; };
     var dele = felter.map(function (f, i) {
-      var a0 = i * seg, a1 = (i + 1) * seg, p0 = pt(a0, rr), p1 = pt(a1, rr), m = pt(a0 + seg / 2, n > 9 ? 86 : 80);
-      var farve = HJUL_FARVER[farveIdx(i, n)];
+      var a0 = vinkler[i].a0, a1 = vinkler[i].a1, seg = a1 - a0, p0 = pt(a0, rr), p1 = pt(a1, rr), midt = a0 + seg / 2;
+      var farve = f.hoved ? ['#f6c344', '#3d2a00'] : HJUL_FARVER[farveIdx(i, n)];
+      // Teksten skrives langs feltet (radialt), så den også kan være i smalle felter
+      var tekst = f.navn.replace(/^Hvid /, '');
       return '<path d="M' + c + ' ' + c + ' L' + p0[0] + ' ' + p0[1] + ' A' + rr + ' ' + rr + ' 0 ' + (seg > 180 ? 1 : 0) + ' 1 ' + p1[0] + ' ' + p1[1] + ' Z" fill="' + farve[0] + '"><title>' + esc(f.navn) + '</title></path>' +
-        '<text x="' + m[0] + '" y="' + m[1] + '" text-anchor="middle" dominant-baseline="central" font-size="' + (n > 9 ? 19 : n > 7 ? 21 : 24) + '">' + esc(f.ikon || '🎁') + '</text>';
+        '<g transform="rotate(' + midt.toFixed(2) + ' ' + c + ' ' + c + ')"><text x="' + c + '" y="' + (c - 72) + '" transform="rotate(-90 ' + c + ' ' + (c - 72) + ')" text-anchor="middle" dominant-baseline="central" font-size="' + (seg < 24 ? 9 : 10.5) + '" font-weight="800" fill="' + farve[1] + '">' + esc(tekst) + '</text></g>';
     }).join('');
     return '<div class="wheel-wrap"><span class="wheel-pointer"></span>' +
       '<svg class="wheel" id="wheel" viewBox="0 0 240 240" style="transform:rotate(' + (ui.hjulRot || 0) + 'deg)">' +
@@ -510,12 +531,12 @@
     var knapper = '<div class="lucky-acts">' +
       (klar
         ? '<span class="tag ny">' + ico('unlock') + 'Dit drej er klar</span>'
-        : '<button class="btn" data-act="koeb-drej"' + (kanKoebeDrej ? '' : ' disabled') + '>Køb et drej</button>') +
+        : '<button class="btn lg" data-act="koeb-drej"' + (kanKoebeDrej ? '' : ' disabled') + '>Køb et drej</button>') +
       '<button class="btn primary lg' + (klar ? '' : ' locked') + '" data-act="spin"' + (klar && kanKoebe ? '' : ' disabled') + '>' + ico(klar ? 'unlock' : 'lock') + 'Drej hjulet</button></div>';
     return '<section class="block"><h2 class="block-title">Feelin\' Lucky?</h2><div class="card lucky">' + hjulSvg(h.felter) +
       '<div class="lucky-main"><div class="lucky-price"><span class="lp-label">Drej hjulet for</span>' +
       '<span class="row-price num"><span class="amt">' + fmt(h.pris) + '</span><span class="unit">' + enhed(h.pris) + '</span>' + coin() + '</span></div>' +
-      '<div class="prizes">' + h.felter.filter(function (f, i, alle) { return alle.map(function (x) { return x.navn; }).indexOf(f.navn) === i; }).map(function (f) { return '<span class="tag">' + esc(f.ikon) + ' ' + esc(f.navn) + '</span>'; }).join('') + '</div>' +
+      '<div class="prizes">' + h.felter.filter(function (f, i, alle) { return alle.map(function (x) { return x.navn; }).indexOf(f.navn) === i; }).map(function (f) { return '<span class="tag' + (f.hoved ? ' hoved' : '') + '">' + esc(f.navn) + '</span>'; }).join('') + '</div>' +
       knapper + '</div></div></section>';
   }
 
@@ -978,10 +999,11 @@
         ui.spinning = true;
         busy(t, true);
         api('spin').then(function (res) {
-          var felter = S.hjul.felter, n = felter.length, seg = 360 / n;
+          var felter = S.hjul.felter, vinkler = hjulVinkler(felter);
           var i = Math.max(0, felter.map(function (f) { return f.id; }).indexOf(res.id));
+          var midt = (vinkler[i].a0 + vinkler[i].a1) / 2, bredde = vinkler[i].a1 - vinkler[i].a0;
           var cur = ui.hjulRot || 0;
-          var maal = cur - (cur % 360) + 360 * 6 + (360 - (i + 0.5) * seg) + (Math.random() - 0.5) * seg * 0.6;
+          var maal = cur - (cur % 360) + 360 * 6 + (360 - midt) + (Math.random() - 0.5) * bredde * 0.6;
           ui.hjulRot = maal;
           var w = document.getElementById('wheel');
           if (w) { w.style.transition = 'transform 4.2s cubic-bezier(.15,.7,.2,1)'; w.style.transform = 'rotate(' + maal + 'deg)'; }
