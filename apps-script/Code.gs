@@ -332,15 +332,27 @@ function opsaet() {
     { noegle: 'TEAMBUDGET_ARK_ID', vaerdi: '' },
     { noegle: 'TEAMBUDGET_BUDGET_CELLE', vaerdi: '' },
     { noegle: 'TEAMBUDGET_BRUGT_CELLE', vaerdi: '' },
-    { noegle: 'TEAMBUDGET_SAESON', vaerdi: '' }
+    { noegle: 'TEAMBUDGET_SAESON', vaerdi: '' },
+    { noegle: 'HJUL_PRIS', vaerdi: 15 }
   ]);
   seed('Menu', [
-    { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 10, kostpris: 8, aktiv: 'ja' },
-    { id: 'monster', navn: 'Monster', ikon: '⚡', pris: 20, kostpris: 15, aktiv: 'ja' },
-    { id: 'kaffe', navn: 'Kaffe to go', ikon: '☕', pris: 30, kostpris: 35, aktiv: 'ja' },
-    { id: 'is', navn: 'Is', ikon: '🍦', pris: 15, kostpris: 12, aktiv: 'ja' },
-    { id: 'slik', navn: 'Slikpose', ikon: '🍬', pris: 15, kostpris: 20, aktiv: 'ja' },
-    { id: 'morgenmad', navn: 'Morgenmad', ikon: '🥐', pris: 40, kostpris: 45, aktiv: 'ja' }
+    { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 10, kostpris: 8, varianter: 'Pepsi Max, Faxe Kondi, Faxe Kondi 0 kalorier, Danskvand', aktiv: 'ja' },
+    { id: 'monster', navn: 'Monster', ikon: '⚡', pris: 20, kostpris: 15, varianter: 'Hvid Monster', aktiv: 'ja' },
+    { id: 'marsbar', navn: 'Marsbar', ikon: '🍫', pris: 8, kostpris: 6, aktiv: 'ja' },
+    { id: 'snickers', navn: 'Snickers', ikon: '🥜', pris: 8, kostpris: 6, aktiv: 'ja' },
+    { id: 'kakao', navn: 'Få serveret kakao', ikon: '☕', pris: 25, kostpris: 8, aktiv: 'ja' },
+    { id: 'andet', navn: 'Andet', ikon: '✨', pris: 0, kostpris: 0, snart: 'ja', aktiv: 'ja' }
+  ]);
+  // Feelin' Lucky? – vægt = relativ chance. type: vare (admin leverer), webcoins (lægges på saldo), intet.
+  seed('Hjul', [
+    { id: 'h-snickers', navn: 'Snickers', ikon: '🥜', type: 'vare', beloeb: 0, kostpris: 6, vaegt: 14, aktiv: 'ja' },
+    { id: 'h-5', navn: '5 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 5, kostpris: 0, vaegt: 22, aktiv: 'ja' },
+    { id: 'h-mars', navn: 'Marsbar', ikon: '🍫', type: 'vare', beloeb: 0, kostpris: 6, vaegt: 14, aktiv: 'ja' },
+    { id: 'h-intet', navn: 'Ingen gevinst', ikon: '🙈', type: 'intet', beloeb: 0, kostpris: 0, vaegt: 25, aktiv: 'ja' },
+    { id: 'h-sodavand', navn: 'Sodavand', ikon: '🥤', type: 'vare', beloeb: 0, kostpris: 8, vaegt: 10, aktiv: 'ja' },
+    { id: 'h-25', navn: '25 Webcoins', ikon: '💰', type: 'webcoins', beloeb: 25, kostpris: 0, vaegt: 7, aktiv: 'ja' },
+    { id: 'h-monster', navn: 'Hvid Monster', ikon: '⚡', type: 'vare', beloeb: 0, kostpris: 15, vaegt: 6, aktiv: 'ja' },
+    { id: 'h-50', navn: '50 Webcoins', ikon: '🏆', type: 'webcoins', beloeb: 50, kostpris: 0, vaegt: 2, aktiv: 'ja' }
   ]);
   seed('Projekter', [
     { id: 'frokost', navn: 'Teamfrokost', ikon: '🍽️', maal: 1500, aaben: 'ja' },

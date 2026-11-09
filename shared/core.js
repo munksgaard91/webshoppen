@@ -15,7 +15,8 @@ var Core = (function () {
   var TABELLER = {
     Config: ['noegle', 'vaerdi'],
     Brugere: ['email', 'initialer', 'navn', 'gruppe', 'aktiv'],
-    Menu: ['id', 'navn', 'ikon', 'billede', 'pris', 'kostpris', 'aktiv'],
+    Menu: ['id', 'navn', 'ikon', 'billede', 'pris', 'kostpris', 'varianter', 'snart', 'aktiv'],
+    Hjul: ['id', 'navn', 'ikon', 'type', 'beloeb', 'kostpris', 'vaegt', 'aktiv'],
     Projekter: ['id', 'navn', 'ikon', 'maal', 'aaben'],
     Posteringer: ['id', 'tid', 'initialer', 'type', 'beloeb', 'tekst', 'ref'],
     Bestillinger: ['id', 'tid', 'fra', 'til', 'vare', 'pris', 'kostpris', 'status', 'forud'],
@@ -116,7 +117,7 @@ var Core = (function () {
         perMaaned[m] = (perMaaned[m] || 0) + b;
         if (m === mk) st.optjentMaaned += b;
       }
-      if (p.type === 'koeb') { st.brugt -= b; st.brugtSelv -= b; }
+      if (p.type === 'koeb' || p.type === 'hjul') { st.brugt -= b; st.brugtSelv -= b; }
       if (p.type === 'gave') { st.brugt -= b; st.givet -= b; st.givetAntal++; }
       if (p.type === 'projekt') { st.brugt -= b; st.indskudt -= b; }
       if (p.type === 'refusion') {
@@ -156,7 +157,24 @@ var Core = (function () {
 
   function menu(db, alle) {
     return db.all('Menu').filter(function (v) { return alle || sand(v.aktiv); }).map(function (v) {
-      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), billede: str(v.billede), pris: num(v.pris), kostpris: num(v.kostpris), aktiv: sand(v.aktiv) };
+      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), billede: str(v.billede), pris: num(v.pris), kostpris: num(v.kostpris), varianter: varianter(v), snart: str(v.snart).toLowerCase() === 'ja', aktiv: sand(v.aktiv) };
+    });
+  }
+
+  // "Pepsi Max, Faxe Kondi" -> ['Pepsi Max', 'Faxe Kondi']
+  function varianter(v) {
+    return str(v.varianter).split(/[,;\n]/).map(function (x) { return x.trim(); }).filter(String);
+  }
+
+  function cfgVal(db, noegle, std) {
+    var v = null;
+    db.all('Config').forEach(function (r) { if (str(r.noegle).trim() === noegle) v = r.vaerdi; });
+    return v === null || v === '' ? std : v;
+  }
+
+  function hjulFelter(db, alle) {
+    return db.all('Hjul').filter(function (h) { return alle || sand(h.aktiv); }).map(function (h) {
+      return { id: str(h.id), navn: str(h.navn), ikon: str(h.ikon), type: str(h.type) || 'intet', beloeb: num(h.beloeb), kostpris: num(h.kostpris), vaegt: num(h.vaegt), aktiv: sand(h.aktiv) };
     });
   }
 
@@ -228,7 +246,8 @@ var Core = (function () {
       regler: regler(db),
       grupper: GRUPPER,
       teambudget: env.teambudget ? env.teambudget() : null,
-      shop: env.shop ? env.shop() : { aaben: true }
+      shop: env.shop ? env.shop() : { aaben: true },
+      hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 15))), felter: hjulFelter(db, false).map(function (f) { return { id: f.id, navn: f.navn, ikon: f.ikon }; }) }
     };
   }
 
@@ -237,6 +256,14 @@ var Core = (function () {
     var vare = null;
     db.all('Menu').forEach(function (v) { if (str(v.id) === str(data.vareId) && sand(v.aktiv)) vare = v; });
     if (!vare) throw err('BAD', 'Varen findes ikke længere.');
+    if (str(vare.snart).toLowerCase() === 'ja') throw err('BAD', 'Varen kommer snart.');
+    var valg = varianter(vare);
+    var variant = '';
+    if (valg.length) {
+      variant = valg.length === 1 ? valg[0] : str(data.variant).trim();
+      if (valg.indexOf(variant) < 0) throw err('BAD', 'Vælg en variant.');
+    }
+    var vareNavn = variant && variant !== str(vare.navn) ? str(vare.navn) + ' · ' + variant : str(vare.navn);
     // Lukket shop = forudbestilling. Den leveres, når shoppen åbner igen.
     var shop = env.shop ? env.shop() : { aaben: true };
     var forud = !shop.aaben;
@@ -255,24 +282,52 @@ var Core = (function () {
 
     var id = env.uuid();
     var tid = env.now().toISOString();
-    db.insert('Bestillinger', { id: id, tid: tid, fra: me.initialer, til: modtager.initialer, vare: str(vare.navn), pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '' });
+    db.insert('Bestillinger', { id: id, tid: tid, fra: me.initialer, til: modtager.initialer, vare: vareNavn, pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '' });
     db.insert('Posteringer', {
       id: env.uuid(), tid: tid, initialer: me.initialer, type: gave ? 'gave' : 'koeb', beloeb: -pris,
-      tekst: gave ? str(vare.navn) + ' til ' + modtager.navn : str(vare.navn), ref: id
+      tekst: gave ? vareNavn + ' til ' + modtager.navn : vareNavn, ref: id
     });
     if (gave) {
       db.insert('Posteringer', {
         id: env.uuid(), tid: tid, initialer: modtager.initialer, type: 'gave_modtaget', beloeb: 0,
-        tekst: str(vare.navn) + ' fra ' + me.navn, ref: id
+        tekst: vareNavn + ' fra ' + me.navn, ref: id
       });
     }
     env.notify({
-      emne: (forud ? 'Forudbestilling · ' : '') + (gave ? 'Gave: ' + vare.navn + ' til ' + modtager.navn : 'Bestilling: ' + vare.navn + ' til ' + me.navn),
+      emne: (forud ? 'Forudbestilling · ' : '') + (gave ? 'Gave: ' + vareNavn + ' til ' + modtager.navn : 'Bestilling: ' + vareNavn + ' til ' + me.navn),
       tekst: (gave
-        ? me.navn + ' (' + me.initialer + ') giver ' + str(vare.ikon) + ' ' + vare.navn + ' til ' + modtager.navn + ' (' + modtager.initialer + ').'
-        : me.navn + ' (' + me.initialer + ') har ' + (forud ? 'forudbestilt ' : 'bestilt ') + str(vare.ikon) + ' ' + vare.navn + '.') + ' Pris: ' + pris + ' Webcoins.'
+        ? me.navn + ' (' + me.initialer + ') giver ' + str(vare.ikon) + ' ' + vareNavn + ' til ' + modtager.navn + ' (' + modtager.initialer + ').'
+        : me.navn + ' (' + me.initialer + ') har ' + (forud ? 'forudbestilt ' : 'bestilt ') + str(vare.ikon) + ' ' + vareNavn + '.') + ' Pris: ' + pris + ' Webcoins.'
     });
     return { id: id, forud: forud };
+  }
+
+  // Feelin' Lucky? – gevinsten afgøres altid her (server), aldrig i browseren.
+  function spin(db, me, data, env) {
+    kraevBruger(me);
+    var pris = Math.max(0, Math.floor(num(cfgVal(db, 'HJUL_PRIS', 15))));
+    var felter = hjulFelter(db, false);
+    var total = felter.reduce(function (s, f) { return s + Math.max(0, f.vaegt); }, 0);
+    if (!felter.length || total <= 0) throw err('BAD', 'Hjulet er ikke sat op endnu.');
+    if (saldoFor(db.all('Posteringer'), me.initialer) < pris) throw err('FUNDS', 'Du har ikke nok Webcoins.');
+    var x = (env.random ? env.random() : Math.random()) * total;
+    var vinder = felter[felter.length - 1];
+    for (var i = 0, acc = 0; i < felter.length; i++) {
+      acc += Math.max(0, felter[i].vaegt);
+      if (x < acc) { vinder = felter[i]; break; }
+    }
+    var tid = env.now().toISOString();
+    var ref = env.uuid();
+    if (pris) db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'hjul', beloeb: -pris, tekst: "Feelin' Lucky?", ref: ref });
+    if (vinder.type === 'webcoins' && vinder.beloeb > 0) {
+      db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'gevinst', beloeb: Math.floor(vinder.beloeb), tekst: 'Gevinst: ' + vinder.navn, ref: ref });
+    } else if (vinder.type === 'vare') {
+      var shop = env.shop ? env.shop() : { aaben: true };
+      db.insert('Bestillinger', { id: ref, tid: tid, fra: me.initialer, til: me.initialer, vare: 'Gevinst: ' + vinder.navn, pris: 0, kostpris: vinder.kostpris, status: 'ny', forud: shop.aaben ? '' : 'ja' });
+      db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'gevinst', beloeb: 0, tekst: 'Gevinst: ' + vinder.navn, ref: ref });
+      env.notify({ emne: 'Gevinst: ' + vinder.navn + ' til ' + me.navn, tekst: me.navn + ' (' + me.initialer + ") har vundet " + vinder.ikon + ' ' + vinder.navn + " på Feelin' Lucky?." });
+    }
+    return { id: vinder.id, navn: vinder.navn, ikon: vinder.ikon, type: vinder.type, beloeb: vinder.beloeb };
   }
 
   function indskyd(db, me, data, env) {
@@ -334,6 +389,7 @@ var Core = (function () {
       }),
       menu: menu(db, true),
       projekter: projekterMedStatus(db, ''),
+      hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 15))), felter: hjulFelter(db, true) },
       regler: regler(db),
       grupper: GRUPPER
     };
@@ -383,11 +439,32 @@ var Core = (function () {
     if (!str(data.navn).trim()) throw err('BAD', 'Navn mangler.');
     var pris = Math.floor(num(data.pris));
     if (!(pris >= 0)) throw err('BAD', 'Ugyldig pris.');
-    var obj = { navn: str(data.navn).trim(), ikon: str(data.ikon).trim(), billede: str(data.billede).trim(), pris: pris, kostpris: Math.max(0, num(data.kostpris)), aktiv: data.aktiv === false ? 'nej' : 'ja' };
+    var obj = { navn: str(data.navn).trim(), ikon: str(data.ikon).trim(), billede: str(data.billede).trim(), pris: pris, kostpris: Math.max(0, num(data.kostpris)), varianter: str(data.varianter).split(/[,;\n]/).map(function (x) { return x.trim(); }).filter(String).join(', '), snart: data.snart ? 'ja' : '', aktiv: data.aktiv === false ? 'nej' : 'ja' };
     var row = null;
     if (data.id) db.all('Menu').forEach(function (r) { if (str(r.id) === str(data.id)) row = r; });
     if (row) db.update('Menu', row, obj);
     else { obj.id = env.uuid(); db.insert('Menu', obj); }
+    return { ok: true };
+  }
+
+  function adminHjulFelt(db, me, data, env) {
+    kraevAdmin(me);
+    if (!str(data.navn).trim()) throw err('BAD', 'Navn mangler.');
+    var type = ['vare', 'webcoins', 'intet'].indexOf(str(data.type)) >= 0 ? str(data.type) : 'intet';
+    var obj = { navn: str(data.navn).trim(), ikon: str(data.ikon).trim(), type: type, beloeb: Math.max(0, Math.floor(num(data.beloeb))), kostpris: Math.max(0, num(data.kostpris)), vaegt: Math.max(0, num(data.vaegt)), aktiv: data.aktiv === false ? 'nej' : 'ja' };
+    var row = null;
+    if (data.id) db.all('Hjul').forEach(function (r) { if (str(r.id) === str(data.id)) row = r; });
+    if (row) db.update('Hjul', row, obj);
+    else { obj.id = env.uuid(); db.insert('Hjul', obj); }
+    return { ok: true };
+  }
+
+  function adminHjulPris(db, me, data) {
+    kraevAdmin(me);
+    var pris = Math.max(0, Math.floor(num(data.pris)));
+    var row = null;
+    db.all('Config').forEach(function (r) { if (str(r.noegle).trim() === 'HJUL_PRIS') row = r; });
+    if (row) db.update('Config', row, { vaerdi: pris }); else db.insert('Config', { noegle: 'HJUL_PRIS', vaerdi: pris });
     return { ok: true };
   }
 
@@ -457,6 +534,9 @@ var Core = (function () {
     state: state,
     bestil: bestil,
     indskyd: indskyd,
+    spin: spin,
+    admin_hjul: adminHjulFelt,
+    admin_hjul_pris: adminHjulPris,
     admin_state: adminState,
     admin_bestilling: adminBestilling,
     admin_bruger: adminBruger,
@@ -465,7 +545,7 @@ var Core = (function () {
     admin_justering: adminJustering,
     admin_sync: function (db, me, data, env) { kraevAdmin(me); return env.sync(); }
   };
-  var SKRIVER = { bestil: 1, indskyd: 1, admin_bestilling: 1, admin_bruger: 1, admin_vare: 1, admin_projekt: 1, admin_justering: 1, admin_sync: 1 };
+  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, admin_hjul: 1, admin_hjul_pris: 1, admin_bestilling: 1, admin_bruger: 1, admin_vare: 1, admin_projekt: 1, admin_justering: 1, admin_sync: 1 };
 
   function handle(db, me, action, data, env) {
     var fn = HANDLINGER[action];

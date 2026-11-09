@@ -250,7 +250,7 @@ a { color: inherit; }
 .bar-amt .coin { width: 15px; height: 15px; vertical-align: 0; margin-left: 6px; }
 .top3-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 6px; font-size: 13px; color: var(--muted); max-width: 360px; }
 .top3-list li { display: flex; align-items: center; gap: 8px; }
-.top3-list li b { margin-left: auto; color: var(--text); }
+.top3-list li b { margin-left: 4px; color: var(--text); }
 .top3-list li.mig, .top3-list li.mig b { color: var(--brand-2); font-weight: 700; }
 .proj-acts { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex: none; width: 210px; }
 .proj-acts .btn { padding: 10px 26px; }
@@ -407,3 +407,38 @@ td.r, th.r { text-align: right; }
   .row-2 { grid-template-columns: 1fr; }
   .search { max-width: none; width: 100%; }
 }
+
+/* Varianter og kommer snart */
+.variants { display: block; font-size: 12px; color: var(--muted); font-weight: 500; margin-top: 2px; }
+.row.snart .thumb, .row.snart .row-main { opacity: .55; }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice { border: 1px solid var(--line-2); background: var(--card-2); border-radius: 12px; padding: 10px 14px; font-weight: 700; font-size: 14px; }
+.choice:hover { border-color: var(--brand-2); }
+.choice.on { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
+:root[data-theme="dark"] .choice.on { color: var(--brand-2); border-color: var(--brand-2); }
+
+/* Feelin' Lucky? */
+.lucky { display: flex; align-items: center; gap: 40px; padding: 28px 32px; }
+.wheel-wrap { position: relative; width: 240px; height: 240px; flex: none; }
+.wheel { width: 240px; height: 240px; display: block; border-radius: 50%; box-shadow: 0 10px 30px rgba(16, 35, 61, .18); }
+.wheel text { pointer-events: none; }
+.wheel-pointer { position: absolute; left: 50%; top: -10px; transform: translateX(-50%); width: 0; height: 0; border-left: 13px solid transparent; border-right: 13px solid transparent; border-top: 24px solid var(--text); z-index: 2; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .25)); }
+.wheel-hub { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 46px; height: 46px; border-radius: 50%; background: var(--card); display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0, 0, 0, .2); }
+.wheel-hub .coin { width: 32px; height: 32px; }
+.lucky-main { flex: 1; min-width: 0; }
+.lucky-price { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 800; margin: 0 0 14px; }
+.prizes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+.btn.lg { padding: 13px 30px; font-size: 16px; border-radius: 14px; }
+.win-ico { font-size: 64px; line-height: 1; margin-bottom: 12px; }
+@media (max-width: 720px) { .lucky { flex-direction: column; } }
+
+/* Let animeret baggrund: to bløde farveskyer der glider langsomt.
+   Kun transform animeres (GPU), ingen blur-filter, og den står stille ved "Reducer bevægelse". */
+body::before, body::after { content: ''; position: fixed; z-index: -1; width: 70vmax; height: 70vmax; border-radius: 50%; pointer-events: none; will-change: transform; }
+body::before { top: -30vmax; left: -20vmax; background: radial-gradient(circle, rgba(47, 116, 181, .16), transparent 62%); animation: sky1 45s ease-in-out infinite alternate; }
+body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circle, rgba(246, 195, 68, .16), transparent 62%); animation: sky2 60s ease-in-out infinite alternate; }
+:root[data-theme="dark"] body::before { background: radial-gradient(circle, rgba(121, 176, 255, .12), transparent 62%); }
+:root[data-theme="dark"] body::after { background: radial-gradient(circle, rgba(246, 195, 68, .08), transparent 62%); }
+@keyframes sky1 { to { transform: translate(22vw, 18vh) scale(1.15); } }
+@keyframes sky2 { to { transform: translate(-24vw, -16vh) scale(1.1); } }
+@media (prefers-reduced-motion: reduce) { body::before, body::after { animation: none; } }

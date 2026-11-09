@@ -16,7 +16,8 @@
   var MAANEDER = ['januar', 'februar', 'marts', 'april', 'maj', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'december'];
   var TYPER = {
     optjent: 'Optjent', koeb: 'Køb', gave: 'Gave givet', gave_modtaget: 'Gave modtaget',
-    projekt: 'Projekt', refusion: 'Refusion', justering: 'Justering'
+    projekt: 'Projekt', refusion: 'Refusion', justering: 'Justering',
+    hjul: "Feelin' Lucky?", gevinst: 'Gevinst'
   };
 
   // ---------- Hjælpere ----------
@@ -351,10 +352,10 @@
       (lukket ? '<span class="tag annulleret">Lukket' + (shop.tekst ? ' · ' + esc(shop.tekst) : '') + '</span>' : '') +
       '<span class="note">' + (lukket ? 'Forudbestil, så leveres det, når shoppen åbner.' : 'Personlig levering, så der kan være lidt ventetid.') + '</span></div>' +
       (S.menu.length ? '<div class="card list compact">' + S.menu.map(function (v) {
-        var raad = st.saldo >= v.pris && kanKoebe;
-        return '<div class="row">' + vareBillede(v) +
-          '<div class="row-main"><b>' + esc(v.navn) + '</b></div>' +
-          '<div class="row-price num">' + wc(v.pris) + coin() + '</div>' +
+        var raad = st.saldo >= v.pris && kanKoebe && !v.snart;
+        return '<div class="row' + (v.snart ? ' snart' : '') + '">' + vareBillede(v) +
+          '<div class="row-main"><b>' + esc(v.navn) + '</b>' + (v.varianter.length ? '<small class="variants">' + v.varianter.map(esc).join(' · ') + '</small>' : '') + '</div>' +
+          '<div class="row-price num">' + (v.snart ? '<span class="tag">Kommer snart</span>' : wc(v.pris) + coin()) + '</div>' +
           '<div class="row-acts">' +
           '<button class="btn sm" data-act="giv" data-id="' + esc(v.id) + '"' + (raad && S.kolleger.length ? '' : ' disabled') + '>' + ico('gift') + 'Giv</button>' +
           '<button class="btn primary sm" data-act="koeb" data-id="' + esc(v.id) + '"' + (raad ? '' : ' disabled') + '>' + (lukket ? 'Forudbestil' : 'Bestil') + '</button></div></div>';
@@ -381,7 +382,45 @@
       }).join('') + '</div>' : '<div class="card empty">Ingen åbne projekter.</div>') + '</section>';
 
     var banner = lukket && me.admin ? '<div class="banner">Shoppen er lukket for medarbejderne lige nu' + (shop.grund === 'fravaer' ? ' (du er ikke til stede)' : '') + '. ' + esc(shop.tekst || '') + '</div>' : '';
-    return banner + top + menu + projekter;
+    return banner + top + menu + lucky(kanKoebe) + projekter;
+  }
+
+  // ---------- Feelin' Lucky? ----------
+
+  var HJUL_FARVER = [['#225581', '#fff'], ['#f6c344', '#3d2a00'], ['#2f74b5', '#fff'], ['#ffe7a3', '#3d2a00']];
+  function hjulSvg(felter) {
+    var n = felter.length, c = 120, rr = 114, seg = 360 / n;
+    var pt = function (deg, rad) { var a = deg * Math.PI / 180; return [(c + rad * Math.sin(a)).toFixed(2), (c - rad * Math.cos(a)).toFixed(2)]; };
+    var dele = felter.map(function (f, i) {
+      var a0 = i * seg, a1 = (i + 1) * seg, p0 = pt(a0, rr), p1 = pt(a1, rr), m = pt(a0 + seg / 2, 80);
+      var farve = HJUL_FARVER[(n % 2 && i === n - 1 && n > 1) ? 1 : i % HJUL_FARVER.length];
+      return '<path d="M' + c + ' ' + c + ' L' + p0[0] + ' ' + p0[1] + ' A' + rr + ' ' + rr + ' 0 ' + (seg > 180 ? 1 : 0) + ' 1 ' + p1[0] + ' ' + p1[1] + ' Z" fill="' + farve[0] + '"><title>' + esc(f.navn) + '</title></path>' +
+        '<text x="' + m[0] + '" y="' + m[1] + '" text-anchor="middle" dominant-baseline="central" font-size="24">' + esc(f.ikon || '🎁') + '</text>';
+    }).join('');
+    return '<div class="wheel-wrap"><span class="wheel-pointer"></span>' +
+      '<svg class="wheel" id="wheel" viewBox="0 0 240 240" style="transform:rotate(' + (ui.hjulRot || 0) + 'deg)">' +
+      '<circle cx="120" cy="120" r="118" fill="var(--card)"/>' + dele +
+      '<circle cx="120" cy="120" r="117" fill="none" stroke="var(--card)" stroke-width="4"/></svg>' +
+      '<span class="wheel-hub">' + coin() + '</span></div>';
+  }
+
+  function lucky(kanKoebe) {
+    var h = S.hjul;
+    if (!h || !h.felter.length) return '';
+    var kan = kanKoebe && S.stats.saldo >= h.pris;
+    return '<section class="block"><h2 class="block-title">Feelin\' Lucky?</h2><div class="card lucky">' + hjulSvg(h.felter) +
+      '<div class="lucky-main"><p class="lucky-price num">Drej hjulet for ' + wc(h.pris) + coin() + '</p>' +
+      '<div class="prizes">' + h.felter.map(function (f) { return '<span class="tag">' + esc(f.ikon) + ' ' + esc(f.navn) + '</span>'; }).join('') + '</div>' +
+      '<button class="btn primary lg" data-act="spin"' + (kan ? '' : ' disabled') + '>Drej hjulet</button></div></div></section>';
+  }
+
+  function visGevinst(res) {
+    var tekst = res.type === 'webcoins' ? '+' + wc(res.beloeb) + ' er lagt på din saldo.'
+      : res.type === 'vare' ? 'Den bliver leveret til dig. Der kan være lidt ventetid.'
+      : 'Bedre held næste gang.';
+    openModal('<div class="closed"><div class="win-ico">' + esc(res.ikon || '🎁') + '</div>' +
+      '<h2>' + (res.type === 'intet' ? 'Ingen gevinst denne gang' : 'Du vandt ' + esc(res.navn) + '!') + '</h2>' +
+      '<p>' + esc(tekst) + '</p><button class="btn primary grow" data-act="close">' + (res.type === 'intet' ? 'Øv' : 'Fedt!') + '</button></div>');
   }
 
   function pageProfil() {
@@ -532,7 +571,7 @@
       '<div class="grid-2 top0"><section class="card"><div class="card-head"><h2 class="card-title">Menu</h2><button class="btn primary sm" data-act="ny-vare">Ny vare</button></div>' +
       '<div class="table-wrap"><table><thead><tr><th></th><th>Navn</th><th class="r">Pris</th><th class="r">Kostpris</th><th>Status</th><th></th></tr></thead><tbody>' +
       A.menu.map(function (v) {
-        return '<tr' + (v.aktiv ? '' : ' style="opacity:.5"') + '><td style="font-size:22px">' + esc(v.ikon) + '</td><td><b>' + esc(v.navn) + '</b></td><td class="r num">' + wc(v.pris) + '</td><td class="r num">' + (v.kostpris ? kr(v.kostpris) : '<span class="tag ny">Mangler</span>') + '</td><td>' + (v.aktiv ? '<span class="tag udleveret">Aktiv</span>' : '<span class="tag">Skjult</span>') + '</td><td><div class="row-acts"><button class="btn sm" data-act="ret-vare" data-id="' + esc(v.id) + '">Rediger</button></div></td></tr>';
+        return '<tr' + (v.aktiv ? '' : ' style="opacity:.5"') + '><td style="font-size:22px">' + esc(v.ikon) + '</td><td><b>' + esc(v.navn) + '</b>' + (v.varianter.length ? '<small class="variants">' + v.varianter.map(esc).join(' · ') + '</small>' : '') + (v.snart ? ' <span class="tag">Kommer snart</span>' : '') + '</td><td class="r num">' + wc(v.pris) + '</td><td class="r num">' + (v.kostpris ? kr(v.kostpris) : '<span class="tag ny">Mangler</span>') + '</td><td>' + (v.aktiv ? '<span class="tag udleveret">Aktiv</span>' : '<span class="tag">Skjult</span>') + '</td><td><div class="row-acts"><button class="btn sm" data-act="ret-vare" data-id="' + esc(v.id) + '">Rediger</button></div></td></tr>';
       }).join('') + '</tbody></table></div></section>' +
       '<section class="card"><div class="card-head"><h2 class="card-title">Projekter</h2><button class="btn primary sm" data-act="nyt-projekt">Nyt projekt</button></div>' +
       (A.projekter.length ? A.projekter.map(function (p) {
@@ -540,7 +579,37 @@
         return '<div class="proj-row"' + (p.aaben ? '' : ' style="opacity:.55"') + '><div class="proj-top"><span class="ico">' + esc(p.ikon || '🎯') + '</span><div class="t"><b>' + esc(p.navn) + '</b><small>' + (p.aaben ? 'Åben' : 'Lukket') + '</small></div><button class="btn sm" data-act="ret-projekt" data-id="' + esc(p.id) + '">Rediger</button></div>' +
           '<div class="bar"><i style="width:' + pp.toFixed(0) + '%"></i></div><div class="meta num"><span>' + wc(p.indsamlet) + '</span><span>' + (p.maal ? 'mål ' + wc(p.maal) : '') + '</span></div></div>';
       }).join('') : '<div class="empty">Ingen projekter.</div>') +
-      '</section></div>';
+      '</section></div>' + adminHjul();
+  }
+
+  function adminHjul() {
+    var h = A.hjul;
+    var total = h.felter.filter(function (f) { return f.aktiv; }).reduce(function (s, f) { return s + f.vaegt; }, 0);
+    var typeNavn = { vare: 'Vare', webcoins: 'Webcoins', intet: 'Ingen gevinst' };
+    return '<section class="card" style="margin-top:20px"><div class="card-head"><h2 class="card-title">Feelin\' Lucky?</h2>' +
+      '<div class="chips"><label class="muted" for="h-pris" style="align-self:center;font-size:13px;font-weight:700">Pris pr. drej</label><input class="input num" id="h-pris" type="number" min="0" value="' + esc(h.pris) + '" style="width:90px">' +
+      '<button class="btn sm" data-act="hjul-pris-ok">Gem pris</button><button class="btn primary sm" data-act="nyt-hjul">Ny præmie</button></div></div>' +
+      '<div class="table-wrap"><table><thead><tr><th></th><th>Præmie</th><th>Type</th><th class="r">Kostpris</th><th class="r">Vægt</th><th class="r">Chance</th><th>Status</th><th></th></tr></thead><tbody>' +
+      h.felter.map(function (f) {
+        var chance = f.aktiv && total > 0 ? (f.vaegt / total * 100) : 0;
+        return '<tr' + (f.aktiv ? '' : ' style="opacity:.5"') + '><td style="font-size:22px">' + esc(f.ikon) + '</td><td><b>' + esc(f.navn) + '</b></td><td>' + esc(typeNavn[f.type] || f.type) + (f.type === 'webcoins' ? ' · ' + wc(f.beloeb) : '') + '</td>' +
+          '<td class="r num">' + (f.type === 'vare' ? kr(f.kostpris) : '–') + '</td><td class="r num">' + fmt(f.vaegt) + '</td><td class="r num">' + chance.toFixed(1).replace('.', ',') + ' %</td>' +
+          '<td>' + (f.aktiv ? '<span class="tag udleveret">Aktiv</span>' : '<span class="tag">Skjult</span>') + '</td><td><div class="row-acts"><button class="btn sm" data-act="ret-hjul" data-id="' + esc(f.id) + '">Rediger</button></div></td></tr>';
+      }).join('') + '</tbody></table></div></section>';
+  }
+
+  function openHjulFelt(id) {
+    var f = id ? A.hjul.felter.filter(function (x) { return x.id === id; })[0] : { id: '', navn: '', ikon: '', type: 'vare', beloeb: 0, kostpris: 0, vaegt: 10, aktiv: true };
+    openModal('<h2>' + (id ? 'Rediger præmie' : 'Ny præmie') + '</h2><input type="hidden" id="h-id" value="' + esc(f.id) + '">' +
+      '<div class="row-2"><div class="field"><label for="h-navn">Navn</label><input class="input" id="h-navn" value="' + esc(f.navn) + '"></div>' +
+      '<div class="field"><label for="h-ikon">Ikon (emoji)</label><input class="input" id="h-ikon" value="' + esc(f.ikon) + '" maxlength="4"></div></div>' +
+      '<div class="row-2"><div class="field"><label for="h-type">Type</label><select class="input" id="h-type">' +
+      [['vare', 'Vare (du leverer)'], ['webcoins', 'Webcoins'], ['intet', 'Ingen gevinst']].map(function (o) { return '<option value="' + o[0] + '"' + (f.type === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="h-vaegt">Vægt (chance)</label><input class="input num" id="h-vaegt" type="number" min="0" value="' + esc(f.vaegt) + '"></div></div>' +
+      '<div class="row-2"><div class="field"><label for="h-beloeb">Webcoins (ved type Webcoins)</label><input class="input num" id="h-beloeb" type="number" min="0" value="' + esc(f.beloeb) + '"></div>' +
+      '<div class="field"><label for="h-kost">Kostpris (kr, ved type Vare)</label><input class="input num" id="h-kost" type="number" min="0" step="0.5" value="' + esc(f.kostpris || '') + '"></div></div>' +
+      '<label class="check"><input type="checkbox" id="h-aktiv"' + (f.aktiv ? ' checked' : '') + '> På hjulet</label>' +
+      '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="hjul-ok">Gem</button></div>');
   }
 
   function pageAdminPosteringer() {
@@ -596,7 +665,8 @@
   function openKoeb(vareId, gave) {
     var v = S.menu.filter(function (x) { return x.id === vareId; })[0];
     if (!v) return;
-    koebState = { vare: v, gave: gave, til: '' };
+    if (v.snart) return;
+    koebState = { vare: v, gave: gave, til: '', variant: v.varianter.length === 1 ? v.varianter[0] : '' };
     renderKoeb();
   }
   function renderKoeb() {
@@ -606,13 +676,17 @@
     var kollegaer = S.kolleger.map(function (u) {
       return '<option value="' + esc(u.initialer) + '"' + (k.til === u.initialer ? ' selected' : '') + '>' + esc(u.navn) + ' · ' + esc(u.gruppe) + '</option>';
     }).join('');
+    var mangler = v.varianter.length > 1 && !k.variant;
     openModal('<h2><span class="ico">' + esc(v.ikon || '🛍️') + '</span>' + esc(v.navn) + '</h2>' +
+      (v.varianter.length > 1 ? '<div class="field"><label>Vælg</label><div class="choices">' + v.varianter.map(function (x) {
+        return '<button class="choice' + (k.variant === x ? ' on' : '') + '" data-act="koeb-variant" data-v="' + esc(x) + '">' + esc(x) + '</button>';
+      }).join('') + '</div></div>' : (v.varianter.length === 1 ? '<p class="muted" style="margin:-8px 0 16px">' + esc(v.varianter[0]) + '</p>' : '')) +
       '<div class="seg"><button class="' + (k.gave ? '' : 'on') + '" data-act="koeb-mode" data-g="0">Til mig</button><button class="' + (k.gave ? 'on' : '') + '" data-act="koeb-mode" data-g="1">Giv til kollega</button></div>' +
       (k.gave ? '<div class="field"><label for="koeb-til">Kollega</label><select class="input" id="koeb-til" data-act="koeb-til"><option value="">Vælg …</option>' + kollegaer + '</select></div>' : '') +
       '<div class="sum"><span class="muted">Pris</span><b class="num">' + wc(v.pris) + '</b></div>' +
       '<div class="sum"><span class="muted">Saldo efter</span><b class="num ' + (efter < 0 ? 'minus' : '') + '">' + wc(efter) + '</b></div>' +
       '<p class="note" style="margin:6px 0 0">' + (forud ? 'Shoppen har lukket. Den leveres, når shoppen åbner.' : 'Personlig levering, så der kan være lidt ventetid.') + '</p>' +
-      '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="koeb-ok"' + (efter < 0 || (k.gave && !k.til) ? ' disabled' : '') + '>' + (forud ? (k.gave ? 'Forudbestil gave' : 'Forudbestil') : (k.gave ? 'Giv gave' : 'Bestil')) + '</button></div>');
+      '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="koeb-ok"' + (efter < 0 || mangler || (k.gave && !k.til) ? ' disabled' : '') + '>' + (forud ? (k.gave ? 'Forudbestil gave' : 'Forudbestil') : (k.gave ? 'Giv gave' : 'Bestil')) + '</button></div>');
   }
 
   var indskydState = null;
@@ -658,6 +732,8 @@
       '<div class="field"><label for="v-billede">Billede (URL eller sti, valgfrit)</label><input class="input" id="v-billede" value="' + esc(v.billede || '') + '" placeholder="assets/varer/monster.jpg"></div>' +
       '<div class="row-2"><div class="field"><label for="v-pris">Pris (Webcoins)</label><input class="input num" id="v-pris" type="number" min="0" value="' + esc(v.pris) + '"></div>' +
       '<div class="field"><label for="v-kost">Kostpris (kr)</label><input class="input num" id="v-kost" type="number" min="0" step="0.5" value="' + esc(v.kostpris || '') + '"></div></div>' +
+      '<div class="field"><label for="v-var">Valgmuligheder (kommasepareret, valgfrit)</label><input class="input" id="v-var" value="' + esc((v.varianter || []).join(', ')) + '" placeholder="Pepsi Max, Faxe Kondi"></div>' +
+      '<label class="check"><input type="checkbox" id="v-snart"' + (v.snart ? ' checked' : '') + '> Kommer snart (kan ikke bestilles endnu)</label>' +
       '<label class="check"><input type="checkbox" id="v-aktiv"' + (v.aktiv ? ' checked' : '') + '> Vises i menuen</label>' +
       '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="vare-ok">Gem</button></div>');
   }
@@ -712,10 +788,30 @@
       case 'koeb': openKoeb(t.dataset.id, false); break;
       case 'giv': openKoeb(t.dataset.id, true); break;
       case 'koeb-mode': koebState.gave = t.dataset.g === '1'; renderKoeb(); break;
+      case 'koeb-variant': koebState.variant = t.dataset.v; renderKoeb(); break;
+      case 'spin': {
+        if (ui.spinning) break;
+        ui.spinning = true;
+        busy(t, true);
+        api('spin').then(function (res) {
+          var felter = S.hjul.felter, n = felter.length, seg = 360 / n;
+          var i = Math.max(0, felter.map(function (f) { return f.id; }).indexOf(res.id));
+          var cur = ui.hjulRot || 0;
+          var maal = cur - (cur % 360) + 360 * 6 + (360 - (i + 0.5) * seg) + (Math.random() - 0.5) * seg * 0.6;
+          ui.hjulRot = maal;
+          var w = document.getElementById('wheel');
+          if (w) { w.style.transition = 'transform 4.2s cubic-bezier(.15,.7,.2,1)'; w.style.transform = 'rotate(' + maal + 'deg)'; }
+          setTimeout(function () { ui.spinning = false; visGevinst(res); refresh(); }, w ? 4400 : 0);
+        }).catch(function (e) {
+          ui.spinning = false; busy(t, false);
+          if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true);
+        });
+        break;
+      }
       case 'koeb-ok': {
         var k = koebState;
         var forud = S.shop && !S.shop.aaben;
-        submit(t, 'bestil', { vareId: k.vare.id, til: k.gave ? k.til : '' },
+        submit(t, 'bestil', { vareId: k.vare.id, variant: k.variant, til: k.gave ? k.til : '' },
           forud ? (k.gave ? 'Gaven er forudbestilt 🎁' : k.vare.navn + ' er forudbestilt') : (k.gave ? 'Gaven er sendt 🎁' : k.vare.navn + ' er bestilt'),
           forud ? 'Den leveres, når shoppen åbner.' : 'Personlig levering, så der kan være lidt ventetid.');
         break;
@@ -745,9 +841,17 @@
       case 'ny-vare': openVare(''); break;
       case 'ret-vare': openVare(t.dataset.id); break;
       case 'vare-ok':
-        submit(t, 'admin_vare', { id: val('v-id'), navn: val('v-navn'), ikon: val('v-ikon'), billede: val('v-billede'), pris: val('v-pris'), kostpris: val('v-kost'), aktiv: checked('v-aktiv') }, 'Vare gemt');
+        submit(t, 'admin_vare', { id: val('v-id'), navn: val('v-navn'), ikon: val('v-ikon'), billede: val('v-billede'), pris: val('v-pris'), kostpris: val('v-kost'), varianter: val('v-var'), snart: checked('v-snart'), aktiv: checked('v-aktiv') }, 'Vare gemt');
         break;
       case 'nyt-projekt': openProjekt(''); break;
+      case 'nyt-hjul': openHjulFelt(''); break;
+      case 'ret-hjul': openHjulFelt(t.dataset.id); break;
+      case 'hjul-ok':
+        submit(t, 'admin_hjul', { id: val('h-id'), navn: val('h-navn'), ikon: val('h-ikon'), type: val('h-type'), vaegt: val('h-vaegt'), beloeb: val('h-beloeb'), kostpris: val('h-kost'), aktiv: checked('h-aktiv') }, 'Præmie gemt');
+        break;
+      case 'hjul-pris-ok':
+        submit(t, 'admin_hjul_pris', { pris: val('h-pris') }, 'Pris gemt');
+        break;
       case 'ret-projekt': openProjekt(t.dataset.id); break;
       case 'projekt-ok':
         submit(t, 'admin_projekt', { id: val('p-id'), navn: val('p-navn'), ikon: val('p-ikon'), maal: val('p-maal'), aaben: checked('p-aaben') }, 'Projekt gemt');

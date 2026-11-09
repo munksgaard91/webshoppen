@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v5';
+  var KEY = 'webshoppen-demo-v7';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -14,13 +14,24 @@ window.Mock = (function () {
   function seed() {
     return {
       Brugere: BRUGERE.map(function (b) { return Object.assign({}, b); }),
+      Config: [{ noegle: 'HJUL_PRIS', vaerdi: 15 }],
       Menu: [
-        { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 10, kostpris: 8, aktiv: 'ja' },
-        { id: 'monster', navn: 'Monster', ikon: '⚡', pris: 20, kostpris: 15, aktiv: 'ja' },
-        { id: 'kaffe', navn: 'Kaffe to go', ikon: '☕', pris: 30, kostpris: 35, aktiv: 'ja' },
-        { id: 'is', navn: 'Is', ikon: '🍦', pris: 15, kostpris: 12, aktiv: 'ja' },
-        { id: 'slik', navn: 'Slikpose', ikon: '🍬', pris: 15, kostpris: 20, aktiv: 'ja' },
-        { id: 'morgenmad', navn: 'Morgenmad', ikon: '🥐', pris: 40, kostpris: 45, aktiv: 'ja' }
+        { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 10, kostpris: 8, varianter: 'Pepsi Max, Faxe Kondi, Faxe Kondi 0 kalorier, Danskvand', aktiv: 'ja' },
+        { id: 'monster', navn: 'Monster', ikon: '⚡', pris: 20, kostpris: 15, varianter: 'Hvid Monster', aktiv: 'ja' },
+        { id: 'marsbar', navn: 'Marsbar', ikon: '🍫', pris: 8, kostpris: 6, aktiv: 'ja' },
+        { id: 'snickers', navn: 'Snickers', ikon: '🥜', pris: 8, kostpris: 6, aktiv: 'ja' },
+        { id: 'kakao', navn: 'Få serveret kakao', ikon: '☕', pris: 25, kostpris: 8, aktiv: 'ja' },
+        { id: 'andet', navn: 'Andet', ikon: '✨', pris: 0, kostpris: 0, snart: 'ja', aktiv: 'ja' }
+      ],
+      Hjul: [
+        { id: 'h-snickers', navn: 'Snickers', ikon: '🥜', type: 'vare', beloeb: 0, kostpris: 6, vaegt: 14, aktiv: 'ja' },
+        { id: 'h-5', navn: '5 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 5, kostpris: 0, vaegt: 22, aktiv: 'ja' },
+        { id: 'h-mars', navn: 'Marsbar', ikon: '🍫', type: 'vare', beloeb: 0, kostpris: 6, vaegt: 14, aktiv: 'ja' },
+        { id: 'h-intet', navn: 'Ingen gevinst', ikon: '🙈', type: 'intet', beloeb: 0, kostpris: 0, vaegt: 25, aktiv: 'ja' },
+        { id: 'h-sodavand', navn: 'Sodavand', ikon: '🥤', type: 'vare', beloeb: 0, kostpris: 8, vaegt: 10, aktiv: 'ja' },
+        { id: 'h-25', navn: '25 Webcoins', ikon: '💰', type: 'webcoins', beloeb: 25, kostpris: 0, vaegt: 7, aktiv: 'ja' },
+        { id: 'h-monster', navn: 'Hvid Monster', ikon: '⚡', type: 'vare', beloeb: 0, kostpris: 15, vaegt: 6, aktiv: 'ja' },
+        { id: 'h-50', navn: '50 Webcoins', ikon: '🏆', type: 'webcoins', beloeb: 50, kostpris: 0, vaegt: 2, aktiv: 'ja' }
       ],
       Projekter: [
         { id: 'frokost', navn: 'Teamfrokost', ikon: '🍽️', maal: 1500, aaben: 'ja' },
@@ -77,6 +88,7 @@ window.Mock = (function () {
   function env() {
     return {
       now: function () { return new Date(); },
+      random: function () { return Math.random(); },
       uuid: function () { return Math.random().toString(36).slice(2, 10); },
       notify: function (b) {
         window.dispatchEvent(new CustomEvent('demo-notify', { detail: b }));
@@ -104,7 +116,7 @@ window.Mock = (function () {
     var rmu = Core.resolveUser(db, { email: 'demo.admin@best-one.dk' }, ADMINS);
     Core.handle(db, rmu, 'bestil', { vareId: 'monster' }, Object.assign({}, e, { notify: function () {} }));
     var dsi = Core.resolveUser(db, { email: 'demo.dsi@best-one.dk' }, ADMINS);
-    Core.handle(db, dsi, 'bestil', { vareId: 'kaffe', til: 'JST' }, Object.assign({}, e, { notify: function () {} }));
+    Core.handle(db, dsi, 'bestil', { vareId: 'kakao', til: 'JST' }, Object.assign({}, e, { notify: function () {} }));
     Core.handle(db, dsi, 'indskyd', { projektId: 'frokost', beloeb: 120 }, Object.assign({}, e, { notify: function () {} }));
     var stille = Object.assign({}, e, { notify: function () {} });
     [['demo.jst@best-one.dk', 'frokost', 80], ['demo.cbo@best-one.dk', 'frokost', 45], ['demo.jfr@best-one.dk', 'biograf', 60], ['demo.cbo@best-one.dk', 'biograf', 25]].forEach(function (x) {
