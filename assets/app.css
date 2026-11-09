@@ -95,11 +95,12 @@ a { color: inherit; }
 
 /* ---------- Brand ---------- */
 
-.bo-logo { display: block; height: 22px; width: auto; color: var(--text); flex: none; }
-.bo-logo.logo-login { height: 30px; margin: 0 auto 6px; }
+.bo-logo { display: block; font-weight: 900; font-size: 22px; line-height: 1; letter-spacing: -0.03em; color: var(--text); white-space: nowrap; flex: none; }
+.bo-logo i { color: var(--gold); font-style: normal; }
+.bo-logo.logo-login { font-size: 30px; margin: 0 auto 6px; }
 .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; min-width: 0; }
 .brand-sep { width: 1px; height: 22px; background: var(--line-2); }
-.brand-name { font-weight: 700; color: var(--brand-2); font-size: 15px; white-space: nowrap; }
+.brand-name { font-weight: 800; color: var(--brand-2); font-size: 22px; line-height: 1; letter-spacing: -0.02em; white-space: nowrap; }
 
 /* ---------- Topmenu (medarbejder) ---------- */
 
@@ -508,3 +509,23 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .pamt { min-width: 140px; text-align: right; font-size: 14px; }
 .prow .tag { margin-right: 6px; }
 @media (max-width: 720px) { .pstats { grid-template-columns: 1fr; } .profile-card { flex-wrap: wrap; } .pc-saldo { text-align: left; } .pamt { min-width: 0; } }
+
+/* Visuelle nøgletal på profilen */
+.pstat { gap: 6px; padding: 16px 18px; }
+.pstat-top { display: flex; align-items: center; gap: 10px; }
+.pstat-top .pico { width: 30px; height: 30px; }
+.pstat-top span:last-child { font-size: 13px; color: var(--muted); }
+.pstat b { font-size: 22px; }
+.pstat .spark { max-width: none; height: 36px; margin: 2px 0 0; }
+.split { display: flex; height: 10px; border-radius: 99px; overflow: hidden; background: var(--card-2); margin-top: 4px; }
+.split i { display: block; height: 100%; }
+.split .s1, .legend i.s1 { background: var(--brand-2); }
+.split .s2, .legend i.s2 { background: var(--gold); }
+.split .s3, .legend i.s3 { background: var(--brand); }
+:root[data-theme="dark"] .split .s3, :root[data-theme="dark"] .legend i.s3 { background: #9cc3ea; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.gift-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; min-height: 26px; }
+.gdot { width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; background: var(--gold-soft); color: var(--warn); }
+.gdot svg { width: 14px; height: 14px; }
