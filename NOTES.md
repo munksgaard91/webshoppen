@@ -39,7 +39,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 - Kilder (faktureringsark, anmeldelser) og teambudget-arket er ikke koblet på.
 - Subdomæne ikke valgt (`xxx.leksione.dk`); `SIDE_URL` står som `webshoppen.leksione.dk`. Ingen `CNAME`-fil endnu.
 - Projekter tæller ikke med i Opgørelse (kun bestillinger/gevinster).
-- Ingen varebilleder endnu – Rasmus har billeder til varer og baggrunde, der skal lægges i `assets/`.
+- Varebilleder: **Monster** har billede (`assets/varer/monster.webp`, skåret ud fra Rasmus' billede, 256×256 WebP med gennemsigtig baggrund). Mangler: Sodavand, Candybar og baggrundsbilleder. Nye billeder: skær ud med Pillow (flood fill fra kanten, beskær til selve produktet, kvadratisk 256px) og sæt stien i Menu-kolonnen `billede`.
 - Rigtigt Google-login er ikke testet (kræver backend + Client ID).
 
 ## Beslutninger
@@ -69,7 +69,7 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 7. **Webshoppen → Slå automatisk hentning til**.
 
 Ændringer i `shared/core.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=56`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=57`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test
@@ -88,7 +88,7 @@ Demo-tricks: `?lukket=fravaer` / `?lukket=tid` viser lukket shop. "Nulstil demod
 
 ## Næste skridt
 1. Rasmus' feedback på Min profil v3 og den nye menu.
-2. Varebilleder og baggrundsbilleder i `assets/` (Menu-kolonnen `billede` er klar).
+2. Varebilleder til Sodavand og Candybar + baggrundsbilleder (Monster er lavet).
 3. Vælg subdomæne → `CNAME`-fil + CNAME hos Curanet → `munksgaard91.github.io`.
 4. Sæt backend op (tjekliste ovenfor) og kobl faktureringsark, anmeldelser og teambudget på.
 5. Regn økonomien igennem: optjening pr. gruppe vs. varepriser vs. lykkehjulets forventede værdi.

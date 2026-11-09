@@ -239,7 +239,7 @@ a { color: inherit; }
 .list .row:nth-child(even) { background: var(--card-2); }
 .list .row:nth-child(even) .thumb { background: var(--card); }
 .thumb { width: 52px; height: 52px; border-radius: 12px; background: var(--card-2); display: grid; place-items: center; font-size: 28px; flex: none; overflow: hidden; }
-.thumb img { width: 100%; height: 100%; object-fit: cover; }
+.thumb img { width: 100%; height: 100%; object-fit: contain; }
 .row-main { flex: 1; min-width: 0; }
 .row-main > b { font-size: 16px; }
 .row-price { display: flex; align-items: center; gap: 8px; font-weight: 800; white-space: nowrap; min-width: 170px; }
