@@ -11,7 +11,7 @@
   var S = null;       // brugerens state
   var A = null;       // admin-state (hentes kun når admin åbner admin-sider)
   var session = null; // { token } eller { email } i demo
-  var ui = { profilFilter: 'alle', bestFilter: 'ny', postType: 'alle', postPerson: '' };
+  var ui = { profilFane: 'aktivitet', bestFilter: 'ny', postType: 'alle', postPerson: '' };
 
   var MAANEDER = ['januar', 'februar', 'marts', 'april', 'maj', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'december'];
   var TYPER = {
@@ -481,7 +481,7 @@
 
     var head = '<section class="profile-card">' + avatar(me, true) +
       '<div class="pc-who">' + (me.gruppe ? '<span>' + esc(me.gruppe) + '</span>' : '') + '<h1>' + esc(me.navn) + '</h1></div>' +
-      '</section>';
+      '<div class="pc-saldo"><b class="num">' + wc(st.saldo) + coin() + '</b></div></section>';
 
     var del = function (v) { return st.brugt > 0 ? Math.max(0, v / st.brugt * 100) : 0; };
     var stats = '<div class="pstats">' +
@@ -596,7 +596,7 @@
 
   function pageAdminOpgoerelse() {
     var rows = A.opgoerelse;
-    var nuKey = S.nu.slice(0, 7);
+    var nuKey = Core.maanedKey(new Date(S.nu)); // lokal tid, ikke UTC
     var denne = rows.filter(function (o) { return o.maaned === nuKey; })[0];
     return adminHead('Opgørelse') +
       '<div class="stat-grid">' +
@@ -901,7 +901,6 @@
         submit(t, 'indskyd', { projektId: indskydState.p.id, beloeb: val('ind-beloeb') }, 'Tak for din donation til ' + indskydState.p.navn);
         break;
 
-      case 'pfilter': ui.profilFilter = t.dataset.f; render(); break;
       case 'pfane': ui.profilFane = t.dataset.f; render(); break;
       case 'bfilter': ui.bestFilter = t.dataset.f; render(); break;
       case 'ptype': ui.postType = t.dataset.f; render(); break;

@@ -1,90 +1,90 @@
 # NOTES – status og næste skridt
 
 Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskine.
+Sidst opdateret: **2026-11-09** (privat Mac). Seneste kodegennemgang: 2026-11-09 – alle filer parser, `tests/core.test.js` 16/16 OK, alle sider klikket igennem i demo uden konsolfejl.
 
-## Status (2026-11-08)
+## Status
 
-**Færdigt (kører i demo-tilstand):**
-- Nyt design adskilt fra salgsdashboardet: lyst, Best One-blå + guld Webcoin-mønt, mørkt tema som valg. Favicon = mønten.
-- Medarbejdere: topmenu (Overblik / Min profil), intet sidepanel. Admin beholder sidepanel.
-- Forside i prioriteret rækkefølge: saldo + teambudget + regler (i-ikon med hover/klik) → Bestil → Projekter → Statistik → Bevægelser + Mine bestillinger.
-- "Webcoins" skrives altid helt ud.
-- Forside v2: "Du har" + "Du har optjent +x Webcoins i <måned>". Bestil og Projekter er lister i fuld bredde. Projekter viser top 3 bidragydere + dit bidrag. Statistik = kun dine tal: optjent i måneden + brugt i alt fordelt på til dig selv / donationer / i projekter. Disclaimer under Bevægelser.
-- Min profil v3 (2026-11-09): blåt topkort (gruppe, navn, saldo til højre), tre nøgletal (optjent i måneden + i alt, brugt i alt med fordeling, gaver), faner **Aktivitet** (alle bevægelser grupperet pr. måned med farvet ikon pr. type) / **Optjening** (pr. måned fordelt på kilder) / **Bestillinger** (med status). Filterknapperne er fjernet. Disclaimer nederst. Initialer og saldo vises ikke i toppen. Nøgletallene er visuelle: sparkline for optjent, delt bjælke (selv/donationer/projekter) for brugt, gave-ikoner for donationer givet (modtaget som lille tekst).
-- Varer kan have et billede (kolonne `billede` i Menu-fanen, URL eller sti som `assets/varer/monster.jpg`). Uden billede vises emoji.
-- Åbningstid 08:00–15:30 på hverdage + lukket når admin har "Ikke til stede" i kalenderen → overlay "Shoppen har lukket". Bestil bliver til **Forudbestil**: bestillingen gemmes med `forud = ja` (ny kolonne i Bestillinger), admin får "Forudbestilling · …" og den vises som "Forudbestilt", indtil den er udleveret. Admin ser et banner i stedet for overlay.
-- Topmenu (2026-11-09): logo er ordmærket "best one." som tekst i Montserrat 900 med guld punktum (`boLogo()` i app.js – SVG'en med "best One" var forkert og er fjernet). "Webshoppen" står i samme størrelse (22px) og fed, Overblik/Min profil centreret, ingen Webcoins-saldo i toppen, "Log ud" ligger i dropdown under brugerens badge.
-- Forside v3 (2026-11-09): kompakt bestil-liste, højere projektrækker med samme kolonner som menuen, "Du har optjent …" fjernet fra saldo-kortet, teambudget viser rest i alt som stort tal, derunder "Brugt i sæsonen: kr x" og sæsonen som tag (Config `TEAMBUDGET_SAESON`, fx `2026/27`). Statistik, bevægelser og bestillinger er flyttet helt til Min profil.
-- Projekter (2026-11-09): knappen hedder **Donér** (handlingen hedder stadig `indskyd` i koden). Beløb og mål står inde i en større progressbar ("245 Webcoins af 1.500 Webcoins" + procent), så rækken ikke har en separat beløbskolonne. "Dit bidrag" står småt under knappen.
-- Menu (2026-11-09): Sodavand (valg: Pepsi Max, Faxe Kondi, Faxe Kondi 0 kalorier, Danskvand), Monster (kun Hvid Monster), Candybar (valg: Marsbar, Snickers), Andet ("Kommer snart"). Nye kolonner i Menu: `varianter` (kommasepareret) og `snart` (ja). Valget gemmes i bestillingen som "Sodavand · Pepsi Max". Kakao er fjernet. Priserne står mindre med højrestillede tal (`.amt` min 3 tegn), så 1–3 cifre flugter. **Priser og kostpriser er pladsholdere.**
-- **Feelin' Lucky?** mellem Bestil og Projekter: lykkehjul med fast pris (Config `HJUL_PRIS`, standard 15). Præmier i ny fane `Hjul` (id, navn, ikon, type `vare`/`webcoins`/`intet`, beloeb, kostpris, vaegt, aktiv). Vægt = relativ chance. **Gevinsten afgøres i backend** (`spin` i core.js), browseren animerer kun hjulet hen til resultatet. Præmier (seed): Candybar, 5 Webcoins, Ingen gevinst, Sodavand, 25 Webcoins, Hvid Monster, 50 Webcoins. Vare-gevinst → bestilling til admin (pris 0, kostpris tæller i opgørelsen). Nye posteringstyper `hjul` og `gevinst`. Admin retter præmier, vægt og pris under Sortiment. Præmier og chancer er pladsholdere – skal regnes igennem sammen med optjeningen.
-- **Månedens kollega** (nederst på forsiden): alle med en gruppe kan stemme én gang pr. måned på en kollega (ikke sig selv). Ny fane `Stemmer` (id, tid, maaned, fra, til, begrundelse). **Begrundelse er påkrævet** (min. 10 tegn) og ses kun af admin, uden navn på den der stemte. UI-teksten siger, at resultater (salg, fakturering) ikke tæller. Stemmer er hemmelige: brugere ser kun deres egen stemme og sidste måneds vinder. Vinder = flest stemmer i måneden; ved lighed vinder den, der fik sin første stemme først. Præmie er fritekst i Config `MDK_PRAEMIE` (rettes under Admin → Månedens kollega) og gives manuelt. Admin ser stilling + tidligere vindere.
-- Let animeret baggrund: to bløde farveskyer (kun CSS-transform), stopper ved "Reducer bevægelse".
-- Mønt-ikonet står kun én gang og til sidst efter beløb. Brug ikke 🪙-emoji som præmieikon.
-- Note om ventetid ved bestilling (personlig levering).
-- Min profil: nøgletal + fuld historik med filtre.
-- Regler-side for alle grupper (kun admin; medarbejdere ser egne regler via i-ikonet).
-- Admin: bestillinger (udleveret/annullér med refusion), **opgørelse** (rigtige kr pr. måned ud fra varernes kostpris – det beløb der skal trækkes), brugere (opret/ret/gruppe/justér saldo), sortiment (menu + projekter), alle posteringer + "Hent optjening nu".
-- Backend-kode i `apps-script/Code.gs` (ikke deployet endnu).
-- Mobil-layout.
+Alt kører i **demo-tilstand** (tom `API_URL`) på https://munksgaard91.github.io/webshoppen/. Backend er skrevet, men **ikke sat op i Google endnu**.
 
-**Ikke gjort endnu:**
-- Backend er ikke sat op i Google (se tjekliste nedenfor).
-- Optjeningsregler er **pladsholdere** – skal regnes igennem.
-- Kilder (faktureringsark, anmeldelser) er ikke koblet på – kræver ark-ID'er og kolonner.
-- Teambudget-arket er ikke koblet på.
-- Subdomæne er ikke valgt (`xxx.leksione.dk`). `SIDE_URL` står som `webshoppen.leksione.dk` indtil videre. Ingen `CNAME`-fil endnu.
-- Projekter (teamfrokost, biograf) tæller ikke med i opgørelsen endnu – kun menuvarer.
+### Medarbejder – Overblik (`#/`)
+Rækkefølge (se også CLAUDE.md):
+1. **Saldo-kort** (blåt, halvskjult "b" i højre side) med hilsen, saldo og i-ikon med egne optjeningsregler (hover/klik). Ved siden af **Teambudget**: rest i alt som stort tal, "Brugt i sæsonen: kr x", sæson som tag (`TEAMBUDGET_SAESON`).
+2. **Bestil** – kompakt liste med skiftevis hvid/lysegrå rækker. Priser er højrestillede tal (1–3 cifre flugter) + "Webcoins" + mønt til sidst. Knapper: Giv (gave til kollega) og Bestil. Varer med `varianter` åbner et valg (Sodavand, Candybar); én variant vælges automatisk (Monster → Hvid Monster). `snart = ja` → "Kommer snart", kan ikke bestilles (Andet). Note om ventetid (personlig levering).
+3. **Feelin' Lucky?** – lykkehjul, fast pris pr. drej. Gevinsten afgøres i backend; browseren animerer kun hjulet hen til resultatet.
+4. **Projekter** – liste med skiftevis baggrund. Stor progressbar med "**245** af 1.500 Webcoins 🪙" og fed procent. Top 3 under hinanden med beløb tæt på navnet. Blå **Donér**-knap (handlingen hedder `indskyd` i koden), "Dit bidrag" småt under knappen.
+5. **Månedens kollega** – stem én gang pr. måned på en kollega (ikke sig selv) med påkrævet begrundelse. Tekst: godt arbejde, hjælp eller god stemning – resultater (salg, fakturering) tæller ikke. Viser præmie og sidste måneds vinder.
+
+Lukket shop (uden for 08:00–15:30 på hverdage, eller når admin har "Ikke til stede" i kalenderen): overlay "Shoppen har lukket", Bestil bliver til **Forudbestil** (`forud = ja` på bestillingen). Admin ser et banner i stedet.
+
+### Medarbejder – Min profil (`#/profil`)
+- Blåt topkort: billede, gruppe (ingen initialer), navn, saldo i højre hjørne (uden ordet "Saldo").
+- Tre visuelle nøgletal: **Optjent i <måned>** (sparkline 6 mdr. + i alt), **Brugt i alt** (delt bjælke selv/donationer/projekter + forklaring), **Donationer** (antal givet som hovedtal, gave-ikoner, modtaget som undertekst).
+- Faner: **Aktivitet** (alle posteringer grupperet pr. måned med farvet ikon), **Optjening** (pr. måned fordelt på kilder), **Bestillinger** (med status). Disclaimer: "Tallene kan ændre sig, hvis der bliver rettet fejl."
+
+### Admin (sidepanel)
+Bestillinger (udleveret / annullér med refusion / fortryd) · **Opgørelse** (kr pr. måned ud fra kostpris = beløbet der skal trækkes) · Brugere (opret/ret/gruppe/justér saldo) · Sortiment (menu inkl. varianter + kommer snart, projekter, lykkehjulets præmier/vægt/chance/pris) · **Månedens kollega** (præmie, stilling med anonyme begrundelser, tidligere vindere) · Regler (alle grupper) · Posteringer (alle + "Hent optjening nu").
+
+### Design
+Lyst tema som standard (Best One-blå + guld Webcoin-mønt), mørkt som valg. Logo = ordmærket "best one." i tekst (Montserrat 900, guld punktum) + "Webshoppen" i 18px fed blå – en anelse mindre end logoet. Let animeret baggrund (to farveskyer, kun CSS-transform, stopper ved "Reducer bevægelse"). Favicon = W-mønten.
+
+## Ikke gjort endnu
+- Backend er ikke sat op i Google (tjekliste nedenfor).
+- **Pladsholdere** der skal regnes igennem: optjeningsregler, varepriser og kostpriser, lykkehjulets præmier/vægte/pris.
+- Kilder (faktureringsark, anmeldelser) og teambudget-arket er ikke koblet på.
+- Subdomæne ikke valgt (`xxx.leksione.dk`); `SIDE_URL` står som `webshoppen.leksione.dk`. Ingen `CNAME`-fil endnu.
+- Projekter tæller ikke med i Opgørelse (kun bestillinger/gevinster).
+- Ingen varebilleder endnu – Rasmus har billeder til varer og baggrunde, der skal lægges i `assets/`.
+- Rigtigt Google-login er ikke testet (kræver backend + Client ID).
 
 ## Beslutninger
+- **Apps Script + Google Sheet som backend** (ikke Cloudflare): datakilderne er Google Sheets, mail/Chat er indbygget, DNS styres via GitHub Pages + Curanet, og der er ingen Node på den private Mac.
+- **Saldo = sum af posteringer.** Admin kan rette direkte i arket.
+- **Optjening pr. måned** med fast `ref` → synk kan køres igen uden dobbelt-optjening. `OPTJENING_FRA` i Config styrer startmåned.
+- **Gave = vare** (ikke rå Webcoins). Giveren betaler, admin leverer.
+- **Kostpris gemmes på bestillingen**, så gamle måneder ikke ændres, når en pris rettes.
+- **Lykkehjul og stemmer afgøres altid i backend** (`spin`, `stem` i core.js). Hjulets vægte sendes kun til admin.
+- **Stemmer er hemmelige.** Brugere ser kun egen stemme + sidste måneds vinder. Admin ser stilling og begrundelser uden afsenders navn (arket har det). Vinder = flest stemmer; ved lighed den, der fik sin første stemme først.
+- **Fravær læses fra kalenderen** for den konto, der har deployet Apps Script (admin): Googles "Ikke til stede"-type eller titel med "Ikke til stede"/"Out of office". Cache 5 min.
+- Brugere uden for `Brugere`-fanen ser "Du er desværre ikke registreret". Admin = `ADMIN_EMAILS`. Login-domæne = **best-one.dk**.
+- **Repoet er offentligt** (gratis GitHub Pages) – kun frontend, ingen hemmeligheder.
 
-- **Apps Script + Google Sheet som backend** i stedet for Cloudflare: alle datakilder er Google Sheets, mail/Chat er indbygget, DNS styres via GitHub Pages + Curanet, og der er ingen Node på den private Mac.
-- **Saldo = sum af posteringer** (ingen saldo-kolonne der kan komme ud af sync). Admin kan rette direkte i arket, hvis noget skal laves om.
-- **Optjening pr. måned** med fast `ref` → synk kan køres igen og igen uden dobbelt-optjening. `OPTJENING_FRA` i Config bestemmer fra hvilken måned der tælles.
-- **Gave = vare** (ikke rå Webcoins). Giveren betaler, admin får besked og leverer til modtageren.
-- Brugere uden for `Brugere`-fanen ser "Du er desværre ikke registreret". Admin styres af `ADMIN_EMAILS` i Config.
-- **Repoet er offentligt** (gratis GitHub Pages). Det er kun frontend – alle data, mails og webhooks ligger i Google-arket.
-- **Kostpris gemmes på bestillingen** i bestillingsøjeblikket, så gamle måneder ikke ændrer sig, hvis prisen på en vare rettes.
-- **Fravær læses fra kalenderen** for den konto, der har deployet Apps Script (admin). Både Googles "Ikke til stede"-begivenhedstype og titler med "Ikke til stede"/"Out of office" tæller. Cache 5 min. Projekter kan stadig få indskud, når shoppen er lukket – kun bestillinger blokeres.
-- Notifikationer: Google Chat webhook og/eller mail – begge kan slås til i Config.
+## Faner i "Webshoppen DB"
+`Config` · `Brugere` · `Menu` (id, navn, ikon, billede, pris, kostpris, varianter, snart, aktiv) · `Hjul` (id, navn, ikon, type vare/webcoins/intet, beloeb, kostpris, vaegt, aktiv) · `Projekter` · `Posteringer` · `Bestillinger` (… status, forud) · `Stemmer` (id, tid, maaned, fra, til, begrundelse) · `Kilder` · `Regler`.
+
+Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHAT_WEBHOOK`, `NOTIFIKATION_MAIL`, `AABNER`, `LUKKER`, `AABNE_DAGE`, `LUK_VED_FRAVAER`, `KALENDER_ID`, `OPTJENING_FRA`, `TEAMBUDGET_ARK_ID`, `TEAMBUDGET_BUDGET_CELLE`, `TEAMBUDGET_BRUGT_CELLE`, `TEAMBUDGET_SAESON`, `HJUL_PRIS`, `MDK_PRAEMIE`.
 
 ## Sådan sættes backend op
+1. Opret et nyt Google Sheet "Webshoppen DB" på din best-one.dk-konto.
+2. Udvidelser → Apps Script. Opret `Code.gs` (← `apps-script/Code.gs`) og `Core.gs` (← `shared/core.js`). Projektindstillinger → vis `appsscript.json` → indsæt `apps-script/appsscript.json`.
+3. Genindlæs arket → **Webshoppen → Opsæt faner**. Godkend adgang (Sheets, mail, kalender, ekstern URL).
+4. Google Cloud Console → APIs & Services → Credentials → **OAuth client ID** (Web application). Authorized JavaScript origins: `https://<subdomæne>.leksione.dk`, `https://munksgaard91.github.io` og `http://localhost:8765`. Client ID → Config `CLIENT_ID` og `assets/config.js` `GOOGLE_CLIENT_ID`.
+5. Apps Script → Implementér → Ny implementering → Webapp (kør som: mig, adgang: alle). URL → `assets/config.js` `API_URL`.
+6. Udfyld `Brugere` (eller via admin-siden), `Kilder` (ark-ID, fane, kolonnebogstaver; tom `kol_vaerdi` = tæl rækker) og evt. `CHAT_WEBHOOK`, `NOTIFIKATION_MAIL`, `TEAMBUDGET_*`.
+7. **Webshoppen → Slå automatisk hentning til**.
 
-1. Opret et nyt Google Sheet "Webshoppen DB" (på din best-one.dk-konto).
-2. Udvidelser → Apps Script. Opret filerne:
-   - `Code.gs` ← indholdet af `apps-script/Code.gs`
-   - `Core.gs` ← indholdet af `shared/core.js`
-   - Projektindstillinger → vis `appsscript.json` → indsæt `apps-script/appsscript.json`
-3. Genindlæs arket → menuen **Webshoppen → Opsæt faner**. Godkend adgang.
-4. Google Cloud Console (samme konto) → APIs & Services → Credentials → **OAuth client ID** (Web application).
-   - Authorized JavaScript origins: `https://<subdomæne>.leksione.dk` og `http://localhost:8765`.
-   - Kopiér Client ID ind i Config-fanen (`CLIENT_ID`) og i `assets/config.js` (`GOOGLE_CLIENT_ID`).
-5. Apps Script → Implementér → Ny implementering → Webapp (kør som: mig, adgang: alle). Kopiér URL'en ind i `assets/config.js` (`API_URL`).
-6. Udfyld fanen `Brugere` (email, initialer, navn, gruppe, aktiv=ja) – eller gør det fra admin-siden.
-7. Udfyld `Kilder` (ark-ID, fane, kolonnebogstaver for initialer/værdi/dato). Tom `kol_vaerdi` = tæl rækker (fx anmeldelser).
-8. Åbningstid: `AABNER`, `LUKKER`, `AABNE_DAGE` (1-5 = man–fre), `LUK_VED_FRAVAER` (ja/nej), `KALENDER_ID` (tom = din primære kalender).
-9. Valgfrit: `CHAT_WEBHOOK` (Google Chat → space → Apps & integrations → Webhooks), `NOTIFIKATION_MAIL`, `TEAMBUDGET_*` (inkl. `TEAMBUDGET_SAESON`, fx `2026/27`).
-10. **Webshoppen → Slå automatisk hentning til**.
+Ændringer i `shared/core.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=36`).
+Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
-Ved ændringer i `shared/core.js` eller `Code.gs`: kopiér ind i Apps Script og lav **Administrer implementeringer → Rediger → Ny version** (så URL'en bevares).
-Ved ændringer i assets: bump `?v=` i `index.html`.
-Når arket allerede er sat op: tilføj kolonnerne `varianter` og `snart` sidst i Menu, opret fanerne `Hjul` og `Stemmer` med kolonnerne ovenfor (sæt kolonnen `maaned` til tekstformat), og tilføj `HJUL_PRIS` og `MDK_PRAEMIE` i Config ("Opsæt faner" udfylder kun tomme faner).
-Demo af lukket shop: tilføj `?lukket=fravaer` eller `?lukket=tid` til adressen.
+## Test
+```bash
+cd ~/code/webshoppen && /System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc shared/core.js tests/core.test.js
+```
+Dækker: login-afvisning, varianter, kommer snart, gave + refusion, admin-rettigheder, forudbestilling, saldo-tjek, lykkehjul (alle tre typer), skjulte vægte, stemmeregler, hemmelige stemmer, tie-breaker, idempotent optjening, åbningstider.
+Demo-tricks: `?lukket=fravaer` / `?lukket=tid` viser lukket shop. "Nulstil demodata" på login-siden.
 
-## Før go-live (fundet ved kodegennemgang 2026-11-09)
-
-Skal tages op ved fejlsøgning og før lancering:
-1. **Login udløber hver time** – Google ID-token (~1 t) gemmes i localStorage; ved udløb sendes brugeren til login (`api()` → `logout` på TOKEN_EXPIRED). Overvej stille fornyelse.
-2. **Månedsfejl omkring midnat** – `pageAdminOpgoerelse` bruger `S.nu.slice(0,7)` (UTC). Den 1. i måneden kl. 00–01/02 dansk tid vises forrige måned i "Brugt i <måned>".
-3. **Ingen refusion ved lukkede projekter** – indskud (`type: projekt`) kan ikke gives tilbage.
-4. **Forældede optjeningsposteringer** – `applyEarnings` opdaterer kun refs, den stadig beregner. Ved gruppeskift eller fjernet regel bliver gamle `optjent`-posteringer liggende.
+## Før go-live (kendte svagheder)
+1. **Login udløber hver time** – Google ID-token (~1 t). Ved udløb sendes brugeren til login. Overvej stille fornyelse.
+2. ~~Månedsfejl omkring midnat i Opgørelse~~ – rettet 2026-11-09 (lokal tid).
+3. **Ingen refusion af projektdonationer**, hvis et projekt lukkes. Brug Justér under Brugere.
+4. **Forældede optjeningsposteringer** – ved gruppeskift eller fjernet regel bliver gamle `optjent`-posteringer liggende (applyEarnings opdaterer kun refs, den stadig beregner).
+5. Månedens kollega-præmie og webcoins-justeringer gives **manuelt**.
 
 ## Næste skridt
-
-0. **Næste i designet:** Rasmus' feedback på Min profil v2, derefter menuen (bestillingslisten). Rasmus har billeder til baggrunde og varer, der skal lægges i `assets/`.
-
-1. Vælg subdomæne → tilføj `CNAME`-fil, opret CNAME hos Curanet → `munksgaard91.github.io`, slå Pages til.
-2. Sæt backend op (tjekliste ovenfor).
-3. Kobl faktureringsark, anmeldelser og teambudget på.
-4. Regn optjeningsreglerne igennem (økonomi: hvad koster en sodavand i WC vs. hvad tjener man om måneden).
-5. Test med 2-3 kolleger før alle får adgang.
+1. Rasmus' feedback på Min profil v3 og den nye menu.
+2. Varebilleder og baggrundsbilleder i `assets/` (Menu-kolonnen `billede` er klar).
+3. Vælg subdomæne → `CNAME`-fil + CNAME hos Curanet → `munksgaard91.github.io`.
+4. Sæt backend op (tjekliste ovenfor) og kobl faktureringsark, anmeldelser og teambudget på.
+5. Regn økonomien igennem: optjening pr. gruppe vs. varepriser vs. lykkehjulets forventede værdi.
+6. Test med 2–3 kolleger, før alle får adgang.

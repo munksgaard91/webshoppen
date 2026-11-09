@@ -1,0 +1,132 @@
+// Logiktest af shared/core.js (ingen Node nødvendig). Kør fra repo-roden:
+//   /System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc shared/core.js tests/core.test.js
+var fejl = 0, ok = 0;
+function t(navn, fn) { try { fn(); ok++; } catch (e) { fejl++; print('FEJL: ' + navn + ' – ' + e.message); } }
+function eq(a, b, m) { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error((m || '') + ' forventede ' + JSON.stringify(b) + ' fik ' + JSON.stringify(a)); }
+function kaster(fn, tekst) { try { fn(); } catch (e) { if (tekst && e.message.indexOf(tekst) < 0) throw new Error('forkert fejl: ' + e.message); return; } throw new Error('kastede ikke'); }
+
+var data = {
+  Config: [{ noegle: 'HJUL_PRIS', vaerdi: 15 }, { noegle: 'MDK_PRAEMIE', vaerdi: 'Snack' }],
+  Brugere: [
+    { email: 'a@best-one.dk', initialer: 'AAA', navn: 'Anna A', gruppe: 'Hjemmeside', aktiv: 'ja' },
+    { email: 'b@best-one.dk', initialer: 'BBB', navn: 'Bo B', gruppe: 'Support', aktiv: 'ja' },
+    { email: 'c@best-one.dk', initialer: 'CCC', navn: 'Carl C', gruppe: 'Fotograf', aktiv: 'nej' }
+  ],
+  Menu: [
+    { id: 'soda', navn: 'Sodavand', pris: 10, kostpris: 8, varianter: 'Pepsi Max, Danskvand', aktiv: 'ja' },
+    { id: 'mon', navn: 'Monster', pris: 20, kostpris: 15, varianter: 'Hvid Monster', aktiv: 'ja' },
+    { id: 'andet', navn: 'Andet', pris: 0, snart: 'ja', aktiv: 'ja' }
+  ],
+  Hjul: [
+    { id: 'h1', navn: 'Candybar', type: 'vare', kostpris: 6, vaegt: 1, aktiv: 'ja' },
+    { id: 'h2', navn: '25 Webcoins', type: 'webcoins', beloeb: 25, vaegt: 1, aktiv: 'ja' },
+    { id: 'h3', navn: 'Ingen', type: 'intet', vaegt: 1, aktiv: 'ja' }
+  ],
+  Projekter: [{ id: 'p1', navn: 'Frokost', maal: 100, aaben: 'ja' }],
+  Posteringer: [
+    { id: 'x1', tid: '2026-11-01T10:00:00.000Z', initialer: 'AAA', type: 'justering', beloeb: 100, tekst: 'Start' },
+    { id: 'x2', tid: '2026-11-01T10:00:00.000Z', initialer: 'BBB', type: 'justering', beloeb: 100, tekst: 'Start' }
+  ],
+  Bestillinger: [], Stemmer: [], Kilder: [], Regler: []
+};
+var db = {
+  all: function (t) { return data[t] || (data[t] = []); },
+  insert: function (t, o) { db.all(t).push(Object.assign({}, o)); },
+  update: function (t, r, p) { Object.assign(r, p); }
+};
+var n = 0, tal = 0, aaben = true, beskeder = [];
+var env = {
+  now: function () { return new Date(2026, 10, 15, 12, 0); },
+  uuid: function () { return 'id' + (++n); },
+  random: function () { return tal; },
+  notify: function (b) { beskeder.push(b.emne); },
+  shop: function () { return aaben ? { aaben: true } : { aaben: false, tekst: 'Lukket' }; }
+};
+var A = Core.resolveUser(db, { email: 'a@best-one.dk' }, ['a@best-one.dk']);
+var B = Core.resolveUser(db, { email: 'b@best-one.dk' }, []);
+function saldo(me) { return Core.handle(db, me, 'state', {}, env).stats.saldo; }
+
+t('ukendt og inaktiv bruger afvises', function () {
+  kaster(function () { Core.resolveUser(db, { email: 'x@best-one.dk' }, []); }, 'ikke registreret');
+  kaster(function () { Core.resolveUser(db, { email: 'c@best-one.dk' }, []); }, 'ikke registreret');
+});
+t('variant kræves ved flere valg', function () {
+  kaster(function () { Core.handle(db, A, 'bestil', { vareId: 'soda' }, env); }, 'variant');
+  kaster(function () { Core.handle(db, A, 'bestil', { vareId: 'soda', variant: 'Cola' }, env); }, 'variant');
+});
+t('bestil med variant', function () {
+  Core.handle(db, A, 'bestil', { vareId: 'soda', variant: 'Danskvand' }, env);
+  eq(data.Bestillinger[0].vare, 'Sodavand · Danskvand');
+  eq(saldo(A), 90);
+});
+t('én variant vælges automatisk', function () {
+  Core.handle(db, A, 'bestil', { vareId: 'mon' }, env);
+  eq(data.Bestillinger[1].vare, 'Monster · Hvid Monster');
+});
+t('kommer snart kan ikke bestilles', function () {
+  kaster(function () { Core.handle(db, A, 'bestil', { vareId: 'andet' }, env); }, 'snart');
+});
+t('gave til kollega + refusion trækkes fra donationer', function () {
+  var r = Core.handle(db, A, 'bestil', { vareId: 'soda', variant: 'Pepsi Max', til: 'BBB' }, env);
+  var st = Core.handle(db, A, 'state', {}, env).stats;
+  eq(st.givet, 10); eq(st.givetAntal, 1);
+  Core.handle(db, A, 'admin_bestilling', { id: r.id, status: 'annulleret' }, env);
+  st = Core.handle(db, A, 'state', {}, env).stats;
+  eq(st.givet, 0, 'givet efter refusion'); eq(st.givetAntal, 0);
+  eq(Core.handle(db, B, 'state', {}, env).stats.gaverModtaget, 1);
+});
+t('ikke-admin kan ikke admin-handlinger', function () {
+  kaster(function () { Core.handle(db, B, 'admin_state', {}, env); }, 'admin');
+});
+t('forudbestilling når shoppen er lukket', function () {
+  aaben = false;
+  var r = Core.handle(db, B, 'bestil', { vareId: 'mon' }, env);
+  aaben = true;
+  eq(r.forud, true);
+});
+t('ikke nok Webcoins', function () {
+  kaster(function () { Core.handle(db, B, 'indskyd', { projektId: 'p1', beloeb: 9999 }, env); }, 'ikke nok');
+});
+t('lykkehjul: vare, webcoins og intet', function () {
+  var foer = saldo(B);
+  tal = 0.1; eq(Core.handle(db, B, 'spin', {}, env).id, 'h1');
+  tal = 0.5; eq(Core.handle(db, B, 'spin', {}, env).id, 'h2');
+  tal = 0.9; eq(Core.handle(db, B, 'spin', {}, env).id, 'h3');
+  eq(saldo(B), foer - 45 + 25, 'saldo efter 3 drej');
+  eq(data.Bestillinger.filter(function (b) { return b.vare === 'Gevinst: Candybar'; }).length, 1);
+});
+t('hjulets vægte vises ikke for brugere', function () {
+  var f = Core.handle(db, B, 'state', {}, env).hjul.felter[0];
+  eq(f.vaegt, undefined);
+});
+t('månedens kollega: ikke sig selv, begrundelse, én gang', function () {
+  kaster(function () { Core.handle(db, A, 'stem', { til: 'AAA', begrundelse: 'Lang nok begrundelse' }, env); }, 'kollega');
+  kaster(function () { Core.handle(db, A, 'stem', { til: 'BBB', begrundelse: 'kort' }, env); }, 'begrundelse');
+  kaster(function () { Core.handle(db, A, 'stem', { til: 'CCC', begrundelse: 'Lang nok begrundelse' }, env); }, 'findes');
+  Core.handle(db, A, 'stem', { til: 'BBB', begrundelse: 'Hjalp med en kunde' }, env);
+  kaster(function () { Core.handle(db, A, 'stem', { til: 'BBB', begrundelse: 'Hjalp med en kunde' }, env); }, 'allerede');
+});
+t('stemmer er hemmelige for brugere', function () {
+  var m = Core.handle(db, B, 'state', {}, env).mdk;
+  eq(m.minStemme, null);
+  eq(JSON.stringify(m).indexOf('stemmer'), -1);
+});
+t('tie-breaker: første stemme vinder', function () {
+  data.Stemmer.push({ id: 's1', tid: '2026-10-05T09:00:00.000Z', maaned: '2026-10', fra: 'CCC', til: 'BBB', begrundelse: 'x' });
+  data.Stemmer.push({ id: 's2', tid: '2026-10-04T09:00:00.000Z', maaned: '2026-10', fra: 'BBB', til: 'AAA', begrundelse: 'y' });
+  eq(Core.handle(db, B, 'state', {}, env).mdk.sidste.initialer, 'AAA');
+});
+t('optjening er idempotent', function () {
+  data.Regler.push({ gruppe: 'Support', kilde: 'genfak', sats: 0.002 });
+  var k = { genfak: { 'BBB|2026-11': 10000 } };
+  eq(Core.applyEarnings(db, k, env).nye, 1);
+  eq(Core.applyEarnings(db, k, env).nye, 0);
+  k.genfak['BBB|2026-11'] = 20000;
+  eq(Core.applyEarnings(db, k, env).rettede, 1);
+});
+t('åbningstider', function () {
+  eq(Core.aabningstider(new Date(2026, 10, 16, 9, 0)).aaben, true);
+  eq(Core.aabningstider(new Date(2026, 10, 16, 15, 30)).aaben, false);
+  eq(Core.aabningstider(new Date(2026, 10, 15, 12, 0)).tekst, 'Åbner i morgen kl. 08:00');
+});
+print('OK: ' + ok + '  FEJL: ' + fejl);
