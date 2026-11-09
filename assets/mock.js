@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v33';
+  var KEY = 'webshoppen-demo-v34';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -25,31 +25,9 @@ window.Mock = (function () {
   function seed() {
     return {
       Brugere: BRUGERE.map(function (b) { return Object.assign({}, b); }),
-      Config: [{ noegle: 'HJUL_PRIS', vaerdi: 30 }, { noegle: 'MDK_PRAEMIE', vaerdi: '50 Webcoins' }, { noegle: 'MDK_PRAEMIE_MAANED', vaerdi: Core.maanedKey(new Date()) }],
+      Config: [{ noegle: 'MDK_PRAEMIE', vaerdi: '50 Webcoins' }, { noegle: 'MDK_PRAEMIE_MAANED', vaerdi: Core.maanedKey(new Date()) }],
       Stemmer: [],
       Spil: [],
-      Menu: [
-        { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 20, kostpris: 8, oenske: 'ja', aktiv: 'ja' },
-        { id: 'monster', navn: 'Hvid Monster', ikon: '⚡', pris: 30, kostpris: 15, aktiv: 'ja' },
-        { id: 'candybar', navn: 'Candybar', ikon: '🍫', pris: 10, kostpris: 6, varianter: 'Marsbar, Snickers', aktiv: 'ja' },
-        { id: 'andet', navn: 'Andet?', ikon: '💡', pris: 0, kostpris: 0, snart: 'ja', aktiv: 'ja' }
-      ],
-      Hjul: [
-        { id: 'h-100', navn: '100 Webcoins', ikon: '🏆', type: 'webcoins', beloeb: 100, kostpris: 0, vaegt: 30, aktiv: 'ja' },
-        { id: 'h-nitte', navn: 'Nitte', ikon: '🙈', type: 'intet', beloeb: 0, kostpris: 0, vaegt: 100, aktiv: 'ja' },
-        { id: 'h-10', navn: '10 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 10, kostpris: 0, vaegt: 80, aktiv: 'ja' },
-        { id: 'h-sodavand', navn: 'Sodavand', ikon: '🥤', type: 'vare', beloeb: 0, kostpris: 8, vaegt: 120, aktiv: 'ja' },
-        { id: 'h-20', navn: '20 Webcoins', ikon: '💫', type: 'webcoins', beloeb: 20, kostpris: 0, vaegt: 180, aktiv: 'ja' },
-        { id: 'h-candybar', navn: 'Candybar', ikon: '🍫', type: 'vare', beloeb: 0, kostpris: 6, vaegt: 80, aktiv: 'ja' },
-        { id: 'h-30', navn: '30 Webcoins', ikon: '💎', type: 'webcoins', beloeb: 30, kostpris: 0, vaegt: 200, aktiv: 'ja' },
-        { id: 'h-monster', navn: 'Hvid Monster', ikon: '⚡', type: 'vare', beloeb: 0, kostpris: 15, vaegt: 70, aktiv: 'ja' },
-        { id: 'h-40', navn: '40 Webcoins', ikon: '💰', type: 'webcoins', beloeb: 40, kostpris: 0, vaegt: 140, aktiv: 'ja' }
-      ],
-      Projekter: [
-        { id: 'frokost', navn: 'Teamfrokost', ikon: '🍽️', maal: 3000, aaben: 'ja' },
-        { id: 'biograf', navn: 'Tur i biografen', ikon: '🎬', maal: 1600, aaben: 'ja' },
-        { id: 'kage', navn: 'Kagefredag', ikon: '🍰', maal: 400, aaben: 'ja' }
-      ],
       Posteringer: [],
       Bestillinger: [],
       Kilder: [

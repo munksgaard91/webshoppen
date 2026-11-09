@@ -6,7 +6,7 @@ function eq(a, b, m) { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Er
 function kaster(fn, tekst) { try { fn(); } catch (e) { if (tekst && e.message.indexOf(tekst) < 0) throw new Error('forkert fejl: ' + e.message); return; } throw new Error('kastede ikke'); }
 
 var data = {
-  Config: [{ noegle: 'HJUL_PRIS', vaerdi: 15 }, { noegle: 'MDK_PRAEMIE', vaerdi: 'Snack' }],
+  Config: [{ noegle: 'MDK_PRAEMIE', vaerdi: 'Snack' }],
   Brugere: [
     { email: 'a@best-one.dk', initialer: 'AAA', navn: 'Anna A', gruppe: 'Hjemmeside', aktiv: 'ja' },
     { email: 'b@best-one.dk', initialer: 'BBB', navn: 'Bo B', gruppe: 'Support', aktiv: 'ja' },
@@ -30,6 +30,8 @@ var data = {
   ],
   Bestillinger: [], Stemmer: [], Kilder: [], Regler: []
 };
+// Sortimentet ligger i koden (shared/sortiment.js); testen bruger sit eget
+var SORTIMENT = { menu: data.Menu, hjul: data.Hjul, events: data.Projekter, hjulPris: 15 };
 var db = {
   all: function (t) { return data[t] || (data[t] = []); },
   insert: function (t, o) { db.all(t).push(Object.assign({}, o)); },

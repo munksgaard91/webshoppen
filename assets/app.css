@@ -795,3 +795,15 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 /* Opgørelse: måneder der er sendt til RAB */
 tr.afregnet td { color: var(--muted); }
 .row-acts.rab { justify-content: flex-end; align-items: center; }
+
+/* Admin-overblik: Events og Månedens kollega lige høje */
+.grid-2.lige { align-items: stretch; }
+.grid-2.lige > .card { height: 100%; box-sizing: border-box; }
+/* Posteringer: Vis flere */
+.vis-flere { display: flex; justify-content: center; padding-top: 16px; }
+/* Regler: simpel liste pr. gruppe */
+.regel-liste .card-title { margin: 22px 0 6px; }
+.regel-liste .card-title:first-child { margin-top: 0; }
+.regel-liste ul { list-style: none; margin: 0; padding: 0; }
+.regel-liste li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.regel-liste p { margin: 0 0 4px; font-size: 14px; }

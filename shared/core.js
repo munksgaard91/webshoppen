@@ -15,11 +15,8 @@ var Core = (function () {
   var TABELLER = {
     Config: ['noegle', 'vaerdi'],
     Brugere: ['email', 'initialer', 'navn', 'gruppe', 'aktiv'],
-    Menu: ['id', 'navn', 'ikon', 'billede', 'pris', 'kostpris', 'varianter', 'oenske', 'snart', 'aktiv'],
     Stemmer: ['id', 'tid', 'maaned', 'fra', 'til', 'begrundelse'],
     Spil: ['id', 'tid', 'initialer', 'status', 'resultat'],
-    Hjul: ['id', 'navn', 'ikon', 'type', 'beloeb', 'kostpris', 'vaegt', 'aktiv'],
-    Projekter: ['id', 'navn', 'ikon', 'maal', 'aaben'],
     Posteringer: ['id', 'tid', 'initialer', 'type', 'beloeb', 'tekst', 'ref'],
     Bestillinger: ['id', 'tid', 'fra', 'til', 'vare', 'pris', 'kostpris', 'status', 'forud', 'oenske'],
     Kilder: ['kilde', 'navn', 'sheet_id', 'fane', 'kol_initialer', 'kol_vaerdi', 'kol_dato', 'start_raekke'],
@@ -139,11 +136,21 @@ var Core = (function () {
     return st;
   }
 
+  // Sortimentet (menu, hjul, events) ligger i koden: shared/sortiment.js (global SORTIMENT), ikke i arket.
+  function sortiment() {
+    var s = typeof SORTIMENT !== 'undefined' ? SORTIMENT : {};
+    return { menu: s.menu || [], hjul: s.hjul || [], events: s.events || [], hjulPris: s.hjulPris === undefined ? 30 : s.hjulPris };
+  }
+  // Mangler feltet, er varen/eventet med (aktiv/aaben er standard)
+  function til(v) { return v === undefined || v === '' || sand(v); }
+  // Kun et udtrykkeligt ja/true tæller (oenske, snart)
+  function ja(v) { return v === true || /^(ja|true|1)$/i.test(str(v).trim()); }
+
   function projekterMedStatus(db, initialer) {
     var poster = db.all('Posteringer');
     var navne = {};
     db.all('Brugere').forEach(function (u) { navne[ini(u.initialer)] = str(u.navn); });
-    return db.all('Projekter').map(function (p) {
+    return sortiment().events.map(function (p) {
       var indsamlet = 0, mit = 0, pr = {};
       poster.forEach(function (x) {
         if (x.type === 'projekt' && str(x.ref) === str(p.id)) {
@@ -155,13 +162,13 @@ var Core = (function () {
       var top = Object.keys(pr).filter(function (i) { return pr[i] > 0; })
         .sort(function (a, b) { return pr[b] - pr[a]; }).slice(0, 10)
         .map(function (i) { return { initialer: i, navn: navne[i] || i, beloeb: pr[i] }; });
-      return { id: str(p.id), navn: str(p.navn), ikon: str(p.ikon), maal: num(p.maal), aaben: sand(p.aaben), indsamlet: indsamlet, mitBidrag: mit, top: top };
+      return { id: str(p.id), navn: str(p.navn), ikon: str(p.ikon), maal: num(p.maal), aaben: til(p.aaben), indsamlet: indsamlet, mitBidrag: mit, top: top };
     });
   }
 
   function menu(db, alle) {
-    return db.all('Menu').filter(function (v) { return alle || sand(v.aktiv); }).map(function (v) {
-      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), billede: str(v.billede), pris: num(v.pris), kostpris: num(v.kostpris), varianter: varianter(v), oenskeFelt: str(v.oenske).toLowerCase() === 'ja', snart: str(v.snart).toLowerCase() === 'ja', aktiv: sand(v.aktiv) };
+    return sortiment().menu.filter(function (v) { return alle || til(v.aktiv); }).map(function (v) {
+      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), billede: str(v.billede), pris: num(v.pris), kostpris: num(v.kostpris), varianter: varianter(v), oenskeFelt: ja(v.oenske), snart: ja(v.snart), aktiv: til(v.aktiv) };
     });
   }
 
@@ -177,8 +184,8 @@ var Core = (function () {
   }
 
   function hjulFelter(db, alle) {
-    return db.all('Hjul').filter(function (h) { return alle || sand(h.aktiv); }).map(function (h) {
-      return { id: str(h.id), navn: str(h.navn), ikon: str(h.ikon), type: str(h.type) || 'intet', beloeb: num(h.beloeb), kostpris: num(h.kostpris), vaegt: num(h.vaegt), aktiv: sand(h.aktiv) };
+    return sortiment().hjul.filter(function (h) { return alle || til(h.aktiv); }).map(function (h) {
+      return { id: str(h.id), navn: str(h.navn), ikon: str(h.ikon), type: str(h.type) || 'intet', beloeb: num(h.beloeb), kostpris: num(h.kostpris), vaegt: num(h.vaegt), aktiv: til(h.aktiv) };
     });
   }
 
@@ -259,7 +266,7 @@ var Core = (function () {
         return { maaned: mk, minStemme: min ? { initialer: min, navn: navne[min] || min, begrundelse: minHvorfor } : null, praemie: mdkPraemie(db, mk),
           sidste: vinder ? { maaned: sidst, initialer: vinder.initialer, navn: vinder.navn } : null };
       })(),
-      hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 30))), klar: me.initialer ? ubrugteDrej(db, me.initialer) : 0, felter: (function () {
+      hjul: { pris: Math.floor(num(sortiment().hjulPris)), klar: me.initialer ? ubrugteDrej(db, me.initialer) : 0, felter: (function () {
         // Felternes størrelse på hjulet følger chancen (andel 0–1), så hjulet viser de rigtige odds.
         var fs = hjulFelter(db, false);
         var tot = fs.reduce(function (sum, f) { return sum + Math.max(0, f.vaegt); }, 0) || 1;
@@ -273,9 +280,9 @@ var Core = (function () {
   function bestil(db, me, data, env) {
     kraevBruger(me);
     var vare = null;
-    db.all('Menu').forEach(function (v) { if (str(v.id) === str(data.vareId) && sand(v.aktiv)) vare = v; });
+    sortiment().menu.forEach(function (v) { if (str(v.id) === str(data.vareId) && til(v.aktiv)) vare = v; });
     if (!vare) throw err('BAD', 'Varen findes ikke længere.');
-    if (str(vare.snart).toLowerCase() === 'ja') throw err('BAD', 'Varen kommer snart.');
+    if (ja(vare.snart)) throw err('BAD', 'Varen kommer snart.');
     var valg = varianter(vare);
     var variant = '';
     if (valg.length) {
@@ -284,7 +291,7 @@ var Core = (function () {
     }
     var vareNavn = variant && variant !== str(vare.navn) ? str(vare.navn) + ' · ' + variant : str(vare.navn);
     // Varer uden valg har et frivilligt ønske-felt (fx "Kold, tak" eller "Gerne en med karamel")
-    var oenske = valg.length <= 1 && str(vare.oenske).toLowerCase() === 'ja' ? str(data.oenske).trim().slice(0, 200) : '';
+    var oenske = valg.length <= 1 && ja(vare.oenske) ? str(data.oenske).trim().slice(0, 200) : '';
     // Lukket shop = forudbestilling. Den leveres, når shoppen åbner igen.
     var shop = env.shop ? env.shop() : { aaben: true };
     var forud = !shop.aaben;
@@ -410,7 +417,7 @@ var Core = (function () {
   // Trin 1: køb et drej (betaling). Trin 2: drej (resultat). Et købt drej ligger i fanen Spil, til det bruges.
   function koebDrej(db, me, data, env) {
     kraevBruger(me);
-    var pris = Math.max(0, Math.floor(num(cfgVal(db, 'HJUL_PRIS', 30))));
+    var pris = Math.max(0, Math.floor(num(sortiment().hjulPris)));
     var felter = hjulFelter(db, false);
     if (!felter.length) throw err('BAD', 'Hjulet er ikke sat op endnu.');
     if (ubrugteDrej(db, me.initialer) > 0) throw err('BAD', 'Du har allerede et drej klar.');
@@ -467,7 +474,7 @@ var Core = (function () {
     var beloeb = Math.floor(num(data.beloeb));
     if (!(beloeb > 0)) throw err('BAD', 'Angiv et beløb.');
     var p = null;
-    db.all('Projekter').forEach(function (x) { if (str(x.id) === str(data.projektId) && sand(x.aaben)) p = x; });
+    sortiment().events.forEach(function (x) { if (str(x.id) === str(data.projektId) && til(x.aaben)) p = x; });
     if (!p) throw err('BAD', 'Eventet er lukket.');
     // Et fuldt projekt kan ikke få flere donationer, og man kan ikke donere mere, end der mangler.
     var maal = num(p.maal);
@@ -535,7 +542,7 @@ var Core = (function () {
       }),
       menu: menu(db, true),
       projekter: projekterMedStatus(db, ''),
-      hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 30))), felter: hjulFelter(db, true) },
+      hjul: { pris: Math.floor(num(sortiment().hjulPris)), felter: hjulFelter(db, true) },
       mdk: (function () {
         var mk = maanedKey(nu), hist = [], m = mk;
         var afgivet = db.all('Stemmer').filter(function (v) { return str(v.maaned) === mk; }).length;
@@ -590,50 +597,6 @@ var Core = (function () {
     return { ok: true };
   }
 
-  function adminVare(db, me, data, env) {
-    kraevAdmin(me);
-    if (!str(data.navn).trim()) throw err('BAD', 'Navn mangler.');
-    var pris = Math.floor(num(data.pris));
-    if (!(pris >= 0)) throw err('BAD', 'Ugyldig pris.');
-    var obj = { navn: str(data.navn).trim(), ikon: str(data.ikon).trim(), billede: str(data.billede).trim(), pris: pris, kostpris: Math.max(0, num(data.kostpris)), varianter: str(data.varianter).split(/[,;\n]/).map(function (x) { return x.trim(); }).filter(String).join(', '), oenske: data.oenskeFelt ? 'ja' : '', snart: data.snart ? 'ja' : '', aktiv: data.aktiv === false ? 'nej' : 'ja' };
-    var row = null;
-    if (data.id) db.all('Menu').forEach(function (r) { if (str(r.id) === str(data.id)) row = r; });
-    if (row) db.update('Menu', row, obj);
-    else { obj.id = env.uuid(); db.insert('Menu', obj); }
-    return { ok: true };
-  }
-
-  function adminHjulFelt(db, me, data, env) {
-    kraevAdmin(me);
-    if (!str(data.navn).trim()) throw err('BAD', 'Navn mangler.');
-    var type = ['vare', 'webcoins', 'intet'].indexOf(str(data.type)) >= 0 ? str(data.type) : 'intet';
-    var obj = { navn: str(data.navn).trim(), ikon: str(data.ikon).trim(), type: type, beloeb: Math.max(0, Math.floor(num(data.beloeb))), kostpris: Math.max(0, num(data.kostpris)), vaegt: Math.max(0, num(data.vaegt)), aktiv: data.aktiv === false ? 'nej' : 'ja' };
-    var row = null;
-    if (data.id) db.all('Hjul').forEach(function (r) { if (str(r.id) === str(data.id)) row = r; });
-    if (row) db.update('Hjul', row, obj);
-    else { obj.id = env.uuid(); db.insert('Hjul', obj); }
-    return { ok: true };
-  }
-
-  function adminHjulPris(db, me, data) {
-    kraevAdmin(me);
-    var pris = Math.max(0, Math.floor(num(data.pris)));
-    var row = null;
-    db.all('Config').forEach(function (r) { if (str(r.noegle).trim() === 'HJUL_PRIS') row = r; });
-    if (row) db.update('Config', row, { vaerdi: pris }); else db.insert('Config', { noegle: 'HJUL_PRIS', vaerdi: pris });
-    return { ok: true };
-  }
-
-  function adminProjekt(db, me, data, env) {
-    kraevAdmin(me);
-    if (!str(data.navn).trim()) throw err('BAD', 'Navn mangler.');
-    var obj = { navn: str(data.navn).trim(), ikon: str(data.ikon).trim(), maal: Math.max(0, Math.floor(num(data.maal))), aaben: data.aaben === false ? 'nej' : 'ja' };
-    var row = null;
-    if (data.id) db.all('Projekter').forEach(function (r) { if (str(r.id) === str(data.id)) row = r; });
-    if (row) db.update('Projekter', row, obj);
-    else { obj.id = env.uuid(); db.insert('Projekter', obj); }
-    return { ok: true };
-  }
 
   function adminJustering(db, me, data, env) {
     kraevAdmin(me);
@@ -699,17 +662,13 @@ var Core = (function () {
     forslag: forslag,
     admin_mdk_praemie: adminMdkPraemie,
     admin_afregnet: adminAfregnet,
-    admin_hjul: adminHjulFelt,
-    admin_hjul_pris: adminHjulPris,
     admin_state: adminState,
     admin_bestilling: adminBestilling,
     admin_bruger: adminBruger,
-    admin_vare: adminVare,
-    admin_projekt: adminProjekt,
     admin_justering: adminJustering,
     admin_sync: function (db, me, data, env) { kraevAdmin(me); return env.sync(); }
   };
-  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_afregnet: 1, admin_hjul: 1, admin_hjul_pris: 1, admin_bestilling: 1, admin_bruger: 1, admin_vare: 1, admin_projekt: 1, admin_justering: 1, admin_sync: 1 };
+  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_sync: 1 };
 
   function handle(db, me, action, data, env) {
     var fn = HANDLINGER[action];

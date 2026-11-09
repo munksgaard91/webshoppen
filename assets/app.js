@@ -235,7 +235,6 @@
     'profil': { titel: 'Min profil', fn: pageProfil },
     'admin/bestillinger': { titel: 'Bestillinger', fn: pageAdminBestillinger, admin: true },
     'admin/brugere': { titel: 'Brugere', fn: pageAdminBrugere, admin: true },
-    'admin/sortiment': { titel: 'Sortiment', fn: pageAdminSortiment, admin: true },
     'admin/kollega': { titel: 'Månedens kollega', fn: pageAdminKollega, admin: true },
     'admin/regler': { titel: 'Regler', fn: pageRegler, admin: true },
     'admin/posteringer': { titel: 'Posteringer', fn: pageAdminPosteringer, admin: true }
@@ -293,7 +292,6 @@
       '<nav class="nav">' + navLink('', 'home', 'Overblik') +
       navLink('admin/bestillinger', 'cart', 'Bestillinger', nyeBest ? '<span class="badge">' + nyeBest + '</span>' : '') +
       navLink('admin/brugere', 'users', 'Brugere') +
-      navLink('admin/sortiment', 'box', 'Sortiment') +
       navLink('admin/kollega', 'star', 'Månedens kollega') +
       navLink('admin/regler', 'book', 'Regler') +
       navLink('admin/posteringer', 'list', 'Posteringer') + '</nav>' +
@@ -767,15 +765,16 @@
     return '<div class="page-head"><div><div class="eyebrow">Admin</div><h1>' + titel + '</h1></div><div class="chips">' + (knapper || '') + '</div></div>';
   }
 
+  // Regler: simpel liste – overskrift pr. gruppe og hvad hver ting er værd
   function pageRegler() {
     return adminHead('Regler') +
-      '<div class="rules">' + S.grupper.map(function (g) {
+      '<section class="card regel-liste">' + S.grupper.map(function (g) {
         var r = S.regler.filter(function (x) { return x.gruppe === g; });
-        return '<section class="card"><div class="card-head" style="margin-bottom:10px"><h2 class="card-title">' + esc(g) + '</h2></div>' +
-          (r.length ? r.map(function (x) { return '<div class="rule"><span>' + esc(x.kildeNavn) + '</span><b>' + esc(x.tekst || x.sats) + '</b></div>'; }).join('') : '<div class="empty">Ingen regler endnu.</div>') +
-          '</section>';
-      }).join('') + '</div>';
+        return '<h2 class="card-title">' + esc(g) + '</h2>' +
+          (r.length ? '<ul>' + r.map(function (x) { return '<li><span>' + esc(x.kildeNavn) + '</span><b>' + esc(x.tekst || x.sats) + '</b></li>'; }).join('') + '</ul>' : '<p class="faint">Kommer senere.</p>');
+      }).join('') + '</section>';
   }
+
 
   function pageAdminBestillinger() {
     var filtre = { ny: 'Nye', udleveret: 'Udleveret', annulleret: 'Annulleret', alle: 'Alle' };
@@ -831,7 +830,7 @@
     // Sorteret efter højeste procent først
     var pct = function (p) { return p.maal > 0 ? p.indsamlet / p.maal : 0; };
     var events = A.projekter.filter(function (p) { return p.aaben; }).sort(function (a, b) { return pct(b) - pct(a); });
-    var ev = '<section class="card"><div class="card-head"><h2 class="card-title">Events</h2><a class="link" href="#/admin/sortiment">Ret</a></div>' +
+    var ev = '<section class="card"><div class="card-head"><h2 class="card-title">Events</h2></div>' +
       (events.length ? events.map(function (p) {
         var pp = p.maal > 0 ? Math.min(100, p.indsamlet / p.maal * 100) : 0;
         return '<div class="adm-ev"><div class="adm-ev-top"><span>' + esc(p.ikon || '🎯') + ' <b>' + esc(p.navn) + '</b></span><span class="num faint">' + fmt(p.indsamlet) + (p.maal ? ' af ' + fmt(p.maal) : '') + ' · <b>' + pp.toFixed(0) + ' %</b></span></div>' +
@@ -858,7 +857,7 @@
 
     // Rækkefølge: det der skal klares (nye bestillinger) øverst, så økonomi, derefter resten
     return adminHead('Overblik') + '<div class="adm-first">' + best + '</div>' + stats +
-      '<div class="grid-2 top0">' + ev + kollega + '</div>' +
+      '<div class="grid-2 top0 lige">' + ev + kollega + '</div>' +
       '<div class="adm-stak">' + opg + akt + '</div>';
   }
 
@@ -887,52 +886,6 @@
       }).join('') + '</tbody></table></div></section>';
   }
 
-  function pageAdminSortiment() {
-    return adminHead('Sortiment') +
-      '<div class="grid-2 top0"><section class="card"><div class="card-head"><h2 class="card-title">Menu</h2><button class="btn primary sm" data-act="ny-vare">Ny vare</button></div>' +
-      '<div class="table-wrap"><table><thead><tr><th></th><th>Navn</th><th class="r">Pris</th><th class="r">Kostpris</th><th>Status</th><th></th></tr></thead><tbody>' +
-      A.menu.map(function (v) {
-        return '<tr' + (v.aktiv ? '' : ' style="opacity:.5"') + '><td style="font-size:22px">' + esc(v.ikon) + '</td><td><b>' + esc(v.navn) + '</b>' + (v.varianter.length ? '<small class="variants">' + v.varianter.map(esc).join(' · ') + '</small>' : '') + (v.snart ? ' <span class="tag">Kommer snart</span>' : '') + '</td><td class="r num">' + wc(v.pris) + '</td><td class="r num">' + (v.kostpris ? kr(v.kostpris) : '<span class="tag ny">Mangler</span>') + '</td><td>' + (v.aktiv ? '<span class="tag udleveret">Aktiv</span>' : '<span class="tag">Skjult</span>') + '</td><td><div class="row-acts"><button class="btn sm" data-act="ret-vare" data-id="' + esc(v.id) + '">Rediger</button></div></td></tr>';
-      }).join('') + '</tbody></table></div></section>' +
-      '<section class="card"><div class="card-head"><h2 class="card-title">Events</h2><button class="btn primary sm" data-act="nyt-projekt">Nyt event</button></div>' +
-      (A.projekter.length ? A.projekter.map(function (p) {
-        var pp = p.maal > 0 ? Math.min(100, (p.indsamlet / p.maal) * 100) : 0;
-        return '<div class="proj-row"' + (p.aaben ? '' : ' style="opacity:.55"') + '><div class="proj-top"><span class="ico">' + esc(p.ikon || '🎯') + '</span><div class="t"><b>' + esc(p.navn) + '</b><small>' + (p.aaben ? 'Åben' : 'Lukket') + '</small></div><button class="btn sm" data-act="ret-projekt" data-id="' + esc(p.id) + '">Rediger</button></div>' +
-          '<div class="bar"><i style="width:' + pp.toFixed(0) + '%"></i></div><div class="meta num"><span>' + wc(p.indsamlet) + '</span><span>' + (p.maal ? 'mål ' + wc(p.maal) : '') + '</span></div></div>';
-      }).join('') : '<div class="empty">Ingen events.</div>') +
-      '</section></div>' + adminHjul();
-  }
-
-  function adminHjul() {
-    var h = A.hjul;
-    var total = h.felter.filter(function (f) { return f.aktiv; }).reduce(function (s, f) { return s + f.vaegt; }, 0);
-    var typeNavn = { vare: 'Vare', webcoins: 'Webcoins', intet: 'Ingen gevinst' };
-    return '<section class="card" style="margin-top:20px"><div class="card-head"><h2 class="card-title">Feelin\' Lucky?</h2>' +
-      '<div class="chips"><label class="muted" for="h-pris" style="align-self:center;font-size:13px;font-weight:700">Pris pr. drej</label><input class="input num" id="h-pris" type="number" min="0" value="' + esc(h.pris) + '" style="width:90px">' +
-      '<button class="btn sm" data-act="hjul-pris-ok">Gem pris</button><button class="btn primary sm" data-act="nyt-hjul">Ny præmie</button></div></div>' +
-      '<div class="table-wrap"><table><thead><tr><th></th><th>Præmie</th><th>Type</th><th class="r">Kostpris</th><th class="r">Vægt</th><th class="r">Chance</th><th>Status</th><th></th></tr></thead><tbody>' +
-      h.felter.map(function (f) {
-        var chance = f.aktiv && total > 0 ? (f.vaegt / total * 100) : 0;
-        return '<tr' + (f.aktiv ? '' : ' style="opacity:.5"') + '><td style="font-size:22px">' + esc(f.ikon) + '</td><td><b>' + esc(f.navn) + '</b></td><td>' + (f.type === 'webcoins' ? wc(f.beloeb) : esc(typeNavn[f.type] || f.type)) + '</td>' +
-          '<td class="r num">' + (f.type === 'vare' ? kr(f.kostpris) : '–') + '</td><td class="r num">' + fmt(f.vaegt) + '</td><td class="r num">' + chance.toFixed(1).replace('.', ',') + ' %</td>' +
-          '<td>' + (f.aktiv ? '<span class="tag udleveret">Aktiv</span>' : '<span class="tag">Skjult</span>') + '</td><td><div class="row-acts"><button class="btn sm" data-act="ret-hjul" data-id="' + esc(f.id) + '">Rediger</button></div></td></tr>';
-      }).join('') + '</tbody></table></div></section>';
-  }
-
-  function openHjulFelt(id) {
-    var f = id ? A.hjul.felter.filter(function (x) { return x.id === id; })[0] : { id: '', navn: '', ikon: '', type: 'vare', beloeb: 0, kostpris: 0, vaegt: 10, aktiv: true };
-    openModal('<h2>' + (id ? 'Rediger præmie' : 'Ny præmie') + '</h2><input type="hidden" id="h-id" value="' + esc(f.id) + '">' +
-      '<div class="row-2"><div class="field"><label for="h-navn">Navn</label><input class="input" id="h-navn" value="' + esc(f.navn) + '"></div>' +
-      '<div class="field"><label for="h-ikon">Ikon (emoji)</label><input class="input" id="h-ikon" value="' + esc(f.ikon) + '" maxlength="4"></div></div>' +
-      '<div class="row-2"><div class="field"><label for="h-type">Type</label><select class="input" id="h-type">' +
-      [['vare', 'Vare (du leverer)'], ['webcoins', 'Webcoins'], ['intet', 'Ingen gevinst']].map(function (o) { return '<option value="' + o[0] + '"' + (f.type === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
-      '<div class="field"><label for="h-vaegt">Vægt (chance)</label><input class="input num" id="h-vaegt" type="number" min="0" value="' + esc(f.vaegt) + '"></div></div>' +
-      '<div class="row-2"><div class="field"><label for="h-beloeb">Webcoins (ved type Webcoins)</label><input class="input num" id="h-beloeb" type="number" min="0" value="' + esc(f.beloeb) + '"></div>' +
-      '<div class="field"><label for="h-kost">Kostpris (kr, ved type Vare)</label><input class="input num" id="h-kost" type="number" min="0" step="0.5" value="' + esc(f.kostpris || '') + '"></div></div>' +
-      '<label class="check"><input type="checkbox" id="h-aktiv"' + (f.aktiv ? ' checked' : '') + '> På hjulet</label>' +
-      '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="hjul-ok">Gem</button></div>');
-  }
-
   function pageAdminKollega() {
     var m = A.mdk;
     var mNavn = MAANEDER[Number(m.maaned.slice(5)) - 1];
@@ -940,7 +893,7 @@
       '<section class="card" style="margin-bottom:20px"><div class="card-head"><h2 class="card-title">Præmie</h2></div>' +
       '<div class="vote-form"><input class="input" id="mdk-praemie" value="' + esc(m.praemie) + '" placeholder="fx 50 Webcoins"><button class="btn primary" data-act="mdk-praemie-ok">Gem</button></div>' +
       '<small class="faint">' + (m.praemie ? 'Gælder ' + mNavn + '.' : 'Ingen præmie for ' + mNavn + ' endnu – medarbejderne ser "Coming soon".') + ' Præmien nulstilles hver måned og gives manuelt (Brugere → Justér).</small></section>' +
-      '<div class="grid-2 top0"><section class="card"><div class="card-head"><h2 class="card-title">Stilling i ' + mNavn + '</h2><span class="tag">' + m.afgivet + ' stemmer</span></div>' +
+      '<div class="adm-stak" style="margin-top:0"><section class="card"><div class="card-head"><h2 class="card-title">Stilling i ' + mNavn + '</h2><span class="tag">' + m.afgivet + ' stemmer</span></div>' +
       (m.stilling.length ? '<div class="table-wrap"><table><thead><tr><th>#</th><th>Kollega</th><th class="r">Stemmer</th><th class="r">Første stemme</th></tr></thead><tbody>' +
         m.stilling.map(function (x, i) {
           return '<tr><td>' + (i === 0 ? '🏆' : i + 1) + '</td><td><b>' + esc(x.navn) + '</b>' +
@@ -959,7 +912,7 @@
     var rows = A.posteringer.filter(function (p) {
       return (ui.postType === 'alle' || p.type === ui.postType) && (!ui.postPerson || p.initialer === ui.postPerson);
     });
-    var vist = rows.slice(0, 400);
+    var vist = rows.slice(0, ui.postVis || 25);
     var sum = rows.reduce(function (s, p) { return s + p.beloeb; }, 0);
     return adminHead('Posteringer', '<button class="btn" data-act="sync">' + ico('sync') + 'Hent optjening nu</button>') +
       '<section class="card"><div class="card-head"><div class="chips">' +
@@ -971,7 +924,8 @@
       (vist.length ? '<div class="table-wrap"><table><thead><tr><th>Tid</th><th>Person</th><th>Type</th><th>Tekst</th><th class="r">Beløb</th></tr></thead><tbody>' +
         vist.map(function (p) {
           return '<tr><td class="faint">' + dato(p.tid) + '</td><td>' + esc(p.navn) + '</td><td><span class="tag">' + esc(TYPER[p.type] || p.type) + '</span></td><td>' + esc(p.tekst) + '</td><td class="r">' + beloebCell(p.beloeb) + '</td></tr>';
-        }).join('') + '</tbody></table></div>' : '<div class="empty">Ingen posteringer.</div>') +
+        }).join('') + '</tbody></table></div>' +
+        (rows.length > vist.length ? '<div class="vis-flere"><button class="btn" data-act="post-flere">Vis flere</button></div>' : '') : '<div class="empty">Ingen posteringer.</div>') +
       '</section>';
   }
 
@@ -1074,31 +1028,6 @@
       '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="juster-ok">Gem</button></div>');
   }
 
-  function openVare(id) {
-    var v = id ? A.menu.filter(function (x) { return x.id === id; })[0] : { id: '', navn: '', ikon: '', pris: 10, kostpris: 0, aktiv: true };
-    openModal('<h2>' + (id ? 'Rediger vare' : 'Ny vare') + '</h2><input type="hidden" id="v-id" value="' + esc(v.id) + '">' +
-      '<div class="row-2"><div class="field"><label for="v-navn">Navn</label><input class="input" id="v-navn" value="' + esc(v.navn) + '"></div>' +
-      '<div class="field"><label for="v-ikon">Ikon (emoji)</label><input class="input" id="v-ikon" value="' + esc(v.ikon) + '" maxlength="4"></div></div>' +
-      '<div class="field"><label for="v-billede">Billede (URL eller sti, valgfrit)</label><input class="input" id="v-billede" value="' + esc(v.billede || '') + '" placeholder="assets/varer/monster.jpg"></div>' +
-      '<div class="row-2"><div class="field"><label for="v-pris">Pris (Webcoins)</label><input class="input num" id="v-pris" type="number" min="0" value="' + esc(v.pris) + '"></div>' +
-      '<div class="field"><label for="v-kost">Kostpris (kr)</label><input class="input num" id="v-kost" type="number" min="0" step="0.5" value="' + esc(v.kostpris || '') + '"></div></div>' +
-      '<div class="field"><label for="v-var">Valgmuligheder (kommasepareret, valgfrit)</label><input class="input" id="v-var" value="' + esc((v.varianter || []).join(', ')) + '" placeholder="Pepsi Max, Faxe Kondi"></div>' +
-      '<label class="check"><input type="checkbox" id="v-oenske"' + (v.oenskeFelt ? ' checked' : '') + '> Vis ønske-felt ved bestilling (kun varer uden valgmuligheder)</label>' +
-      '<label class="check"><input type="checkbox" id="v-snart"' + (v.snart ? ' checked' : '') + '> Kommer snart (kan ikke bestilles endnu)</label>' +
-      '<label class="check"><input type="checkbox" id="v-aktiv"' + (v.aktiv ? ' checked' : '') + '> Vises i menuen</label>' +
-      '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="vare-ok">Gem</button></div>');
-  }
-
-  function openProjekt(id) {
-    var p = id ? A.projekter.filter(function (x) { return x.id === id; })[0] : { id: '', navn: '', ikon: '', maal: 1000, aaben: true };
-    openModal('<h2>' + (id ? 'Rediger event' : 'Nyt event') + '</h2><input type="hidden" id="p-id" value="' + esc(p.id) + '">' +
-      '<div class="row-2"><div class="field"><label for="p-navn">Navn</label><input class="input" id="p-navn" value="' + esc(p.navn) + '"></div>' +
-      '<div class="field"><label for="p-ikon">Ikon (emoji)</label><input class="input" id="p-ikon" value="' + esc(p.ikon) + '" maxlength="4"></div></div>' +
-      '<div class="field"><label for="p-maal">Mål (Webcoins)</label><input class="input num" id="p-maal" type="number" min="0" value="' + esc(p.maal) + '"></div>' +
-      '<label class="check"><input type="checkbox" id="p-aaben"' + (p.aaben ? ' checked' : '') + '> Åben for indskud</label>' +
-      '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="projekt-ok">Gem</button></div>');
-  }
-
   function val(id) { var el = document.getElementById(id); return el ? el.value : ''; }
   function checked(id) { var el = document.getElementById(id); return !!(el && el.checked); }
 
@@ -1162,6 +1091,7 @@
       case 'afregnet':
         submit(t, 'admin_afregnet', { maaned: t.dataset.m, sendt: t.dataset.s === '1' }, t.dataset.s === '1' ? 'Markeret som sendt til RAB' : 'Markering fjernet');
         break;
+      case 'post-flere': ui.postVis = (ui.postVis || 25) + 25; render(); break;
       case 'bsort': {
         var nb = ui.brugerSort || { k: 'navn', op: true };
         // Saldo sorteres højeste først ved første klik, tekst A–Å
@@ -1233,7 +1163,7 @@
 
       case 'pfane': ui.profilFane = t.dataset.f; render(); break;
       case 'bfilter': ui.bestFilter = t.dataset.f; render(); break;
-      case 'ptype': ui.postType = t.dataset.f; render(); break;
+      case 'ptype': ui.postType = t.dataset.f; ui.postVis = 25; render(); break;
       case 'bstatus':
         busy(t, true);
         api('admin_bestilling', { id: t.dataset.id, status: t.dataset.s }).then(refresh).catch(function (e) { busy(t, false); toast('Det gik ikke', e.message, true); });
@@ -1247,13 +1177,6 @@
       case 'juster-ok':
         submit(t, 'admin_justering', { initialer: val('j-ini'), beloeb: val('j-beloeb'), tekst: val('j-tekst') }, 'Saldo justeret');
         break;
-      case 'ny-vare': openVare(''); break;
-      case 'ret-vare': openVare(t.dataset.id); break;
-      case 'vare-ok':
-        submit(t, 'admin_vare', { id: val('v-id'), navn: val('v-navn'), ikon: val('v-ikon'), billede: val('v-billede'), pris: val('v-pris'), kostpris: val('v-kost'), varianter: val('v-var'), oenskeFelt: checked('v-oenske'), snart: checked('v-snart'), aktiv: checked('v-aktiv') }, 'Vare gemt');
-        break;
-      case 'nyt-projekt': openProjekt(''); break;
-      case 'nyt-hjul': openHjulFelt(''); break;
       case 'stem': {
         var til = val('mdk-til');
         var hvorfor = val('mdk-hvorfor').trim();
@@ -1275,17 +1198,6 @@
       case 'mdk-praemie-ok':
         submit(t, 'admin_mdk_praemie', { praemie: val('mdk-praemie') }, 'Præmie gemt');
         break;
-      case 'ret-hjul': openHjulFelt(t.dataset.id); break;
-      case 'hjul-ok':
-        submit(t, 'admin_hjul', { id: val('h-id'), navn: val('h-navn'), ikon: val('h-ikon'), type: val('h-type'), vaegt: val('h-vaegt'), beloeb: val('h-beloeb'), kostpris: val('h-kost'), aktiv: checked('h-aktiv') }, 'Præmie gemt');
-        break;
-      case 'hjul-pris-ok':
-        submit(t, 'admin_hjul_pris', { pris: val('h-pris') }, 'Pris gemt');
-        break;
-      case 'ret-projekt': openProjekt(t.dataset.id); break;
-      case 'projekt-ok':
-        submit(t, 'admin_projekt', { id: val('p-id'), navn: val('p-navn'), ikon: val('p-ikon'), maal: val('p-maal'), aaben: checked('p-aaben') }, 'Event gemt');
-        break;
       case 'sync':
         busy(t, true);
         api('admin_sync').then(function (r) {
@@ -1299,7 +1211,7 @@
   document.addEventListener('change', function (ev) {
     var t = ev.target;
     if (t.dataset.act === 'koeb-til') { koebState.oenske = val('koeb-oenske'); koebState.til = t.value; renderKoeb(); }
-    if (t.dataset.act === 'pperson') { ui.postPerson = t.value; render(); }
+    if (t.dataset.act === 'pperson') { ui.postPerson = t.value; ui.postVis = 25; render(); }
   });
 
   document.addEventListener('input', function (ev) {

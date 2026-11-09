@@ -10,7 +10,7 @@ Læs altid `NOTES.md` for status, næste skridt og beslutninger, før du går i 
 GitHub Pages (statisk frontend, custom domæne via CNAME, DNS hos Curanet)
    │  fetch POST (Content-Type: text/plain → ingen CORS-preflight)
    ▼
-Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
+Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs" + shared/sortiment.js som "Sortiment.gs")
    │  bundet til Google Sheet "Webshoppen DB" (= databasen)
    ├─ læser faktureringsark / anmeldelser (fanen Kilder) via timer-trigger
    ├─ læser teambudget-arket (Config-nøgler TEAMBUDGET_*)
@@ -34,9 +34,10 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
 |---|---|
 | `index.html` | Skal for hele appen |
 | `assets/config.js` | `API_URL` (Apps Script web app-URL) og `GOOGLE_CLIENT_ID`. Tom `API_URL` = demo-tilstand |
-| `assets/app.js` | Al UI-logik (vanilla JS, hash-routing `#/`, `#/profil`, `#/admin/bestillinger`, `…/brugere`, `…/sortiment`, `…/kollega`, `…/regler`, `…/posteringer`) |
+| `assets/app.js` | Al UI-logik (vanilla JS, hash-routing `#/`, `#/profil`, `#/admin/bestillinger`, `…/brugere`, `…/kollega`, `…/regler`, `…/posteringer`) |
 | `assets/app.css` | Design (lyst shop-look med blå + guld, mørkt tema som valg) |
 | `assets/mock.js` | Demo-backend i browseren (localStorage), bruger `shared/core.js` |
+| `shared/sortiment.js` | **Sortimentet**: menu, lykkehjul (præmier/vægte/pris) og events. Rettes kun her i koden – ingen Sortiment-side i admin, ingen faner i arket |
 | `shared/core.js` | **Al forretningslogik**, delt mellem demo og Apps Script. Ingen Google-API'er her |
 | `apps-script/Code.gs` | Sheet-adapter, auth, doPost, synk, notifikationer, kalenderfravær, opsætning af arket |
 | `tools/udskaer.py` | Skærer produktbilleder ud til Bestil-listen (Pillow) – se NOTES.md |
@@ -46,7 +47,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
 ## Konventioner
 
 - Ingen build-step, ingen npm. Ren HTML/CSS/JS, så det kan køre direkte fra GitHub Pages.
-- Forretningslogik ændres i `shared/core.js` og kopieres derefter ind i Apps Script-projektet som `Core.gs`.
+- Forretningslogik ændres i `shared/core.js` og kopieres derefter ind i Apps Script-projektet som `Core.gs`. Sortiment (varer, priser, hjul, events) ændres i `shared/sortiment.js` → `Sortiment.gs`. Event-id'er må ikke ændres.
 - **Skriv altid "Webcoins" helt ud** ("1 Webcoin" i ental) – aldrig WC eller andre forkortelser. Brug `wc(n)` i app.js. Mønt-ikonet (`coin()`) står **kun én gang og til sidst** efter beløbet, f.eks. "245 af 1.500 Webcoins 🪙" – aldrig foran eller midt i. **Undtagelser:** den store saldo i saldo-kortet øverst på Overblik og præmien i Månedens kollega har mønten **foran** (🪙 67 Webcoins / 🪙 20 Webcoins).
 - **Primært laptop (MacBook) og desktop.** Mobil skal bare fungere (ingen vandret scroll) – brug ikke tid på at finpudse mobil.
 - UI-tekster på dansk, korte. Ingen lange forklaringer i UI'et — funktionalitet og god UI.
@@ -57,7 +58,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
 - **b-mærket** (`bMark()`, samme glyf som b'et i logoet) bruges som halvskjult dekoration i højre side af saldo-kortet og profilkortet – hvidt, lav opacitet.
 - Min profil: topkort (gruppe, navn, saldo uden ordet "Saldo"), tre visuelle nøgletal (Optjent, Brugt, Donationer) og faner Aktivitet / Optjening / Bestillinger. Ingen initialer i toppen.
 - "Donationer" = gaver givet til kolleger; events bruger knappen "Donér".
-- **"Projekter" hedder "Events" i hele UI'et.** I koden og arket hedder det stadig `Projekter`/`projekt` (fane, posteringstype, funktioner) – det ændres ikke, så eksisterende data virker.
+- **"Projekter" hedder "Events" i hele UI'et.** I koden hedder det stadig `projekt`/`projekter` (posteringstype, funktioner); eventene selv står i `SORTIMENT.events` – det ændres ikke, så eksisterende data virker.
 - **Admin (rmu) deltager ikke**: står kun i `ADMIN_EMAILS`, ikke i `Brugere`. Ingen bestilling, hjul, donation, stemme eller profil – kun moderering.
 - **Demo-saldo er altid 67 Webcoins** for alle testbrugere (justering til sidst i seed i `mock.js`). Ændres demo-data, skal saldoen stadig ende på 67 – og bump `KEY` i mock.js, så demoen nulstilles.
 - **Ingen rigtige navne/mails i repoet** (det er offentligt). Rigtig brugerliste ligger i `brugere.local.csv` (gitignored). Demo bruger "Demo …"-navne.
