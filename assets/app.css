@@ -726,3 +726,15 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .beloeb-chips .chip { padding: 8px 0; text-align: center; }
 .beloeb-chips .chip:disabled { opacity: .35; cursor: not-allowed; }
 .proj-acts .dit.event { color: #2fa36f; }
+
+/* Månedens kollega v3: venstre = kun sidste vinder (tom teaser ved start), højre = afstemning med præmie + deadline */
+.mdk-spot { justify-content: center; }
+.mdk-avatar.empty { border-style: dashed; background: rgba(255, 255, 255, .06); }
+.mdk-crown.faded { opacity: .45; filter: grayscale(.6); }
+.mdk-tease { font-size: 13px; opacity: .8; }
+.mdk-meta { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0 14px; }
+.mdk-pill { display: inline-flex; align-items: center; gap: 8px; background: var(--brand-soft); border-radius: 12px; padding: 8px 14px; font-size: 14px; }
+.mdk-pill small { font-size: 12px; color: var(--muted); font-weight: 600; }
+.mdk-pill b { color: var(--brand); font-weight: 800; }
+:root[data-theme="dark"] .mdk-pill b { color: var(--brand-2); }
+.mdk-pill .coin { width: 18px; height: 18px; }

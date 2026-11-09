@@ -457,27 +457,33 @@
     var mNavn = MAANEDER[Number(m.maaned.slice(5)) - 1];
     var nu = new Date(S.nu);
     var dageTilbage = new Date(nu.getFullYear(), nu.getMonth() + 1, 0).getDate() - nu.getDate();
+    var forrigeNavn = MAANEDER[(nu.getMonth() + 11) % 12];
+    var naesteNavn = MAANEDER[(nu.getMonth() + 1) % 12];
     var kandidater = S.kolleger.filter(function (u) { return u.gruppe; });
     var forkort = function (navn) { return String(navn || '').split(' ').map(function (x) { return x[0]; }).join('').slice(0, 2).toUpperCase(); };
 
-    // Venstre: blåt spotlight med sidste måneds vinder, præmie og nedtælling
+    // Venstre: kun sidste måneds vinder. Ingen vinder endnu = tom plads, der teaser at det kan være dig.
     var spot = '<div class="mdk-spot"><span class="saldo-deco" aria-hidden="true">' + bMark() + '</span>' +
       (m.sidste
         ? '<span class="mdk-eyebrow">Vinder i ' + MAANEDER[Number(m.sidste.maaned.slice(5)) - 1] + '</span>' +
           '<div class="mdk-winner"><span class="mdk-crown">🏆</span><span class="mdk-avatar">' + esc(m.sidste.initialer || forkort(m.sidste.navn)) + '</span></div>' +
           '<b class="mdk-name">' + esc(m.sidste.navn) + '</b>'
-        : '<span class="mdk-eyebrow">Ingen vinder endnu</span><div class="mdk-winner"><span class="mdk-avatar empty">?</span></div><b class="mdk-name">Bliv den første</b>') +
-      '<div class="mdk-facts"><span class="mdk-facts-titel">Afstemning i ' + mNavn + '</span><span><small>Præmie</small>' + (/webcoin/i.test(m.praemie) ? coin() : '🎁') + ' ' + esc(m.praemie) + '</span><span><small>Slutter om</small>⏳ ' + (dageTilbage === 0 ? 'Sidste dag i ' + mNavn : dageTilbage + (dageTilbage === 1 ? ' dag' : ' dage') + ' tilbage') + '</span></div></div>';
+        : '<span class="mdk-eyebrow">Vinder i ' + forrigeNavn + '</span>' +
+          '<div class="mdk-winner"><span class="mdk-crown faded">🏆</span><span class="mdk-avatar empty">?</span></div>' +
+          '<b class="mdk-name">Det kunne være dig!</b><span class="mdk-tease">Den første vinder kåres 1. ' + naesteNavn + '</span>') +
+      '</div>';
 
-    // Højre: afstemning
+    // Højre: denne måneds afstemning med præmie og deadline øverst
+    var fakta = '<div class="mdk-meta"><span class="mdk-pill">' + (/webcoin/i.test(m.praemie) ? coin() : '🎁') + '<small>Præmie</small><b>' + esc(m.praemie) + '</b></span>' +
+      '<span class="mdk-pill">⏳<small>Slutter om</small><b>' + (dageTilbage === 0 ? 'i dag' : dageTilbage + (dageTilbage === 1 ? ' dag' : ' dage')) + '</b></span></div>';
     var hoejre;
     if (m.minStemme) {
-      hoejre = '<h3 class="mdk-q">Tak for din stemme</h3>' +
+      hoejre = '<h3 class="mdk-q">Tak for din stemme</h3>' + fakta +
         '<div class="mdk-voted"><span class="mdk-avatar sm">' + esc(m.minStemme.initialer || forkort(m.minStemme.navn)) + '</span><div><b>' + esc(m.minStemme.navn) + '</b>' +
         (m.minStemme.begrundelse ? '<q>' + esc(m.minStemme.begrundelse) + '</q>' : '') + '</div></div>' +
         '<p class="mdk-fine">Vinderen findes, når ' + mNavn + ' er slut. Stemmerne er hemmelige.</p>';
     } else if (kanKoebe) {
-      hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3>' +
+      hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3>' + fakta +
         '<p class="mdk-why">Noget godt, en hjælpende hånd eller bare god stemning. Resultater som salg og fakturering tæller ikke med.</p>' +
         '<input type="hidden" id="mdk-til" value="">' +
         '<div class="mdk-pick">' + kandidater.map(function (u) {
@@ -487,11 +493,12 @@
         '<textarea class="input vote-why" id="mdk-hvorfor" rows="2" maxlength="500" placeholder="Hvorfor? Fx hjalp mig med en svær kunde"></textarea>' +
         '<div class="mdk-send"><button class="btn primary" data-act="stem">Stem</button><span class="mdk-fine">Én stemme i ' + mNavn + ' · stemmerne er hemmelige</span></div>';
     } else {
-      hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3><p class="mdk-why">Medarbejderne stemmer her. Du kan se stillingen under Admin → Månedens kollega.</p>';
+      hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3>' + fakta + '<p class="mdk-why">Medarbejderne stemmer her. Du kan se stillingen under Admin → Månedens kollega.</p>';
     }
 
     return '<section class="block"><h2 class="block-title">Månedens kollega</h2><div class="card mdk2">' + spot + '<div class="mdk-vote">' + hoejre + '</div></div></section>';
   }
+
 
   // ---------- Feelin' Lucky? – tombola ----------
   // En vandret rulle med præmiekort kører forbi markøren, sætter farten ned og stopper på gevinsten.

@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v28';
+  var KEY = 'webshoppen-demo-v30';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -15,7 +15,7 @@ window.Mock = (function () {
   function seed() {
     return {
       Brugere: BRUGERE.map(function (b) { return Object.assign({}, b); }),
-      Config: [{ noegle: 'HJUL_PRIS', vaerdi: 15 }, { noegle: 'MDK_PRAEMIE', vaerdi: '20 Webcoins' }],
+      Config: [{ noegle: 'HJUL_PRIS', vaerdi: 15 }, { noegle: 'MDK_PRAEMIE', vaerdi: '25 Webcoins' }],
       Stemmer: [],
       Spil: [],
       Menu: [
@@ -124,9 +124,6 @@ window.Mock = (function () {
     var stille = Object.assign({}, e, { notify: function () {} });
     var HV = ["Hjalp mig med en svær Bricks-opsætning", "Altid god stemning på kontoret", "Tog en ekstra supportvagt for mig", "Skaffede kage til hele afdelingen", "Gav mig gode råd om en kunde"];
     var nu0 = new Date(), sidst = new Date(nu0.getFullYear(), nu0.getMonth() - 1, 12, 10);
-    [['DSI', 'JST', 0], ['CBO', 'DSI', 1], ['JFR', 'JST', 2], ['JST', 'DSI', 3]].forEach(function (x) {
-      data.Stemmer.push({ id: 's' + x[2], tid: new Date(sidst.getTime() + x[2] * 3600e3).toISOString(), maaned: Core.maanedKey(sidst), fra: x[0], til: x[1], begrundelse: HV[x[2]] });
-    });
     data.Stemmer.push({ id: 's9', tid: new Date().toISOString(), maaned: Core.maanedKey(nu0), fra: 'JST', til: 'CBO', begrundelse: HV[4] });
     [['demo.jst@best-one.dk', 'frokost', 80], ['demo.cbo@best-one.dk', 'frokost', 45], ['demo.jfr@best-one.dk', 'biograf', 60], ['demo.cbo@best-one.dk', 'biograf', 25], ['demo.jst@best-one.dk', 'kage', 80], ['demo.dsi@best-one.dk', 'kage', 70], ['demo.jfr@best-one.dk', 'kage', 50]].forEach(function (x) {
       Core.handle(db, Core.resolveUser(db, { email: x[0] }, ADMINS), 'indskyd', { projektId: x[1], beloeb: x[2] }, stille);

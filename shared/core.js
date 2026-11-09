@@ -344,7 +344,7 @@ var Core = (function () {
       return b.stemmer - a.stemmer || a.foerste.localeCompare(b.foerste);
     });
   }
-  function mdkPraemie(db) { return str(cfgVal(db, 'MDK_PRAEMIE', '20 Webcoins')); }
+  function mdkPraemie(db) { return str(cfgVal(db, 'MDK_PRAEMIE', '25 Webcoins')); }
 
   function stem(db, me, data, env) {
     kraevBruger(me);
