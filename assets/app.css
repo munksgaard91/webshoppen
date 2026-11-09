@@ -666,8 +666,9 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .top3-list li.mig .t3-beloeb b { color: var(--brand-2); }
 .top3-list li.faint { display: block; }
 /* Fuldt projekt: grøn progressbar */
-.bar-big.fuld > i { background: linear-gradient(90deg, #8fdcb8, #4fc28f); }
-:root[data-theme="dark"] .bar-big.fuld > i { background: linear-gradient(90deg, rgba(79, 213, 154, .35), rgba(79, 213, 154, .6)); }
+/* Fuldt projekt: samme grøn som Yehaw! og hvid skrift for kontrasten */
+.bar-big.fuld > i, :root[data-theme="dark"] .bar-big.fuld > i { background: linear-gradient(90deg, #34a874, #258a5a); }
+.bar-big.fuld .bar-label, .bar-big.fuld .bar-label b { color: #fff; }
 
 /* Projekter: Top donator + "Se resten" (top 10 ved hover) */
 .top-don { margin-top: 12px; max-width: 400px; }
