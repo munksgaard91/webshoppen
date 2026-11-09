@@ -683,3 +683,6 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .reel-card.vare { box-shadow: inset 0 0 0 1px var(--line-2); }
 .reel-card.nitte { box-shadow: none; }
 .reel { border-radius: 4px; }
+/* Yehaw! er grøn ligesom den fulde progressbar */
+.btn.yehaw { background: #2fa36f; border-color: #2fa36f; color: #fff; }
+.btn.yehaw:hover { background: #258a5d; border-color: #258a5d; }

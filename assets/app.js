@@ -999,9 +999,9 @@
       case 'forslag': {
         var proj = t.dataset.type === 'projekt';
         openModal('<h2><span class="ico">💡</span>Send forslag</h2>' +
-          '<p class="muted" style="margin:-8px 0 14px">' + (proj ? 'Hvad skal vi samle ind til?' : 'Hvad mangler der i menuen?') + ' Forslaget sendes direkte til Rasmus.</p>' +
+          '<p class="muted" style="margin:-8px 0 14px">' + (proj ? 'Hvad skal vi samle ind til?' : 'Hvad mangler der i menuen?') + '</p>' +
           '<input type="hidden" id="f-type" value="' + (proj ? 'projekt' : 'vare') + '">' +
-          '<textarea class="input" id="f-tekst" rows="4" maxlength="1000" placeholder="' + (proj ? 'Fx bowling, escape room eller morgenmad til hele teamet' : 'Fx Red Bull, frugt eller en bestemt snack') + '"></textarea>' +
+          '<textarea class="input" id="f-tekst" rows="4" maxlength="1000"></textarea>' +
           '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="forslag-ok">Send</button></div>');
         break;
       }
