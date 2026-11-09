@@ -67,7 +67,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
 - "Andet?"-rækker (menu: "Har du en idé?", projekter: "Har du en idé til et projekt?") har én hvid knap **"Send forslag"**. Forslag sendes via backend (`forslag` → `env.notify` → `NOTIFIKATION_MAIL`/Chat), ikke mailto.
 - Saldo-kortet: **"Hvordan optjener jeg?"** + i-ikon; klik åbner en boks med gruppens regler, hover viser en boble.
 - Teambudget: rest i alt som stort tal; "Brugt i sæsonen" står i **mild rød** (`.tb-sub .brugt`).
-- Månedens kollega: begrundelse påkrævet; tekst: "Stem på en kollega, der har hjulpet dig, gjort noget ekstra eller løftet stemningen. Det handler om mennesker, ikke salgstal."
+- Månedens kollega: begrundelse frivillig (alt godtages, også tomt); præmien er "Coming soon" ved ny måned, indtil admin vælger en (`MDK_PRAEMIE_MAANED`); tekst: "Stem på en kollega, der har hjulpet dig, gjort noget ekstra eller løftet stemningen. Det handler om mennesker, ikke salgstal."
 - Røde tal = brugt/minus, grønne = optjent/plus. Grøn bruges også til progressbaren og Yehaw!-knappen på et projekt, der er nået 100 %. Ellers kun blå, hvid, grå og mørk.
 
 - Escape altid brugerdata med `esc()` i app.js før det sættes ind i HTML.

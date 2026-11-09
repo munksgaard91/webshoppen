@@ -118,9 +118,8 @@ t('hjulets vægte vises ikke for brugere', function () {
 });
 t('månedens kollega: ikke sig selv, begrundelse, én gang', function () {
   kaster(function () { Core.handle(db, A, 'stem', { til: 'AAA', begrundelse: 'Lang nok begrundelse' }, env); }, 'kollega');
-  kaster(function () { Core.handle(db, A, 'stem', { til: 'BBB', begrundelse: 'kort' }, env); }, 'begrundelse');
   kaster(function () { Core.handle(db, A, 'stem', { til: 'CCC', begrundelse: 'Lang nok begrundelse' }, env); }, 'findes');
-  Core.handle(db, A, 'stem', { til: 'BBB', begrundelse: 'Hjalp med en kunde' }, env);
+  Core.handle(db, A, 'stem', { til: 'BBB', begrundelse: 'test' }, env); // begrundelse er frivillig og må være kort
   kaster(function () { Core.handle(db, A, 'stem', { til: 'BBB', begrundelse: 'Hjalp med en kunde' }, env); }, 'allerede');
 });
 t('stemmer er hemmelige for brugere', function () {
@@ -132,6 +131,14 @@ t('tie-breaker: første stemme vinder', function () {
   data.Stemmer.push({ id: 's1', tid: '2026-10-05T09:00:00.000Z', maaned: '2026-10', fra: 'CCC', til: 'BBB', begrundelse: 'x' });
   data.Stemmer.push({ id: 's2', tid: '2026-10-04T09:00:00.000Z', maaned: '2026-10', fra: 'BBB', til: 'AAA', begrundelse: 'y' });
   eq(Core.handle(db, B, 'state', {}, env).mdk.sidste.initialer, 'AAA');
+});
+t('præmie: Coming soon ved ny måned, indtil admin vælger', function () {
+  eq(Core.handle(db, B, 'state', {}, env).mdk.praemie, '');
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  Core.handle(db, adm, 'admin_mdk_praemie', { praemie: '25 Webcoins' }, env);
+  eq(Core.handle(db, B, 'state', {}, env).mdk.praemie, '25 Webcoins');
+  data.Config.forEach(function (r) { if (r.noegle === 'MDK_PRAEMIE_MAANED') r.vaerdi = '2026-10'; });
+  eq(Core.handle(db, B, 'state', {}, env).mdk.praemie, '');
 });
 t('optjening er idempotent', function () {
   data.Regler.push({ gruppe: 'Support', kilde: 'genfak', sats: 0.002 });

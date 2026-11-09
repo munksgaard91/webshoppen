@@ -334,7 +334,8 @@ function opsaet() {
     { noegle: 'TEAMBUDGET_BRUGT_CELLE', vaerdi: '' },
     { noegle: 'TEAMBUDGET_SAESON', vaerdi: '' },
     { noegle: 'HJUL_PRIS', vaerdi: 15 },
-    { noegle: 'MDK_PRAEMIE', vaerdi: '25 Webcoins' }
+    { noegle: 'MDK_PRAEMIE', vaerdi: '25 Webcoins' },
+    { noegle: 'MDK_PRAEMIE_MAANED', vaerdi: Core.maanedKey(new Date()) }
   ]);
   seed('Menu', [
     { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 10, kostpris: 8, oenske: 'ja', aktiv: 'ja' },

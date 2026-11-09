@@ -474,7 +474,7 @@
       '</div>';
 
     // Højre: denne måneds afstemning med præmie og deadline øverst
-    var fakta = '<div class="mdk-meta"><span class="mdk-pill">' + (/webcoin/i.test(m.praemie) ? coin() : '🎁') + '<small>Præmie</small><b>' + esc(m.praemie) + '</b></span>' +
+    var fakta = '<div class="mdk-meta"><span class="mdk-pill">' + (/webcoin/i.test(m.praemie) ? coin() : '🎁') + '<small>Præmie</small><b>' + (m.praemie ? esc(m.praemie) : 'Coming soon') + '</b></span>' +
       '<span class="mdk-pill">⏳<small>Slutter om</small><b>' + (dageTilbage === 0 ? 'i dag' : dageTilbage + (dageTilbage === 1 ? ' dag' : ' dage')) + '</b></span></div>';
     var hoejre;
     if (m.minStemme) {
@@ -878,8 +878,8 @@
     var mNavn = MAANEDER[Number(m.maaned.slice(5)) - 1];
     return adminHead('Månedens kollega') +
       '<section class="card" style="margin-bottom:20px"><div class="card-head"><h2 class="card-title">Præmie</h2></div>' +
-      '<div class="vote-form"><input class="input" id="mdk-praemie" value="' + esc(m.praemie) + '" placeholder="fx En snack efter eget valg eller 50 Webcoins"><button class="btn primary" data-act="mdk-praemie-ok">Gem</button></div>' +
-      '<small class="faint">Præmien gives manuelt. Webcoins kan lægges ind under Brugere → Justér.</small></section>' +
+      '<div class="vote-form"><input class="input" id="mdk-praemie" value="' + esc(m.praemie) + '" placeholder="fx 25 Webcoins"><button class="btn primary" data-act="mdk-praemie-ok">Gem</button></div>' +
+      '<small class="faint">' + (m.praemie ? 'Gælder ' + mNavn + '.' : 'Ingen præmie for ' + mNavn + ' endnu – medarbejderne ser "Coming soon".') + ' Præmien nulstilles hver måned og gives manuelt (Brugere → Justér).</small></section>' +
       '<div class="grid-2 top0"><section class="card"><div class="card-head"><h2 class="card-title">Stilling i ' + mNavn + '</h2><span class="tag">' + m.afgivet + ' stemmer</span></div>' +
       (m.stilling.length ? '<div class="table-wrap"><table><thead><tr><th>#</th><th>Kollega</th><th class="r">Stemmer</th><th class="r">Første stemme</th></tr></thead><tbody>' +
         m.stilling.map(function (x, i) {
@@ -1181,12 +1181,20 @@
         var til = val('mdk-til');
         var hvorfor = val('mdk-hvorfor').trim();
         if (!til) { toast('Vælg en kollega', '', true); break; }
-        if (hvorfor.length < 10) { toast('Skriv en kort begrundelse', 'Fortæl hvad vedkommende har gjort.', true); break; }
         var navn = (S.kolleger.filter(function (u) { return u.initialer === til; })[0] || {}).navn || til;
-        if (!confirm('Stem på ' + navn + '? Du kan kun stemme én gang i denne måned.')) break;
-        submit(t, 'stem', { til: til, begrundelse: hvorfor }, 'Tak for din stemme');
+        // Bekræftelse i en boks på siden (browserens confirm() vises ikke alle steder)
+        ui.stemKlar = { til: til, begrundelse: hvorfor };
+        openModal('<h2><span class="ico">🏆</span>Stem på ' + esc(navn) + '?</h2>' +
+          '<p class="muted" style="margin:-8px 0 14px">Du kan kun stemme én gang i denne måned.</p>' +
+          (hvorfor ? '<div class="mdk-voted" style="margin:0"><div><q>' + esc(hvorfor) + '</q></div></div>' : '') +
+          '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="stem-ok">Stem</button></div>');
         break;
       }
+      case 'stem-ok':
+        if (!ui.stemKlar) break;
+        submit(t, 'stem', ui.stemKlar, 'Tak for din stemme');
+        ui.stemKlar = null;
+        break;
       case 'mdk-praemie-ok':
         submit(t, 'admin_mdk_praemie', { praemie: val('mdk-praemie') }, 'Præmie gemt');
         break;

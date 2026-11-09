@@ -255,7 +255,7 @@ var Core = (function () {
         var min = null, minHvorfor = '';
         db.all('Stemmer').forEach(function (v) { if (str(v.maaned) === mk && ini(v.fra) === me.initialer) { min = ini(v.til); minHvorfor = str(v.begrundelse); } });
         var vinder = mdkStilling(db, sidst)[0] || null;
-        return { maaned: mk, minStemme: min ? { initialer: min, navn: navne[min] || min, begrundelse: minHvorfor } : null, praemie: mdkPraemie(db),
+        return { maaned: mk, minStemme: min ? { initialer: min, navn: navne[min] || min, begrundelse: minHvorfor } : null, praemie: mdkPraemie(db, mk),
           sidste: vinder ? { maaned: sidst, initialer: vinder.initialer, navn: vinder.navn } : null };
       })(),
       hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 15))), klar: me.initialer ? ubrugteDrej(db, me.initialer) : 0, felter: (function () {
@@ -344,7 +344,17 @@ var Core = (function () {
       return b.stemmer - a.stemmer || a.foerste.localeCompare(b.foerste);
     });
   }
-  function mdkPraemie(db) { return str(cfgVal(db, 'MDK_PRAEMIE', '25 Webcoins')); }
+  // Præmien gælder kun den måned, admin har sat den for (MDK_PRAEMIE_MAANED). Ny måned = tom ("Coming soon"),
+  // indtil admin vælger en ny præmie. Vinderen af sidste måned findes automatisk ud fra stemmerne.
+  function mdkPraemie(db, mk) {
+    if (str(cfgVal(db, 'MDK_PRAEMIE_MAANED', '')).trim() !== mk) return '';
+    return str(cfgVal(db, 'MDK_PRAEMIE', '')).trim();
+  }
+  function saetCfg(db, noegle, vaerdi) {
+    var row = null;
+    db.all('Config').forEach(function (r) { if (str(r.noegle).trim() === noegle) row = r; });
+    if (row) db.update('Config', row, { vaerdi: vaerdi }); else db.insert('Config', { noegle: noegle, vaerdi: vaerdi });
+  }
 
   function stem(db, me, data, env) {
     kraevBruger(me);
@@ -356,7 +366,6 @@ var Core = (function () {
     var ok = aktiveBrugere(db).some(function (u) { return ini(u.initialer) === t && str(u.gruppe); });
     if (!ok) throw err('BAD', 'Kollegaen findes ikke.');
     var hvorfor = str(data.begrundelse).trim().slice(0, 500);
-    if (hvorfor.length < 10) throw err('BAD', 'Skriv en kort begrundelse.');
     db.insert('Stemmer', { id: env.uuid(), tid: env.now().toISOString(), maaned: mk, fra: me.initialer, til: t, begrundelse: hvorfor });
     return { ok: true };
   }
@@ -375,13 +384,12 @@ var Core = (function () {
     return { ok: true };
   }
 
-  function adminMdkPraemie(db, me, data) {
+  function adminMdkPraemie(db, me, data, env) {
     kraevAdmin(me);
     var tekst = str(data.praemie).trim();
     if (!tekst) throw err('BAD', 'Skriv en præmie.');
-    var row = null;
-    db.all('Config').forEach(function (r) { if (str(r.noegle).trim() === 'MDK_PRAEMIE') row = r; });
-    if (row) db.update('Config', row, { vaerdi: tekst }); else db.insert('Config', { noegle: 'MDK_PRAEMIE', vaerdi: tekst });
+    saetCfg(db, 'MDK_PRAEMIE', tekst);
+    saetCfg(db, 'MDK_PRAEMIE_MAANED', maanedKey(env.now()));
     return { ok: true };
   }
 
@@ -518,7 +526,7 @@ var Core = (function () {
           var st = mdkStilling(db, m);
           if (st.length) hist.push({ maaned: m, vinder: st[0], stemmer: st.reduce(function (s, x) { return s + x.stemmer; }, 0) });
         }
-        return { maaned: mk, stilling: mdkStilling(db, mk), afgivet: afgivet, praemie: mdkPraemie(db), historik: hist };
+        return { maaned: mk, stilling: mdkStilling(db, mk), afgivet: afgivet, praemie: mdkPraemie(db, mk), historik: hist };
       })(),
       regler: regler(db),
       grupper: GRUPPER

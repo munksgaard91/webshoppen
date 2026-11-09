@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v31';
+  var KEY = 'webshoppen-demo-v32';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -25,7 +25,7 @@ window.Mock = (function () {
   function seed() {
     return {
       Brugere: BRUGERE.map(function (b) { return Object.assign({}, b); }),
-      Config: [{ noegle: 'HJUL_PRIS', vaerdi: 15 }, { noegle: 'MDK_PRAEMIE', vaerdi: '25 Webcoins' }],
+      Config: [{ noegle: 'HJUL_PRIS', vaerdi: 15 }, { noegle: 'MDK_PRAEMIE', vaerdi: '25 Webcoins' }, { noegle: 'MDK_PRAEMIE_MAANED', vaerdi: Core.maanedKey(new Date()) }],
       Stemmer: [],
       Spil: [],
       Menu: [
