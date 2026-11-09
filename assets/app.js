@@ -372,7 +372,7 @@
           '<div class="bar bar-big"><i style="width:' + pp.toFixed(0) + '%"></i>' +
           '<span class="bar-label num"><span class="bar-amt">' + (p.maal
             ? '<b>' + fmt(p.indsamlet) + '</b> af ' + fmt(p.maal) + ' ' + enhed(p.maal) + coin()
-            : '<b>' + fmt(p.indsamlet) + '</b> ' + enhed(p.indsamlet) + coin()) + '</span>' + (p.maal ? '<span>' + pp.toFixed(0) + ' %</span>' : '') + '</span></div>' +
+            : '<b>' + fmt(p.indsamlet) + '</b> ' + enhed(p.indsamlet) + coin()) + '</span>' + (p.maal ? '<b>' + pp.toFixed(0) + ' %</b>' : '') + '</span></div>' +
           '<ol class="top3-list">' + (p.top.length ? p.top.map(function (t, i) {
             return '<li class="' + (t.initialer === me.initialer ? 'mig' : '') + '"><span>' + medaljer[i] + '</span>' + esc(t.navn) + '<b class="num">' + wc(t.beloeb) + '</b></li>';
           }).join('') : '<li class="faint">Ingen bidrag endnu</li>') + '</ol></div>' +
