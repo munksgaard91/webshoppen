@@ -1052,10 +1052,20 @@
       case 'giv': openKoeb(t.dataset.id, true); break;
       case 'koeb-mode': koebState.oenske = val('koeb-oenske'); koebState.gave = t.dataset.g === '1'; renderKoeb(); break;
       case 'koeb-variant': koebState.variant = t.dataset.v; renderKoeb(); break;
-      case 'koeb-drej':
+      case 'koeb-drej': {
+        // Bekræft købet, så man altid ser prisen
+        var hp = S.hjul.pris;
+        openModal('<h2><span class="ico">🎰</span>Køb et drej</h2>' +
+          '<div class="sum"><span class="muted">Pris</span><b class="num">' + wc(hp) + '</b></div>' +
+          '<div class="sum"><span class="muted">Saldo efter</span><b class="num">' + wc(S.stats.saldo - hp) + '</b></div>' +
+          '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="koeb-drej-ok">Køb for ' + wc(hp) + '</button></div>');
+        break;
+      }
+      case 'koeb-drej-ok':
         busy(t, true);
         api('koeb_drej').then(function () {
           ui.reel = null;
+          closeModal();
           toast('Drej købt', 'Hjulet er låst op. Tryk på Drej hjulet.');
           return refresh();
         }).catch(function (e) { busy(t, false); if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true); });
