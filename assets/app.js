@@ -485,12 +485,10 @@
     } else if (kanKoebe) {
       hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3>' + fakta +
         '<p class="mdk-why">Stem på en kollega, der har hjulpet dig, gjort noget ekstra eller løftet stemningen. Det handler om mennesker, ikke salgstal.</p>' +
-        '<input type="hidden" id="mdk-til" value="">' +
-        '<div class="mdk-pick">' + kandidater.map(function (u) {
-          return '<button class="mdk-person" data-act="mdk-valg" data-ini="' + esc(u.initialer) + '" title="' + esc(u.navn) + ' · ' + esc(u.gruppe) + '">' +
-            '<span class="mdk-avatar sm">' + esc(u.initialer) + '</span><span class="mdk-pname">' + esc(fornavn(u.navn)) + '</span></button>';
-        }).join('') + '</div>' +
-        '<textarea class="input vote-why" id="mdk-hvorfor" rows="2" maxlength="500" placeholder="Hvorfor? Fx hjalp mig med en svær kunde"></textarea>' +
+        '<div class="mdk-select"><select class="input" id="mdk-til"><option value="">Vælg en kollega</option>' +
+          kandidater.map(function (u) { return '<option value="' + esc(u.initialer) + '">' + esc(u.navn) + ' · ' + esc(u.gruppe) + '</option>'; }).join('') +
+        '</select></div>' +
+        '<textarea class="input vote-why" id="mdk-hvorfor" rows="2" maxlength="500" placeholder="Hvorfor?"></textarea>' +
         '<div class="mdk-send"><button class="btn primary" data-act="stem">Stem</button><span class="mdk-fine">Én stemme i ' + mNavn + ' · stemmerne er hemmelige</span></div>';
     } else {
       hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3>' + fakta + '<p class="mdk-why">Medarbejderne stemmer her. Du kan se stillingen under Admin → Månedens kollega.</p>';

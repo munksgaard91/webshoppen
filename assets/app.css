@@ -741,3 +741,8 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 /* "Vinder i <måned>" større og øverst i feltet */
 .mdk-spot { justify-content: center; }
 .mdk-spot .mdk-eyebrow { font-size: 15px; font-weight: 800; letter-spacing: .1em; opacity: .95; margin-bottom: 14px; }
+
+/* Månedens kollega: pæn dropdown i stedet for kort */
+.mdk-select { position: relative; margin-bottom: 10px; }
+.mdk-select::after { content: ''; position: absolute; right: 16px; top: 50%; width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+.mdk-select select { appearance: none; -webkit-appearance: none; padding: 13px 40px 13px 14px; font-weight: 600; cursor: pointer; }
