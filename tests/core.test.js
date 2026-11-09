@@ -63,6 +63,12 @@ t('én variant vælges automatisk', function () {
   Core.handle(db, A, 'bestil', { vareId: 'mon' }, env);
   eq(data.Bestillinger[1].vare, 'Monster · Hvid Monster');
 });
+t('ønske gemmes kun på varer uden valg', function () {
+  Core.handle(db, A, 'bestil', { vareId: 'mon', oenske: 'Gerne kold' }, env);
+  eq(data.Bestillinger[data.Bestillinger.length - 1].oenske, 'Gerne kold');
+  Core.handle(db, A, 'bestil', { vareId: 'soda', variant: 'Danskvand', oenske: 'ignoreres' }, env);
+  eq(data.Bestillinger[data.Bestillinger.length - 1].oenske, '');
+});
 t('kommer snart kan ikke bestilles', function () {
   kaster(function () { Core.handle(db, A, 'bestil', { vareId: 'andet' }, env); }, 'snart');
 });

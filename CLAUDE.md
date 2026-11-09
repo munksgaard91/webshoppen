@@ -37,6 +37,8 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
 | `assets/mock.js` | Demo-backend i browseren (localStorage), bruger `shared/core.js` |
 | `shared/core.js` | **Al forretningslogik**, delt mellem demo og Apps Script. Ingen Google-API'er her |
 | `apps-script/Code.gs` | Sheet-adapter, auth, doPost, synk, notifikationer, kalenderfravær, opsætning af arket |
+| `tools/udskaer.py` | Skærer produktbilleder ud til Bestil-listen (Pillow) – se NOTES.md |
+| `assets/varer/` | Produktbilleder (256×256 WebP, gennemsigtig baggrund) |
 | `tests/core.test.js` | Logiktest af core.js – køres med macOS' indbyggede `jsc` (se NOTES.md → Test) |
 | `CNAME` | Custom domæne til GitHub Pages (oprettes når subdomænet er valgt) |
 
@@ -61,6 +63,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
 ### Faste tekster og farver (aftalt med Rasmus)
 - Gave til kollega hedder **"Donér til en kollega"** (knap og dialog); bekræftelse "Din donation er sendt 🎁". Projekter bruger knappen **"Donér"**.
 - Ventetid: **"Personlig levering, forvent lidt ventetid."**
+- Bestil-listen har **ingen små undertekster** under varenavne. Valg vises først i bestillingsvinduet; varer uden valg får et frivilligt "Dit ønske"-felt.
 - "Andet?"-rækker (menu: "Har du en idé?", projekter: "Har du en idé til et projekt?") har én hvid knap **"Send forslag"**. Forslag sendes via backend (`forslag` → `env.notify` → `NOTIFIKATION_MAIL`/Chat), ikke mailto.
 - Saldo-kortet: **"Hvordan optjener jeg?"** + i-ikon; klik åbner en boks med gruppens regler, hover viser en boble.
 - Teambudget: rest i alt som stort tal; "Brugt i sæsonen" står i **mild rød** (`.tb-sub .brugt`).

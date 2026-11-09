@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v17';
+  var KEY = 'webshoppen-demo-v18';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -19,7 +19,7 @@ window.Mock = (function () {
       Stemmer: [],
       Spil: [],
       Menu: [
-        { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 10, kostpris: 8, varianter: 'Pepsi Max, Faxe Kondi, Faxe Kondi 0 kalorier, Danskvand', aktiv: 'ja' },
+        { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', billede: 'assets/varer/sodavand.webp', pris: 10, kostpris: 8, varianter: 'Pepsi Max, Faxe Kondi, Faxe Kondi 0 kalorier, Danskvand', aktiv: 'ja' },
         { id: 'monster', navn: 'Monster', ikon: '⚡', billede: 'assets/varer/monster.webp', pris: 20, kostpris: 15, varianter: 'Hvid Monster', aktiv: 'ja' },
         { id: 'candybar', navn: 'Candybar', ikon: '🍫', pris: 8, kostpris: 6, varianter: 'Marsbar, Snickers', aktiv: 'ja' },
         { id: 'andet', navn: 'Andet?', ikon: '💡', pris: 0, kostpris: 0, snart: 'ja', aktiv: 'ja' }

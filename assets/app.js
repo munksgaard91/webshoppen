@@ -372,9 +372,9 @@
       '<span class="note">' + (lukket ? 'Forudbestil, så leveres det, når shoppen åbner.' : 'Personlig levering, forvent lidt ventetid.') + '</span></div>' +
       (S.menu.length ? '<div class="card list compact">' + S.menu.map(function (v) {
         var raad = st.saldo >= v.pris && kanKoebe && !v.snart;
-        if (v.snart) return forslagRaekke(vareBillede(v), v.navn, 'Har du en idé?', 'vare', kanKoebe);
+        if (v.snart) return forslagRaekke(vareBillede(v), v.navn, '', 'vare', kanKoebe);
         return '<div class="row">' + vareBillede(v) +
-          '<div class="row-main"><b>' + esc(v.navn) + '</b>' + (v.varianter.length ? '<small class="variants">' + v.varianter.map(esc).join(' · ') + '</small>' : '') + '</div>' +
+          '<div class="row-main"><b>' + esc(v.navn) + '</b></div>' +
           '<div class="row-price num">' + (v.snart ? '<span class="tag">Kommer snart</span>' : '<span class="amt">' + fmt(v.pris) + '</span><span class="unit">' + enhed(v.pris) + '</span>' + coin()) + '</div>' +
           '<div class="row-acts">' +
           '<button class="btn sm" data-act="giv" data-id="' + esc(v.id) + '"' + (raad && S.kolleger.length ? '' : ' disabled') + '>' + ico('gift') + 'Donér til en kollega</button>' +
@@ -410,7 +410,7 @@
   // "Andet?"-række med én hvid knap, der sender et forslag direkte til admin
   function forslagRaekke(billede, navn, undertekst, type, kan) {
     return '<div class="row forslag-row">' + billede +
-      '<div class="row-main"><b>' + esc(navn) + '</b><small class="variants">' + esc(undertekst) + '</small></div>' +
+      '<div class="row-main"><b>' + esc(navn) + '</b>' + (undertekst ? '<small class="variants">' + esc(undertekst) + '</small>' : '') + '</div>' +
       '<div class="row-acts"><button class="btn" data-act="forslag" data-type="' + type + '"' + (kan ? '' : ' disabled') + '>' + ico('send') + 'Send forslag</button></div></div>';
   }
 
@@ -658,7 +658,7 @@
           var acts = '';
           if (b.status === 'ny') acts = '<button class="btn primary sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="udleveret">Udleveret</button><button class="btn danger sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="annulleret">Annullér</button>';
           else if (b.status === 'udleveret') acts = '<button class="btn sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="ny">Fortryd</button><button class="btn danger sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="annulleret">Annullér</button>';
-          return '<tr><td class="faint">' + dato(b.tid) + '</td><td>' + esc(b.fraNavn) + '</td><td>' + (b.til !== b.fra ? '🎁 ' + esc(b.tilNavn) : '<span class="faint">—</span>') + '</td><td><b>' + esc(b.vare) + '</b></td><td class="r num">' + wc(b.pris) + '</td><td>' + statusTag(b) + '</td><td><div class="row-acts">' + acts + '</div></td></tr>';
+          return '<tr><td class="faint">' + dato(b.tid) + '</td><td>' + esc(b.fraNavn) + '</td><td>' + (b.til !== b.fra ? '🎁 ' + esc(b.tilNavn) : '<span class="faint">—</span>') + '</td><td><b>' + esc(b.vare) + '</b>' + (b.oenske ? '<small class="variants">Ønske: ' + esc(b.oenske) + '</small>' : '') + '</td><td class="r num">' + wc(b.pris) + '</td><td>' + statusTag(b) + '</td><td><div class="row-acts">' + acts + '</div></td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty">Ingen bestillinger.</div>') +
       '</section>';
   }
@@ -828,7 +828,7 @@
     openModal('<h2><span class="ico">' + esc(v.ikon || '🛍️') + '</span>' + esc(v.navn) + '</h2>' +
       (v.varianter.length > 1 ? '<div class="field"><label>Vælg</label><div class="choices">' + v.varianter.map(function (x) {
         return '<button class="choice' + (k.variant === x ? ' on' : '') + '" data-act="koeb-variant" data-v="' + esc(x) + '">' + esc(x) + '</button>';
-      }).join('') + '</div></div>' : (v.varianter.length === 1 ? '<p class="muted" style="margin:-8px 0 16px">' + esc(v.varianter[0]) + '</p>' : '')) +
+      }).join('') + '</div></div>' : '<div class="field"><label for="koeb-oenske">Dit ønske (valgfrit)</label><input class="input" id="koeb-oenske" maxlength="200" value="' + esc(k.oenske || '') + '" placeholder="' + (v.varianter.length === 1 ? esc(v.varianter[0]) + ', gerne kold' : 'Fx Snickers, tak') + '"></div>') +
       '<div class="seg"><button class="' + (k.gave ? '' : 'on') + '" data-act="koeb-mode" data-g="0">Til mig</button><button class="' + (k.gave ? 'on' : '') + '" data-act="koeb-mode" data-g="1">Donér til en kollega</button></div>' +
       (k.gave ? '<div class="field"><label for="koeb-til">Kollega</label><select class="input" id="koeb-til" data-act="koeb-til"><option value="">Vælg …</option>' + kollegaer + '</select></div>' : '') +
       '<div class="sum"><span class="muted">Pris</span><b class="num">' + wc(v.pris) + '</b></div>' +
@@ -963,7 +963,7 @@
 
       case 'koeb': openKoeb(t.dataset.id, false); break;
       case 'giv': openKoeb(t.dataset.id, true); break;
-      case 'koeb-mode': koebState.gave = t.dataset.g === '1'; renderKoeb(); break;
+      case 'koeb-mode': koebState.oenske = val('koeb-oenske'); koebState.gave = t.dataset.g === '1'; renderKoeb(); break;
       case 'koeb-variant': koebState.variant = t.dataset.v; renderKoeb(); break;
       case 'koeb-drej':
         busy(t, true);
@@ -994,7 +994,7 @@
       case 'koeb-ok': {
         var k = koebState;
         var forud = S.shop && !S.shop.aaben;
-        submit(t, 'bestil', { vareId: k.vare.id, variant: k.variant, til: k.gave ? k.til : '' },
+        submit(t, 'bestil', { vareId: k.vare.id, variant: k.variant, oenske: val('koeb-oenske'), til: k.gave ? k.til : '' },
           forud ? (k.gave ? 'Din donation er forudbestilt 🎁' : k.vare.navn + ' er forudbestilt') : (k.gave ? 'Din donation er sendt 🎁' : k.vare.navn + ' er bestilt'),
           forud ? 'Den leveres, når shoppen åbner.' : 'Personlig levering, forvent lidt ventetid.');
         break;
@@ -1064,7 +1064,7 @@
 
   document.addEventListener('change', function (ev) {
     var t = ev.target;
-    if (t.dataset.act === 'koeb-til') { koebState.til = t.value; renderKoeb(); }
+    if (t.dataset.act === 'koeb-til') { koebState.oenske = val('koeb-oenske'); koebState.til = t.value; renderKoeb(); }
     if (t.dataset.act === 'pperson') { ui.postPerson = t.value; render(); }
   });
 
