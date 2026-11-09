@@ -808,7 +808,7 @@
 
 
     var stats = '<div class="stat-grid to">' +
-      statBox('Brugt i ' + mNavn, wcSmall(denne ? denne.wc : 0) + coin(), denne ? denne.antal + ' bestillinger · ' + kr(denne.kr) : 'Ingen bestillinger') +
+      statBox('Brugt i ' + mNavn, wcSmall(denne ? denne.wc : 0) + coin(), denne ? denne.antal + ' bestillinger' : 'Ingen bestillinger') +
       (tb ? statBox('Teambudget tilbage', kr(tb.rest), 'Brugt i sæsonen: ' + kr(tb.brugt)) : '') +
       '</div>';
 
