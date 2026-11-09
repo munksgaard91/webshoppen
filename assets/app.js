@@ -370,7 +370,9 @@
           '<span class="thumb">' + esc(p.ikon || '🎯') + '</span>' +
           '<div class="row-main"><b>' + esc(p.navn) + '</b>' +
           '<div class="bar bar-big"><i style="width:' + pp.toFixed(0) + '%"></i>' +
-          '<span class="bar-label num"><span><b>' + wc(p.indsamlet) + '</b>' + (p.maal ? ' af ' + wc(p.maal) : '') + '</span>' + (p.maal ? '<span>' + pp.toFixed(0) + ' %</span>' : '') + '</span></div>' +
+          '<span class="bar-label num"><span class="bar-amt">' + (p.maal
+            ? '<b>' + fmt(p.indsamlet) + '</b>' + coin() + 'af ' + fmt(p.maal) + coin() + enhed(p.maal)
+            : '<b>' + fmt(p.indsamlet) + '</b>' + coin() + enhed(p.indsamlet)) + '</span>' + (p.maal ? '<span>' + pp.toFixed(0) + ' %</span>' : '') + '</span></div>' +
           '<ol class="top3-list">' + (p.top.length ? p.top.map(function (t, i) {
             return '<li class="' + (t.initialer === me.initialer ? 'mig' : '') + '"><span>' + medaljer[i] + '</span>' + esc(t.navn) + '<b class="num">' + wc(t.beloeb) + '</b></li>';
           }).join('') : '<li class="faint">Ingen bidrag endnu</li>') + '</ol></div>' +
