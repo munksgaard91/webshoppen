@@ -345,14 +345,12 @@ function opsaet() {
   // Feelin' Lucky? – vægt = relativ chance. type: vare (admin leverer), webcoins (lægges på saldo), intet.
   seed('Hjul', [
     { id: 'h-50', navn: '50 Webcoins', ikon: '🏆', type: 'webcoins', beloeb: 50, kostpris: 0, vaegt: 20, aktiv: 'ja' },
-    { id: 'h-nitte1', navn: 'Nitte', ikon: '🙈', type: 'intet', beloeb: 0, kostpris: 0, vaegt: 133, aktiv: 'ja' },
-    { id: 'h-5', navn: '5 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 5, kostpris: 0, vaegt: 120, aktiv: 'ja' },
-    { id: 'h-sodavand', navn: 'Sodavand', ikon: '🥤', type: 'vare', beloeb: 0, kostpris: 8, vaegt: 70, aktiv: 'ja' },
-    { id: 'h-10', navn: '10 Webcoins', ikon: '💫', type: 'webcoins', beloeb: 10, kostpris: 0, vaegt: 120, aktiv: 'ja' },
-    { id: 'h-nitte2', navn: 'Nitte', ikon: '🙈', type: 'intet', beloeb: 0, kostpris: 0, vaegt: 133, aktiv: 'ja' },
+    { id: 'h-nitte', navn: 'Nitte', ikon: '🙈', type: 'intet', beloeb: 0, kostpris: 0, vaegt: 133, aktiv: 'ja' },
+    { id: 'h-5', navn: '5 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 5, kostpris: 0, vaegt: 200, aktiv: 'ja' },
+    { id: 'h-sodavand', navn: 'Sodavand', ikon: '🥤', type: 'vare', beloeb: 0, kostpris: 8, vaegt: 127, aktiv: 'ja' },
+    { id: 'h-10', navn: '10 Webcoins', ikon: '💫', type: 'webcoins', beloeb: 10, kostpris: 0, vaegt: 190, aktiv: 'ja' },
     { id: 'h-candybar', navn: 'Candybar', ikon: '🍫', type: 'vare', beloeb: 0, kostpris: 6, vaegt: 80, aktiv: 'ja' },
-    { id: 'h-15', navn: '15 Webcoins', ikon: '💎', type: 'webcoins', beloeb: 15, kostpris: 0, vaegt: 100, aktiv: 'ja' },
-    { id: 'h-nitte3', navn: 'Nitte', ikon: '🙈', type: 'intet', beloeb: 0, kostpris: 0, vaegt: 134, aktiv: 'ja' },
+    { id: 'h-15', navn: '15 Webcoins', ikon: '💎', type: 'webcoins', beloeb: 15, kostpris: 0, vaegt: 160, aktiv: 'ja' },
     { id: 'h-monster', navn: 'Hvid Monster', ikon: '⚡', type: 'vare', beloeb: 0, kostpris: 15, vaegt: 30, aktiv: 'ja' },
     { id: 'h-20', navn: '20 Webcoins', ikon: '💰', type: 'webcoins', beloeb: 20, kostpris: 0, vaegt: 60, aktiv: 'ja' }
   ]);
