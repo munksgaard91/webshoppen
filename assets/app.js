@@ -859,13 +859,27 @@
       '<div class="adm-stak">' + opg + akt + '</div>';
   }
 
+  // Brugere: klik på en kolonneoverskrift sorterer; klik igen vender rækkefølgen
+  function sortTh(k, tekst, cls) {
+    var b = ui.brugerSort || { k: 'navn', op: true };
+    var pil = b.k === k ? (b.op ? ' ▲' : ' ▼') : '';
+    return '<th' + (cls ? ' class="' + cls + '"' : '') + '><button class="th-sort' + (b.k === k ? ' on' : '') + '" data-act="bsort" data-k="' + k + '">' + tekst + pil + '</button></th>';
+  }
+  function sorterBrugere(liste) {
+    var b = ui.brugerSort || { k: 'navn', op: true };
+    return liste.slice().sort(function (x, y) {
+      var r = b.k === 'saldo' ? x.saldo - y.saldo : String(x[b.k] || '').localeCompare(String(y[b.k] || ''), 'da');
+      return (b.op ? r : -r) || x.navn.localeCompare(y.navn, 'da');
+    });
+  }
+
   function pageAdminBrugere() {
     return adminHead('Brugere', '<button class="btn primary" data-act="ny-bruger">Tilføj bruger</button>') +
-      '<section class="card"><div class="card-head"><input class="input search" placeholder="Søg navn, initialer, mail" data-search="brugere"></div>' +
-      '<div class="table-wrap"><table><thead><tr><th>Navn</th><th>Init.</th><th>Gruppe</th><th>Mail</th><th class="r">Saldo</th><th class="r">Optjent (md.)</th><th></th></tr></thead><tbody>' +
-      A.brugere.map(function (u) {
+      '<section class="card"><div class="card-head"><input class="input search" placeholder="Søg navn, initialer, gruppe" data-search="brugere"></div>' +
+      '<div class="table-wrap"><table><thead><tr>' + sortTh('navn', 'Navn') + sortTh('initialer', 'Initialer') + sortTh('gruppe', 'Gruppe') + sortTh('saldo', 'Saldo', 'r') + '<th></th></tr></thead><tbody>' +
+      sorterBrugere(A.brugere).map(function (u) {
         var q = (u.navn + ' ' + u.initialer + ' ' + u.email + ' ' + u.gruppe).toLowerCase();
-        return '<tr data-q="' + esc(q) + '"' + (u.aktiv ? '' : ' style="opacity:.5"') + '><td><b>' + esc(u.navn) + '</b>' + (u.aktiv ? '' : ' <span class="tag">Inaktiv</span>') + '</td><td>' + esc(u.initialer) + '</td><td>' + (u.gruppe ? esc(u.gruppe) : '<span class="tag ny">Ingen gruppe</span>') + '</td><td class="faint">' + esc(u.email) + '</td><td class="r num"><b>' + wc(u.saldo) + '</b></td><td class="r num">' + wc(u.optjentMaaned) + '</td>' +
+        return '<tr data-q="' + esc(q) + '"' + (u.aktiv ? '' : ' style="opacity:.5"') + '><td><b>' + esc(u.navn) + '</b>' + (u.aktiv ? '' : ' <span class="tag">Inaktiv</span>') + '</td><td>' + esc(u.initialer) + '</td><td>' + (u.gruppe ? esc(u.gruppe) : '<span class="tag ny">Ingen gruppe</span>') + '</td><td class="r num"><b>' + wc(u.saldo) + '</b></td>' +
           '<td><div class="row-acts"><button class="btn sm" data-act="ret-bruger" data-email="' + esc(u.email) + '">Rediger</button><button class="btn sm" data-act="juster" data-ini="' + esc(u.initialer) + '">Justér</button></div></td></tr>';
       }).join('') + '</tbody></table></div></section>';
   }
@@ -1140,6 +1154,13 @@
         var cur = document.documentElement.getAttribute('data-theme') === 'dark';
         if (cur) document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', 'dark');
         store('webshoppen-tema', cur ? null : 'dark');
+        break;
+      }
+      case 'bsort': {
+        var nb = ui.brugerSort || { k: 'navn', op: true };
+        // Saldo sorteres højeste først ved første klik, tekst A–Å
+        ui.brugerSort = nb.k === t.dataset.k ? { k: nb.k, op: !nb.op } : { k: t.dataset.k, op: t.dataset.k !== 'saldo' };
+        render();
         break;
       }
       case 'fold-side': {

@@ -788,3 +788,7 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .stat-grid.to { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 /* Nøgletal: lidt luft mellem "Webcoins" og mønten */
 .stat .val .coin { margin-left: 8px; }
+/* Sortérbare kolonner (Admin → Brugere) */
+.th-sort { all: unset; cursor: pointer; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; }
+.th-sort:hover, .th-sort.on { color: var(--text); }
+.th-sort:focus-visible { outline: 2px solid var(--brand-2); outline-offset: 2px; border-radius: 4px; }
