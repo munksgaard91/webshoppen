@@ -484,7 +484,7 @@
         '<p class="mdk-fine">Vinderen findes, når ' + mNavn + ' er slut. Stemmerne er hemmelige.</p>';
     } else if (kanKoebe) {
       hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3>' + fakta +
-        '<p class="mdk-why">Noget godt, en hjælpende hånd eller bare god stemning. Resultater som salg og fakturering tæller ikke med.</p>' +
+        '<p class="mdk-why">Stem på en kollega, der har hjulpet dig, gjort noget ekstra eller løftet stemningen. Det handler om mennesker, ikke salgstal.</p>' +
         '<input type="hidden" id="mdk-til" value="">' +
         '<div class="mdk-pick">' + kandidater.map(function (u) {
           return '<button class="mdk-person" data-act="mdk-valg" data-ini="' + esc(u.initialer) + '" title="' + esc(u.navn) + ' · ' + esc(u.gruppe) + '">' +
