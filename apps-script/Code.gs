@@ -343,9 +343,8 @@ function opsaet() {
   ]);
   // Feelin' Lucky? – vægt = relativ chance. type: vare (admin leverer), webcoins (lægges på saldo), intet.
   seed('Hjul', [
-    { id: 'h-snickers', navn: 'Snickers', ikon: '🥜', type: 'vare', beloeb: 0, kostpris: 6, vaegt: 14, aktiv: 'ja' },
+    { id: 'h-candybar', navn: 'Candybar', ikon: '🍫', type: 'vare', beloeb: 0, kostpris: 6, vaegt: 28, aktiv: 'ja' },
     { id: 'h-5', navn: '5 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 5, kostpris: 0, vaegt: 22, aktiv: 'ja' },
-    { id: 'h-mars', navn: 'Marsbar', ikon: '🍫', type: 'vare', beloeb: 0, kostpris: 6, vaegt: 14, aktiv: 'ja' },
     { id: 'h-intet', navn: 'Ingen gevinst', ikon: '🙈', type: 'intet', beloeb: 0, kostpris: 0, vaegt: 25, aktiv: 'ja' },
     { id: 'h-sodavand', navn: 'Sodavand', ikon: '🥤', type: 'vare', beloeb: 0, kostpris: 8, vaegt: 10, aktiv: 'ja' },
     { id: 'h-25', navn: '25 Webcoins', ikon: '💰', type: 'webcoins', beloeb: 25, kostpris: 0, vaegt: 7, aktiv: 'ja' },

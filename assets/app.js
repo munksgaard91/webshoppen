@@ -388,12 +388,20 @@
   // ---------- Feelin' Lucky? ----------
 
   var HJUL_FARVER = [['#225581', '#fff'], ['#f6c344', '#3d2a00'], ['#2f74b5', '#fff'], ['#ffe7a3', '#3d2a00']];
+  // Nabofelter må aldrig få samme farve – heller ikke sidste og første.
+  function farveIdx(i, n) {
+    var k = HJUL_FARVER.length, idx = i % k;
+    if (n > 1 && i === n - 1 && idx === 0) {
+      for (var j = 1; j < k; j++) if (j !== (n - 2) % k) return j;
+    }
+    return idx;
+  }
   function hjulSvg(felter) {
     var n = felter.length, c = 120, rr = 114, seg = 360 / n;
     var pt = function (deg, rad) { var a = deg * Math.PI / 180; return [(c + rad * Math.sin(a)).toFixed(2), (c - rad * Math.cos(a)).toFixed(2)]; };
     var dele = felter.map(function (f, i) {
       var a0 = i * seg, a1 = (i + 1) * seg, p0 = pt(a0, rr), p1 = pt(a1, rr), m = pt(a0 + seg / 2, 80);
-      var farve = HJUL_FARVER[(n % 2 && i === n - 1 && n > 1) ? 1 : i % HJUL_FARVER.length];
+      var farve = HJUL_FARVER[farveIdx(i, n)];
       return '<path d="M' + c + ' ' + c + ' L' + p0[0] + ' ' + p0[1] + ' A' + rr + ' ' + rr + ' 0 ' + (seg > 180 ? 1 : 0) + ' 1 ' + p1[0] + ' ' + p1[1] + ' Z" fill="' + farve[0] + '"><title>' + esc(f.navn) + '</title></path>' +
         '<text x="' + m[0] + '" y="' + m[1] + '" text-anchor="middle" dominant-baseline="central" font-size="24">' + esc(f.ikon || '🎁') + '</text>';
     }).join('');
