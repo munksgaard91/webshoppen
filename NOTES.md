@@ -39,7 +39,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 - Kilder (faktureringsark, anmeldelser) og teambudget-arket er ikke koblet på.
 - Subdomæne ikke valgt (`xxx.leksione.dk`); `SIDE_URL` står som `webshoppen.leksione.dk`. Ingen `CNAME`-fil endnu.
 - Projekter tæller ikke med i Opgørelse (kun bestillinger/gevinster).
-- Varebilleder i `assets/varer/`: **Monster** (`monster.webp`) og **Sodavand** (`sodavand.webp`, Pepsi Max + Faxe Kondi side om side). Mangler: Candybar og baggrundsbilleder. Nye billeder laves med **`tools/udskaer.py`** (Pillow): `python3 tools/udskaer.py assets/varer/x.webp kilde.jpg [kilde2 …] --luft 1.35` – fjerner hvid baggrund, beskærer, kvadratisk 256px med luft omkring. Sæt stien i Menu-kolonnen `billede`.
+- Varebilleder i `assets/varer/`: **Monster** (`monster.webp`) og **Sodavand** (`sodavand.webp`, Pepsi Max + Faxe Kondi side om side, `--luft 1.5`). Mangler: Candybar og baggrundsbilleder. Nye billeder laves med **`tools/udskaer.py`** (Pillow): `python3 tools/udskaer.py assets/varer/x.webp kilde.jpg [kilde2 …] --luft 1.35` – fjerner hvid baggrund, beskærer, kvadratisk 256px med luft omkring. Sæt stien i Menu-kolonnen `billede`.
 - Rigtigt Google-login er ikke testet (kræver backend + Client ID).
 
 ## Beslutninger
