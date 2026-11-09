@@ -722,3 +722,6 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .split .s4, .legend i.s4 { background: #8b97ab; }
 .fb-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; padding: 16px 24px; }
 .fb-card b { font-size: 15px; }
+.beloeb-chips { margin-bottom: 14px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.beloeb-chips .chip { padding: 8px 0; text-align: center; }
+.beloeb-chips .chip:disabled { opacity: .35; cursor: not-allowed; }

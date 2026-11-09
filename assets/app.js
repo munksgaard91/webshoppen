@@ -979,10 +979,10 @@
     if (!p) return;
     indskydState = { p: p };
     var maks = p.maal > 0 ? Math.min(S.stats.saldo, Math.max(0, p.maal - p.indsamlet)) : S.stats.saldo;
-    var forslag = [10, 25, 50, 100].filter(function (n) { return n <= maks; });
+    var forslag = [5, 10, 15, 20, 25, 50]; // beløb man ikke har råd til (eller som overstiger det der mangler) er slået fra
     openModal('<h2><span class="ico">' + esc(p.ikon || '🎯') + '</span>' + esc(p.navn) + '</h2>' +
       '<div class="field"><label for="ind-beloeb">Antal Webcoins' + (p.maal > 0 ? ' (der mangler ' + wc(Math.max(0, p.maal - p.indsamlet)) + ')' : '') + '</label><input class="input num" id="ind-beloeb" type="number" min="1" max="' + Math.max(0, maks) + '" inputmode="numeric" placeholder="0"></div>' +
-      (forslag.length ? '<div class="chips" style="margin-bottom:14px">' + forslag.map(function (n) { return '<button class="chip" data-act="ind-forslag" data-n="' + n + '">' + n + '</button>'; }).join('') + '</div>' : '') +
+      '<div class="chips beloeb-chips">' + forslag.map(function (n) { return '<button class="chip" data-act="ind-forslag" data-n="' + n + '"' + (n > maks ? ' disabled' : '') + '>' + n + '</button>'; }).join('') + '</div>' +
       '<div class="sum"><span class="muted">Din saldo</span><b class="num">' + wc(S.stats.saldo) + '</b></div>' +
       '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="ind-ok">Donér</button></div>');
   }
@@ -1141,7 +1141,10 @@
         break;
       }
       case 'indskyd': openIndskyd(t.dataset.id); break;
-      case 'ind-forslag': document.getElementById('ind-beloeb').value = t.dataset.n; break;
+      case 'ind-forslag':
+        document.getElementById('ind-beloeb').value = t.dataset.n;
+        document.querySelectorAll('.beloeb-chips .chip').forEach(function (c) { c.classList.toggle('on', c === t); });
+        break;
       case 'ind-ok':
         submit(t, 'indskyd', { projektId: indskydState.p.id, beloeb: val('ind-beloeb') }, 'Tak for din donation til ' + indskydState.p.navn);
         break;
