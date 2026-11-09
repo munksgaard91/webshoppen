@@ -686,3 +686,17 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 /* Yehaw! er grøn ligesom den fulde progressbar */
 .btn.yehaw { background: #2fa36f; border-color: #2fa36f; color: #fff; }
 .btn.yehaw:hover { background: #258a5d; border-color: #258a5d; }
+
+/* Teambudget-kortet: blå accent, ring med andel tilbage og svagt b-mærke */
+.tb-card { position: relative; overflow: hidden; border-top: 4px solid var(--brand); }
+.tb-card > :not(.tb-deco) { position: relative; }
+.tb-deco .b-mark { position: absolute; right: -18px; bottom: -46px; height: 170px; width: auto; color: var(--brand); opacity: .05; }
+.tb-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tb-body { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.tb-big { color: var(--brand); margin: 0; font-size: 34px; }
+:root[data-theme="dark"] .tb-big { color: #fff; }
+.tb-label { font-size: 13px; font-weight: 700; color: var(--muted); margin: 2px 0 8px; }
+.tb-ring { width: 84px; height: 84px; flex: none; }
+.tb-ring-bg { fill: none; stroke: var(--card-2); stroke-width: 8; }
+.tb-ring-fg { fill: none; stroke: var(--brand-2); stroke-width: 8; stroke-linecap: round; }
+.tb-ring text { font-size: 15px; font-weight: 800; fill: var(--text); font-family: 'Montserrat', system-ui, sans-serif; }
