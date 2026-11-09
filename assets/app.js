@@ -355,7 +355,7 @@
         var raad = st.saldo >= v.pris && kanKoebe && !v.snart;
         return '<div class="row' + (v.snart ? ' snart' : '') + '">' + vareBillede(v) +
           '<div class="row-main"><b>' + esc(v.navn) + '</b>' + (v.varianter.length ? '<small class="variants">' + v.varianter.map(esc).join(' · ') + '</small>' : '') + '</div>' +
-          '<div class="row-price num">' + (v.snart ? '<span class="tag">Kommer snart</span>' : wc(v.pris) + coin()) + '</div>' +
+          '<div class="row-price num">' + (v.snart ? '<span class="tag">Kommer snart</span>' : '<span class="amt">' + fmt(v.pris) + '</span><span class="unit">' + enhed(v.pris) + '</span>' + coin()) + '</div>' +
           '<div class="row-acts">' +
           '<button class="btn sm" data-act="giv" data-id="' + esc(v.id) + '"' + (raad && S.kolleger.length ? '' : ' disabled') + '>' + ico('gift') + 'Giv</button>' +
           '<button class="btn primary sm" data-act="koeb" data-id="' + esc(v.id) + '"' + (raad ? '' : ' disabled') + '>' + (lukket ? 'Forudbestil' : 'Bestil') + '</button></div></div>';

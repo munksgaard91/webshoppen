@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v7';
+  var KEY = 'webshoppen-demo-v8';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -18,9 +18,7 @@ window.Mock = (function () {
       Menu: [
         { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 10, kostpris: 8, varianter: 'Pepsi Max, Faxe Kondi, Faxe Kondi 0 kalorier, Danskvand', aktiv: 'ja' },
         { id: 'monster', navn: 'Monster', ikon: '⚡', pris: 20, kostpris: 15, varianter: 'Hvid Monster', aktiv: 'ja' },
-        { id: 'marsbar', navn: 'Marsbar', ikon: '🍫', pris: 8, kostpris: 6, aktiv: 'ja' },
-        { id: 'snickers', navn: 'Snickers', ikon: '🥜', pris: 8, kostpris: 6, aktiv: 'ja' },
-        { id: 'kakao', navn: 'Få serveret kakao', ikon: '☕', pris: 25, kostpris: 8, aktiv: 'ja' },
+        { id: 'candybar', navn: 'Candybar', ikon: '🍫', pris: 8, kostpris: 6, varianter: 'Marsbar, Snickers', aktiv: 'ja' },
         { id: 'andet', navn: 'Andet', ikon: '✨', pris: 0, kostpris: 0, snart: 'ja', aktiv: 'ja' }
       ],
       Hjul: [
@@ -116,7 +114,7 @@ window.Mock = (function () {
     var rmu = Core.resolveUser(db, { email: 'demo.admin@best-one.dk' }, ADMINS);
     Core.handle(db, rmu, 'bestil', { vareId: 'monster' }, Object.assign({}, e, { notify: function () {} }));
     var dsi = Core.resolveUser(db, { email: 'demo.dsi@best-one.dk' }, ADMINS);
-    Core.handle(db, dsi, 'bestil', { vareId: 'kakao', til: 'JST' }, Object.assign({}, e, { notify: function () {} }));
+    Core.handle(db, dsi, 'bestil', { vareId: 'candybar', variant: 'Snickers', til: 'JST' }, Object.assign({}, e, { notify: function () {} }));
     Core.handle(db, dsi, 'indskyd', { projektId: 'frokost', beloeb: 120 }, Object.assign({}, e, { notify: function () {} }));
     var stille = Object.assign({}, e, { notify: function () {} });
     [['demo.jst@best-one.dk', 'frokost', 80], ['demo.cbo@best-one.dk', 'frokost', 45], ['demo.jfr@best-one.dk', 'biograf', 60], ['demo.cbo@best-one.dk', 'biograf', 25]].forEach(function (x) {
