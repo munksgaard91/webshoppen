@@ -558,3 +558,41 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .lucky-acts .tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px; }
 .lucky-acts .tag svg, .btn.lg svg { width: 16px; height: 16px; }
 .btn.primary.locked:disabled { background: var(--card-2); border-color: var(--line-2); color: var(--muted); opacity: 1; }
+
+/* Yehaw! + konfetti */
+.btn.yehaw { background: var(--brand-2); border-color: var(--brand-2); }
+.btn.yehaw:hover { background: var(--brand); border-color: var(--brand); }
+.confetti { position: fixed; inset: 0; pointer-events: none; z-index: 80; overflow: hidden; }
+.confetti i { position: absolute; top: -20px; border-radius: 2px; box-shadow: 0 0 0 1px rgba(16, 35, 61, .08); animation-name: konfetti; animation-timing-function: cubic-bezier(.25, .6, .4, 1); animation-fill-mode: forwards; }
+@keyframes konfetti { to { transform: translate(var(--dx), 105vh) rotate(var(--rot)); } }
+
+/* Månedens kollega v2: blåt spotlight + afstemning med personvælger */
+.mdk2 { display: grid; grid-template-columns: 300px minmax(0, 1fr); padding: 0; overflow: hidden; }
+.mdk-spot { position: relative; overflow: hidden; background: var(--saldo); color: #fff; padding: 26px 24px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+.mdk-spot > :not(.saldo-deco) { position: relative; }
+.mdk-spot .saldo-deco .b-mark { height: 220px; right: -40px; bottom: -60px; }
+.mdk-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .8; }
+.mdk-winner { position: relative; margin-top: 6px; }
+.mdk-crown { position: absolute; top: -18px; left: 50%; transform: translateX(-50%) rotate(-8deg); font-size: 26px; }
+.mdk-avatar { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 26px; background: rgba(255, 255, 255, .16); color: #fff; border: 3px solid rgba(255, 255, 255, .5); }
+.mdk-avatar.empty { font-size: 32px; opacity: .8; }
+.mdk-avatar.sm { width: 40px; height: 40px; font-size: 13px; border-width: 2px; background: var(--brand-soft); color: var(--brand); border-color: transparent; }
+:root[data-theme="dark"] .mdk-avatar.sm { color: var(--brand-2); }
+.mdk-name { font-size: 20px; font-weight: 800; }
+.mdk-facts { display: grid; gap: 6px; margin-top: 8px; width: 100%; }
+.mdk-facts span { background: rgba(255, 255, 255, .12); border-radius: 10px; padding: 8px 12px; font-size: 13px; font-weight: 600; }
+.mdk-vote { padding: 24px 28px; min-width: 0; }
+.mdk-q { margin: 0 0 6px; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+.mdk-vote .mdk-why { margin: 0 0 16px; color: var(--muted); font-size: 14px; max-width: 620px; }
+.mdk-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.mdk-person { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); transition: border-color .15s, background .15s, transform .15s; }
+.mdk-person:hover { border-color: var(--brand-2); transform: translateY(-2px); }
+.mdk-person.on { border-color: var(--brand); background: var(--brand-soft); }
+.mdk-person.on .mdk-avatar.sm { background: var(--brand); color: #fff; }
+.mdk-pname { font-size: 13px; font-weight: 600; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mdk-vote .vote-why { max-width: none; }
+.mdk-send { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.mdk-fine { font-size: 12px; color: var(--faint); }
+.mdk-voted { display: flex; gap: 14px; align-items: flex-start; background: var(--card-2); border-radius: 14px; padding: 14px 16px; margin: 10px 0 10px; }
+.mdk-voted q { display: block; font-style: italic; color: var(--muted); font-size: 14px; margin-top: 4px; }
+@media (max-width: 720px) { .mdk2 { grid-template-columns: 1fr; } }

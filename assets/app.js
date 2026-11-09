@@ -397,7 +397,9 @@
           '<ol class="top3-list">' + (p.top.length ? p.top.map(function (t, i) {
             return '<li class="' + (t.initialer === me.initialer ? 'mig' : '') + '"><span>' + medaljer[i] + '</span>' + esc(t.navn) + '<b class="num">' + wc(t.beloeb) + '</b></li>';
           }).join('') : '<li class="faint">Ingen bidrag endnu</li>') + '</ol></div>' +
-          '<div class="proj-acts"><div class="donate"><button class="btn primary" data-act="indskyd" data-id="' + esc(p.id) + '"' + (kanKoebe && st.saldo > 0 ? '' : ' disabled') + '>Donér</button>' +
+          '<div class="proj-acts"><div class="donate">' + (p.maal > 0 && p.indsamlet >= p.maal
+            ? '<button class="btn primary yehaw" data-act="yehaw">Yehaw! 🎉</button>'
+            : '<button class="btn primary" data-act="indskyd" data-id="' + esc(p.id) + '"' + (kanKoebe && st.saldo > 0 ? '' : ' disabled') + '>Donér</button>') +
           (p.mitBidrag ? '<span class="dit num">Dit bidrag<br>' + wc(p.mitBidrag) + '</span>' : '') + '</div></div></div>';
       }).join('') + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et projekt?', 'projekt', kanKoebe) + '</div>' : '<div class="card list">' + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et projekt?', 'projekt', kanKoebe) + '</div>') + '</section>';
 
@@ -412,24 +414,65 @@
       '<div class="row-acts"><button class="btn" data-act="forslag" data-type="' + type + '"' + (kan ? '' : ' disabled') + '>' + ico('send') + 'Send forslag</button></div></div>';
   }
 
+  // Konfetti i Best One-farver. Ren DOM + CSS-animation, ryddes op efter 4 sek.
+  function konfetti() {
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { toast('Yehaw! 🎉', 'Projektet er fuldt.'); return; }
+    var farver = ['#225581', '#2f74b5', '#79b0ff', '#c9dcf2', '#ffffff', '#8b97ab'];
+    var boks = document.createElement('div');
+    boks.className = 'confetti';
+    for (var i = 0; i < 140; i++) {
+      var c = document.createElement('i');
+      var w = 6 + Math.random() * 6;
+      c.style.cssText = 'left:' + (Math.random() * 100) + 'vw;width:' + w + 'px;height:' + (w * (0.4 + Math.random() * 0.8)) + 'px;background:' + farver[i % farver.length] +
+        ';animation-duration:' + (2.2 + Math.random() * 1.6) + 's;animation-delay:' + (Math.random() * 0.4) + 's;--dx:' + ((Math.random() - 0.5) * 40) + 'vw;--rot:' + (360 + Math.random() * 720) + 'deg';
+      boks.appendChild(c);
+    }
+    document.body.appendChild(boks);
+    setTimeout(function () { boks.remove(); }, 4500);
+  }
+
   // ---------- Månedens kollega ----------
 
   function kollega(kanKoebe) {
     var m = S.mdk;
     if (!m) return '';
     var mNavn = MAANEDER[Number(m.maaned.slice(5)) - 1];
+    var nu = new Date(S.nu);
+    var dageTilbage = new Date(nu.getFullYear(), nu.getMonth() + 1, 0).getDate() - nu.getDate();
     var kandidater = S.kolleger.filter(function (u) { return u.gruppe; });
-    var stem = m.minStemme
-      ? '<div class="voted"><span class="voted-ico">✓</span><div>Du har stemt på <b>' + esc(m.minStemme.navn) + '</b> i ' + mNavn + '.' + (m.minStemme.begrundelse ? '<q>' + esc(m.minStemme.begrundelse) + '</q>' : '') + '<small>Vinderen findes, når måneden er slut.</small></div></div>'
-      : (kanKoebe ? '<div class="vote-form"><select class="input" id="mdk-til"><option value="">Vælg en kollega …</option>' +
-          kandidater.map(function (u) { return '<option value="' + esc(u.initialer) + '">' + esc(u.navn) + ' · ' + esc(u.gruppe) + '</option>'; }).join('') +
-          '</select></div><textarea class="input vote-why" id="mdk-hvorfor" rows="2" maxlength="500" placeholder="Begrundelse: Hvad har vedkommende gjort?"></textarea>' +
-          '<div class="vote-form"><button class="btn primary" data-act="stem">Stem</button></div><small class="faint">Du kan stemme én gang i ' + mNavn + '. Stemmerne er hemmelige.</small>' : '');
-    return '<section class="block"><h2 class="block-title">Månedens kollega</h2><div class="card mdk">' +
-      '<div class="mdk-main"><p class="mdk-why">Stem på en kollega, der har gjort noget godt, hjulpet med noget bestemt eller bare skabt god stemning i hverdagen. Resultater som salg og fakturering tæller ikke med.</p>' + stem + '</div>' +
-      '<div class="mdk-side"><div class="mdk-prize"><span class="eyebrow">Præmie</span><b>🎁 ' + esc(m.praemie) + '</b></div>' +
-      (m.sidste ? '<div class="mdk-last"><span class="eyebrow">' + cap(MAANEDER[Number(m.sidste.maaned.slice(5)) - 1]) + 's kollega</span><b>🏆 ' + esc(m.sidste.navn) + '</b></div>' : '') +
-      '</div></div></section>';
+    var forkort = function (navn) { return String(navn || '').split(' ').map(function (x) { return x[0]; }).join('').slice(0, 2).toUpperCase(); };
+
+    // Venstre: blåt spotlight med sidste måneds vinder, præmie og nedtælling
+    var spot = '<div class="mdk-spot"><span class="saldo-deco" aria-hidden="true">' + bMark() + '</span>' +
+      (m.sidste
+        ? '<span class="mdk-eyebrow">' + cap(MAANEDER[Number(m.sidste.maaned.slice(5)) - 1]) + 's kollega</span>' +
+          '<div class="mdk-winner"><span class="mdk-crown">🏆</span><span class="mdk-avatar">' + esc(m.sidste.initialer || forkort(m.sidste.navn)) + '</span></div>' +
+          '<b class="mdk-name">' + esc(m.sidste.navn) + '</b>'
+        : '<span class="mdk-eyebrow">Månedens kollega</span><div class="mdk-winner"><span class="mdk-avatar empty">?</span></div><b class="mdk-name">Bliv den første</b>') +
+      '<div class="mdk-facts"><span>🎁 ' + esc(m.praemie) + '</span><span>⏳ ' + (dageTilbage === 0 ? 'Sidste dag i ' + mNavn : dageTilbage + (dageTilbage === 1 ? ' dag' : ' dage') + ' tilbage') + '</span></div></div>';
+
+    // Højre: afstemning
+    var hoejre;
+    if (m.minStemme) {
+      hoejre = '<h3 class="mdk-q">Tak for din stemme</h3>' +
+        '<div class="mdk-voted"><span class="mdk-avatar sm">' + esc(m.minStemme.initialer || forkort(m.minStemme.navn)) + '</span><div><b>' + esc(m.minStemme.navn) + '</b>' +
+        (m.minStemme.begrundelse ? '<q>' + esc(m.minStemme.begrundelse) + '</q>' : '') + '</div></div>' +
+        '<p class="mdk-fine">Vinderen findes, når ' + mNavn + ' er slut. Stemmerne er hemmelige.</p>';
+    } else if (kanKoebe) {
+      hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3>' +
+        '<p class="mdk-why">Noget godt, en hjælpende hånd eller bare god stemning. Resultater som salg og fakturering tæller ikke med.</p>' +
+        '<input type="hidden" id="mdk-til" value="">' +
+        '<div class="mdk-pick">' + kandidater.map(function (u) {
+          return '<button class="mdk-person" data-act="mdk-valg" data-ini="' + esc(u.initialer) + '" title="' + esc(u.navn) + ' · ' + esc(u.gruppe) + '">' +
+            '<span class="mdk-avatar sm">' + esc(u.initialer) + '</span><span class="mdk-pname">' + esc(fornavn(u.navn)) + '</span></button>';
+        }).join('') + '</div>' +
+        '<textarea class="input vote-why" id="mdk-hvorfor" rows="2" maxlength="500" placeholder="Hvorfor? Fx hjalp mig med en svær kunde"></textarea>' +
+        '<div class="mdk-send"><button class="btn primary" data-act="stem">Stem</button><span class="mdk-fine">Én stemme i ' + mNavn + ' · stemmerne er hemmelige</span></div>';
+    } else {
+      hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3><p class="mdk-why">Medarbejderne stemmer her. Du kan se stillingen under Admin → Månedens kollega.</p>';
+    }
+
+    return '<section class="block"><h2 class="block-title">Månedens kollega</h2><div class="card mdk2">' + spot + '<div class="mdk-vote">' + hoejre + '</div></div></section>';
   }
 
   // ---------- Feelin' Lucky? ----------
@@ -799,9 +842,10 @@
     var p = S.projekter.filter(function (x) { return x.id === id; })[0];
     if (!p) return;
     indskydState = { p: p };
-    var forslag = [10, 25, 50, 100].filter(function (n) { return n <= S.stats.saldo; });
+    var maks = p.maal > 0 ? Math.min(S.stats.saldo, Math.max(0, p.maal - p.indsamlet)) : S.stats.saldo;
+    var forslag = [10, 25, 50, 100].filter(function (n) { return n <= maks; });
     openModal('<h2><span class="ico">' + esc(p.ikon || '🎯') + '</span>' + esc(p.navn) + '</h2>' +
-      '<div class="field"><label for="ind-beloeb">Antal Webcoins</label><input class="input num" id="ind-beloeb" type="number" min="1" max="' + Math.max(0, S.stats.saldo) + '" inputmode="numeric" placeholder="0"></div>' +
+      '<div class="field"><label for="ind-beloeb">Antal Webcoins' + (p.maal > 0 ? ' (der mangler ' + wc(Math.max(0, p.maal - p.indsamlet)) + ')' : '') + '</label><input class="input num" id="ind-beloeb" type="number" min="1" max="' + Math.max(0, maks) + '" inputmode="numeric" placeholder="0"></div>' +
       (forslag.length ? '<div class="chips" style="margin-bottom:14px">' + forslag.map(function (n) { return '<button class="chip" data-act="ind-forslag" data-n="' + n + '">' + n + '</button>'; }).join('') + '</div>' : '') +
       '<div class="sum"><span class="muted">Din saldo</span><b class="num">' + wc(S.stats.saldo) + '</b></div>' +
       '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="ind-ok">Donér</button></div>');
@@ -884,6 +928,12 @@
         submit(t, 'forslag', { type: val('f-type'), tekst: ft }, 'Tak! Dit forslag er sendt');
         break;
       }
+      case 'yehaw': konfetti(); break;
+      case 'mdk-valg':
+        document.querySelectorAll('.mdk-person').forEach(function (el) { el.classList.toggle('on', el === t); });
+        document.getElementById('mdk-til').value = t.dataset.ini;
+        document.getElementById('mdk-hvorfor').focus();
+        break;
       case 'regler-boks':
         openModal('<h2><span class="info-btn dark">' + ico('info') + '</span>Sådan optjener du Webcoins</h2>' +
           '<p class="muted" style="margin:-8px 0 14px">Gælder for din gruppe: <b>' + esc(S.me.gruppe) + '</b></p>' +

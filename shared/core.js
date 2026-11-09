@@ -434,6 +434,15 @@ var Core = (function () {
     var p = null;
     db.all('Projekter').forEach(function (x) { if (str(x.id) === str(data.projektId) && sand(x.aaben)) p = x; });
     if (!p) throw err('BAD', 'Projektet er lukket.');
+    // Et fuldt projekt kan ikke få flere donationer, og man kan ikke donere mere, end der mangler.
+    var maal = num(p.maal);
+    if (maal > 0) {
+      var indsamlet = 0;
+      db.all('Posteringer').forEach(function (x) { if (x.type === 'projekt' && str(x.ref) === str(p.id)) indsamlet -= num(x.beloeb); });
+      var mangler = Math.max(0, maal - indsamlet);
+      if (mangler <= 0) throw err('BAD', 'Projektet er fuldt. Yehaw!');
+      if (beloeb > mangler) throw err('BAD', 'Der mangler kun ' + mangler + (mangler === 1 ? ' Webcoin.' : ' Webcoins.'));
+    }
     if (saldoFor(db.all('Posteringer'), me.initialer) < beloeb) throw err('FUNDS', 'Du har ikke nok Webcoins.');
     db.insert('Posteringer', { id: env.uuid(), tid: env.now().toISOString(), initialer: me.initialer, type: 'projekt', beloeb: -beloeb, tekst: str(p.navn), ref: str(p.id) });
     env.notify({ emne: 'Projekt: ' + p.navn, tekst: me.navn + ' (' + me.initialer + ') har lagt ' + beloeb + ' Webcoins i ' + str(p.ikon) + ' ' + p.navn + '.' });

@@ -85,7 +85,8 @@ t('forudbestilling når shoppen er lukket', function () {
   eq(r.forud, true);
 });
 t('ikke nok Webcoins', function () {
-  kaster(function () { Core.handle(db, B, 'indskyd', { projektId: 'p1', beloeb: 9999 }, env); }, 'ikke nok');
+  data.Projekter.push({ id: 'p0', navn: 'Uden mål', maal: 0, aaben: 'ja' });
+  kaster(function () { Core.handle(db, B, 'indskyd', { projektId: 'p0', beloeb: 9999 }, env); }, 'ikke nok');
 });
 t('lykkehjul: vare, webcoins og intet', function () {
   var foer = saldo(B);
@@ -153,5 +154,11 @@ t('forslag sendes til admin', function () {
   kaster(function () { Core.handle(db, B, 'forslag', { type: 'vare', tekst: 'hej' }, env); }, 'forslag');
   Core.handle(db, B, 'forslag', { type: 'projekt', tekst: 'Bowling for hele teamet' }, env);
   eq(beskeder[0], 'Forslag til projekt fra Bo B');
+});
+t('fuldt projekt kan ikke få flere donationer', function () {
+  data.Projekter.push({ id: 'p2', navn: 'Lille', maal: 20, aaben: 'ja' });
+  kaster(function () { Core.handle(db, A, 'indskyd', { projektId: 'p2', beloeb: 25 }, env); }, 'mangler kun 20');
+  Core.handle(db, A, 'indskyd', { projektId: 'p2', beloeb: 20 }, env);
+  kaster(function () { Core.handle(db, A, 'indskyd', { projektId: 'p2', beloeb: 1 }, env); }, 'fuldt');
 });
 print('OK: ' + ok + '  FEJL: ' + fejl);
