@@ -129,4 +129,21 @@ t('åbningstider', function () {
   eq(Core.aabningstider(new Date(2026, 10, 16, 15, 30)).aaben, false);
   eq(Core.aabningstider(new Date(2026, 10, 15, 12, 0)).tekst, 'Åbner i morgen kl. 08:00');
 });
+t('ren admin deltager ikke, men kan moderere', function () {
+  var R = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  eq(R.admin, true); eq(R.initialer, '');
+  kaster(function () { Core.handle(db, R, 'bestil', { vareId: 'mon' }, env); }, 'initialer');
+  kaster(function () { Core.handle(db, R, 'spin', {}, env); }, 'initialer');
+  kaster(function () { Core.handle(db, R, 'stem', { til: 'BBB', begrundelse: 'Lang nok begrundelse' }, env); }, 'initialer');
+  kaster(function () { Core.handle(db, B, 'stem', { til: '', begrundelse: 'Lang nok begrundelse' }, env); }, 'kollega');
+  var navne = Core.handle(db, B, 'state', {}, env).kolleger.map(function (k) { return k.initialer; });
+  eq(navne.indexOf(''), -1, 'admin står ikke som kollega');
+  eq(Array.isArray(Core.handle(db, R, 'admin_state', {}, env).brugere), true);
+});
+t('forslag sendes til admin', function () {
+  beskeder = [];
+  kaster(function () { Core.handle(db, B, 'forslag', { type: 'vare', tekst: 'hej' }, env); }, 'forslag');
+  Core.handle(db, B, 'forslag', { type: 'projekt', tekst: 'Bowling for hele teamet' }, env);
+  eq(beskeder[0], 'Forslag til projekt fra Bo B');
+});
 print('OK: ' + ok + '  FEJL: ' + fejl);

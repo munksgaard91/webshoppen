@@ -1,15 +1,16 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v11';
+  var KEY = 'webshoppen-demo-v13';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
-    { email: 'demo.admin@best-one.dk', initialer: 'RMU', navn: 'Demo Admin', gruppe: 'Hjemmeside', aktiv: 'ja' },
     { email: 'demo.jst@best-one.dk', initialer: 'JST', navn: 'Demo Hjemmeside', gruppe: 'Hjemmeside', aktiv: 'ja' },
     { email: 'demo.dsi@best-one.dk', initialer: 'DSI', navn: 'Demo Redaktør', gruppe: 'Redaktør', aktiv: 'ja' },
     { email: 'demo.cbo@best-one.dk', initialer: 'CBO', navn: 'Demo Fotograf', gruppe: 'Fotograf', aktiv: 'ja' },
     { email: 'demo.jfr@best-one.dk', initialer: 'JFR', navn: 'Demo Support', gruppe: 'Support', aktiv: 'ja' }
   ];
+
+  var DEMO_ALLE = [{ email: 'demo.admin@best-one.dk', initialer: 'RMU', navn: 'Demo Admin', gruppe: '' }].concat(BRUGERE, [{ email: 'ukendt@best-one.dk', initialer: '?', navn: 'Ikke registreret', gruppe: '' }]);
 
   function seed() {
     return {
@@ -20,7 +21,7 @@ window.Mock = (function () {
         { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 10, kostpris: 8, varianter: 'Pepsi Max, Faxe Kondi, Faxe Kondi 0 kalorier, Danskvand', aktiv: 'ja' },
         { id: 'monster', navn: 'Monster', ikon: '⚡', pris: 20, kostpris: 15, varianter: 'Hvid Monster', aktiv: 'ja' },
         { id: 'candybar', navn: 'Candybar', ikon: '🍫', pris: 8, kostpris: 6, varianter: 'Marsbar, Snickers', aktiv: 'ja' },
-        { id: 'andet', navn: 'Andet', ikon: '✨', pris: 0, kostpris: 0, snart: 'ja', aktiv: 'ja' }
+        { id: 'andet', navn: 'Andet?', ikon: '💡', pris: 0, kostpris: 0, snart: 'ja', aktiv: 'ja' }
       ],
       Hjul: [
         { id: 'h-candybar', navn: 'Candybar', ikon: '🍫', type: 'vare', beloeb: 0, kostpris: 6, vaegt: 28, aktiv: 'ja' },
@@ -111,15 +112,15 @@ window.Mock = (function () {
     data = seed();
     Core.applyEarnings(db, falskeKilder(new Date()), env());
     var e = env();
-    var rmu = Core.resolveUser(db, { email: 'demo.admin@best-one.dk' }, ADMINS);
-    Core.handle(db, rmu, 'bestil', { vareId: 'monster' }, Object.assign({}, e, { notify: function () {} }));
+    var jst = Core.resolveUser(db, { email: 'demo.jst@best-one.dk' }, ADMINS);
+    Core.handle(db, jst, 'bestil', { vareId: 'monster' }, Object.assign({}, e, { notify: function () {} }));
     var dsi = Core.resolveUser(db, { email: 'demo.dsi@best-one.dk' }, ADMINS);
     Core.handle(db, dsi, 'bestil', { vareId: 'candybar', variant: 'Snickers', til: 'JST' }, Object.assign({}, e, { notify: function () {} }));
     Core.handle(db, dsi, 'indskyd', { projektId: 'frokost', beloeb: 120 }, Object.assign({}, e, { notify: function () {} }));
     var stille = Object.assign({}, e, { notify: function () {} });
     var HV = ["Hjalp mig med en svær Bricks-opsætning", "Altid god stemning på kontoret", "Tog en ekstra supportvagt for mig", "Skaffede kage til hele afdelingen", "Gav mig gode råd om en kunde"];
     var nu0 = new Date(), sidst = new Date(nu0.getFullYear(), nu0.getMonth() - 1, 12, 10);
-    [['DSI', 'JST', 0], ['CBO', 'DSI', 1], ['JFR', 'JST', 2], ['RMU', 'DSI', 3]].forEach(function (x) {
+    [['DSI', 'JST', 0], ['CBO', 'DSI', 1], ['JFR', 'JST', 2], ['JST', 'DSI', 3]].forEach(function (x) {
       data.Stemmer.push({ id: 's' + x[2], tid: new Date(sidst.getTime() + x[2] * 3600e3).toISOString(), maaned: Core.maanedKey(sidst), fra: x[0], til: x[1], begrundelse: HV[x[2]] });
     });
     data.Stemmer.push({ id: 's9', tid: new Date().toISOString(), maaned: Core.maanedKey(nu0), fra: 'JST', til: 'CBO', begrundelse: HV[4] });
@@ -130,12 +131,13 @@ window.Mock = (function () {
   }
 
   return {
-    demoBrugere: BRUGERE.concat([{ email: 'ukendt@best-one.dk', initialer: '?', navn: 'Ikke registreret', gruppe: '' }]),
+    demoBrugere: DEMO_ALLE,
     call: function (email, action, payload) {
       return new Promise(function (resolve, reject) {
         setTimeout(function () {
           try {
-            var me = Core.resolveUser(db, { email: email }, ADMINS);
+            var demo = DEMO_ALLE.filter(function (u) { return u.email === email; })[0];
+            var me = Core.resolveUser(db, { email: email, name: demo ? demo.navn : '' }, ADMINS);
             var res = Core.handle(db, me, action, JSON.parse(JSON.stringify(payload || {})), env());
             if (Core.skriver(action)) gem();
             resolve(JSON.parse(JSON.stringify(res)));

@@ -350,6 +350,16 @@ var Core = (function () {
     return { ok: true };
   }
 
+  // Forslag til menu eller projekter – sendes direkte til admin (mail/Chat via env.notify).
+  function forslag(db, me, data, env) {
+    kraevBruger(me);
+    var tekst = str(data.tekst).trim().slice(0, 1000);
+    if (tekst.length < 5) throw err('BAD', 'Skriv dit forslag.');
+    var hvad = str(data.type) === 'projekt' ? 'projekt' : 'menuen';
+    env.notify({ emne: 'Forslag til ' + hvad + ' fra ' + me.navn, tekst: me.navn + ' (' + me.initialer + ') foreslår til ' + hvad + ':\n\n' + tekst });
+    return { ok: true };
+  }
+
   function adminMdkPraemie(db, me, data) {
     kraevAdmin(me);
     var tekst = str(data.praemie).trim();
@@ -604,6 +614,7 @@ var Core = (function () {
     indskyd: indskyd,
     spin: spin,
     stem: stem,
+    forslag: forslag,
     admin_mdk_praemie: adminMdkPraemie,
     admin_hjul: adminHjulFelt,
     admin_hjul_pris: adminHjulPris,

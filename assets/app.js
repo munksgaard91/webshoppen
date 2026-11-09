@@ -107,6 +107,7 @@
     star: '<path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z"/>',
     down: '<path d="M17 7 7 17M7 9v8h8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
     heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+    send: '<path d="M21 3 10 14M21 3l-7 18-4-7-7-4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>',
     list: '<rect x="3" y="4" width="18" height="3" rx="1"/><rect x="3" y="10.5" width="18" height="3" rx="1"/><rect x="3" y="17" width="12" height="3" rx="1"/>',
     sun: '<circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
     logout: '<path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 8l4 4-4 4M19 12H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -160,6 +161,7 @@
     app.innerHTML = '<div class="boot"><span class="spinner"></span></div>';
     api('state').then(function (s) {
       S = s;
+      if (S.me.admin && !S.me.initialer && !route()) location.hash = '#/admin/bestillinger';
       if (S.me.admin) return api('admin_state').then(function (a) { A = a; render(); });
       render();
     }).catch(function (e) {
@@ -250,6 +252,7 @@
     var r = route();
     var side = SIDER[r] || SIDER[''];
     if (side.admin && !S.me.admin) side = SIDER[''];
+    if (side === SIDER.profil && !S.me.initialer) side = SIDER[''];
     if (side.admin && !A) {
       api('admin_state').then(function (a) { A = a; render(); }).catch(function (e) { toast('Fejl', e.message, true); });
       app.innerHTML = '<div class="boot"><span class="spinner"></span></div>';
@@ -283,7 +286,7 @@
       '<div class="scrim" data-act="close-nav"></div>' +
       '<aside class="side">' +
       '<div class="side-head">' + logo() + '</div>' +
-      '<nav class="nav">' + navLink('', 'home', 'Overblik') + navLink('profil', 'user', 'Min profil') + '</nav>' +
+      '<nav class="nav">' + navLink('', 'home', S.me.initialer ? 'Overblik' : 'Overblik (visning)') + (S.me.initialer ? navLink('profil', 'user', 'Min profil') : '') + '</nav>' +
       '<div class="nav-label">Admin</div>' +
       '<nav class="nav">' +
       navLink('admin/bestillinger', 'cart', 'Bestillinger', nyeBest ? '<span class="badge">' + nyeBest + '</span>' : '') +
@@ -348,8 +351,9 @@
       (me.gruppe ? '<span class="info"><button class="info-link" data-act="regler-boks"><span class="info-txt">Hvordan optjener jeg?</span><span class="info-btn">' + ico('info') + '</span></button>' +
         '<span class="pop" role="tooltip"><b class="pop-title">' + esc(me.gruppe) + '</b>' + mineRegler() + '</span></span>' : '') +
       '</div>' +
-      '<div class="saldo-big num"><span>' + fmt(st.saldo) + '</span><small>' + enhed(st.saldo) + '</small>' + coin('coin-lg') + '</div>' +
-      (kanKoebe ? '' : '<div class="saldo-sub">Din konto er ikke tilknyttet initialer endnu.</div>') +
+      (kanKoebe
+        ? '<div class="saldo-big num"><span>' + fmt(st.saldo) + '</span><small>' + enhed(st.saldo) + '</small>' + coin('coin-lg') + '</div>'
+        : '<div class="saldo-big"><span style="font-size:40px">Admin</span></div><div class="saldo-sub">Du deltager ikke. Her ser du siden, som medarbejderne gør.</div>') +
       '</section>';
 
     var team = tb ? '<section class="card tb-card"><div class="tb-head"><span class="eyebrow">Teambudget</span>' +
@@ -366,7 +370,8 @@
       '<span class="note">' + (lukket ? 'Forudbestil, så leveres det, når shoppen åbner.' : 'Personlig levering, så der kan være lidt ventetid.') + '</span></div>' +
       (S.menu.length ? '<div class="card list compact">' + S.menu.map(function (v) {
         var raad = st.saldo >= v.pris && kanKoebe && !v.snart;
-        return '<div class="row' + (v.snart ? ' snart' : '') + '">' + vareBillede(v) +
+        if (v.snart) return forslagRaekke(vareBillede(v), v.navn, 'Har du en idé til menuen?', 'vare', kanKoebe);
+        return '<div class="row">' + vareBillede(v) +
           '<div class="row-main"><b>' + esc(v.navn) + '</b>' + (v.varianter.length ? '<small class="variants">' + v.varianter.map(esc).join(' · ') + '</small>' : '') + '</div>' +
           '<div class="row-price num">' + (v.snart ? '<span class="tag">Kommer snart</span>' : '<span class="amt">' + fmt(v.pris) + '</span><span class="unit">' + enhed(v.pris) + '</span>' + coin()) + '</div>' +
           '<div class="row-acts">' +
@@ -392,10 +397,17 @@
           }).join('') : '<li class="faint">Ingen bidrag endnu</li>') + '</ol></div>' +
           '<div class="proj-acts"><div class="donate"><button class="btn primary" data-act="indskyd" data-id="' + esc(p.id) + '"' + (kanKoebe && st.saldo > 0 ? '' : ' disabled') + '>Donér</button>' +
           (p.mitBidrag ? '<span class="dit num">Dit bidrag<br>' + wc(p.mitBidrag) + '</span>' : '') + '</div></div></div>';
-      }).join('') + '</div>' : '<div class="card empty">Ingen åbne projekter.</div>') + '</section>';
+      }).join('') + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et projekt?', 'projekt', kanKoebe) + '</div>' : '<div class="card list">' + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et projekt?', 'projekt', kanKoebe) + '</div>') + '</section>';
 
     var banner = lukket && me.admin ? '<div class="banner">Shoppen er lukket for medarbejderne lige nu' + (shop.grund === 'fravaer' ? ' (du er ikke til stede)' : '') + '. ' + esc(shop.tekst || '') + '</div>' : '';
     return banner + top + menu + lucky(kanKoebe) + projekter + kollega(kanKoebe);
+  }
+
+  // "Andet?"-række med én hvid knap, der sender et forslag direkte til admin
+  function forslagRaekke(billede, navn, undertekst, type, kan) {
+    return '<div class="row forslag-row">' + billede +
+      '<div class="row-main"><b>' + esc(navn) + '</b><small class="variants">' + esc(undertekst) + '</small></div>' +
+      '<div class="row-acts"><button class="btn" data-act="forslag" data-type="' + type + '"' + (kan ? '' : ' disabled') + '>' + ico('send') + 'Send forslag</button></div></div>';
   }
 
   // ---------- Månedens kollega ----------
@@ -848,6 +860,21 @@
     if (t.tagName === 'SELECT') return;
 
     switch (act) {
+      case 'forslag': {
+        var proj = t.dataset.type === 'projekt';
+        openModal('<h2><span class="ico">💡</span>Send forslag</h2>' +
+          '<p class="muted" style="margin:-8px 0 14px">' + (proj ? 'Hvad skal vi samle ind til?' : 'Hvad mangler der i menuen?') + ' Forslaget sendes direkte til Rasmus.</p>' +
+          '<input type="hidden" id="f-type" value="' + (proj ? 'projekt' : 'vare') + '">' +
+          '<textarea class="input" id="f-tekst" rows="4" maxlength="1000" placeholder="' + (proj ? 'Fx bowling, escape room eller morgenmad til hele teamet' : 'Fx Red Bull, frugt eller en bestemt snack') + '"></textarea>' +
+          '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="forslag-ok">Send</button></div>');
+        break;
+      }
+      case 'forslag-ok': {
+        var ft = val('f-tekst').trim();
+        if (ft.length < 5) { toast('Skriv dit forslag', '', true); break; }
+        submit(t, 'forslag', { type: val('f-type'), tekst: ft }, 'Tak! Dit forslag er sendt');
+        break;
+      }
       case 'regler-boks':
         openModal('<h2><span class="info-btn dark">' + ico('info') + '</span>Sådan optjener du Webcoins</h2>' +
           '<p class="muted" style="margin:-8px 0 14px">Gælder for din gruppe: <b>' + esc(S.me.gruppe) + '</b></p>' +

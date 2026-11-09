@@ -538,3 +538,10 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .gift-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; min-height: 26px; }
 .gdot { width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; background: var(--brand-soft); color: var(--warn); }
 .gdot svg { width: 14px; height: 14px; }
+
+/* "Andet?"-rækker med Send forslag */
+.forslag-row .row-main > b { color: var(--text); }
+.forslag-row .btn { background: var(--card); }
+.list .row.forslag-row .row-acts { width: auto; min-width: 210px; }
+.proj-item + .forslag-row, .list .forslag-row { padding-top: 14px; padding-bottom: 14px; }
+#f-tekst { resize: vertical; min-height: 96px; }

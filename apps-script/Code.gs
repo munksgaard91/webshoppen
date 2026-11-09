@@ -340,7 +340,7 @@ function opsaet() {
     { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 10, kostpris: 8, varianter: 'Pepsi Max, Faxe Kondi, Faxe Kondi 0 kalorier, Danskvand', aktiv: 'ja' },
     { id: 'monster', navn: 'Monster', ikon: '⚡', pris: 20, kostpris: 15, varianter: 'Hvid Monster', aktiv: 'ja' },
     { id: 'candybar', navn: 'Candybar', ikon: '🍫', pris: 8, kostpris: 6, varianter: 'Marsbar, Snickers', aktiv: 'ja' },
-    { id: 'andet', navn: 'Andet', ikon: '✨', pris: 0, kostpris: 0, snart: 'ja', aktiv: 'ja' }
+    { id: 'andet', navn: 'Andet?', ikon: '💡', pris: 0, kostpris: 0, snart: 'ja', aktiv: 'ja' }
   ]);
   // Feelin' Lucky? – vægt = relativ chance. type: vare (admin leverer), webcoins (lægges på saldo), intet.
   seed('Hjul', [

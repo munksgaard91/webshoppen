@@ -1,7 +1,7 @@
 # NOTES – status og næste skridt
 
 Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskine.
-Sidst opdateret: **2026-11-09** (privat Mac). Seneste kodegennemgang: 2026-11-09 – alle filer parser, `tests/core.test.js` 16/16 OK, alle sider klikket igennem i demo uden konsolfejl.
+Sidst opdateret: **2026-11-09** (privat Mac). Seneste kodegennemgang: 2026-11-09 – alle filer parser, `tests/core.test.js` 18/18 OK, alle sider klikket igennem i demo uden konsolfejl.
 
 ## Status
 
@@ -10,9 +10,10 @@ Alt kører i **demo-tilstand** (tom `API_URL`) på https://munksgaard91.github.i
 ### Medarbejder – Overblik (`#/`)
 Rækkefølge (se også CLAUDE.md):
 1. **Saldo-kort** (blåt, halvskjult "b" i højre side) med hilsen, saldo og "Hvordan optjener jeg?" + i-ikon i hjørnet: hover viser en lille boble, klik åbner en boks med gruppens optjeningsregler. Ved siden af **Teambudget**: rest i alt som stort tal, "Brugt i sæsonen: kr x", sæson som tag (`TEAMBUDGET_SAESON`).
-2. **Bestil** – kompakt liste med skiftevis hvid/lysegrå rækker. Priser er højrestillede tal (1–3 cifre flugter) + "Webcoins" + mønt til sidst. Knapper: Giv (gave til kollega) og Bestil. Varer med `varianter` åbner et valg (Sodavand, Candybar); én variant vælges automatisk (Monster → Hvid Monster). `snart = ja` → "Kommer snart", kan ikke bestilles (Andet). Note om ventetid (personlig levering).
+2. **Bestil** – kompakt liste med skiftevis hvid/lysegrå rækker. Priser er højrestillede tal (1–3 cifre flugter) + "Webcoins" + mønt til sidst. Knapper: Giv (gave til kollega) og Bestil. Varer med `varianter` åbner et valg (Sodavand, Candybar); én variant vælges automatisk (Monster → Hvid Monster). `snart = ja` → rækken bliver en **"Andet?"-række** med én hvid knap "Send forslag" (kan ikke bestilles). Note om ventetid (personlig levering).
 3. **Feelin' Lucky?** – lykkehjul, fast pris pr. drej. Gevinsten afgøres i backend; browseren animerer kun hjulet hen til resultatet.
 4. **Projekter** – liste med skiftevis baggrund. Stor progressbar med "**245** af 1.500 Webcoins 🪙" og fed procent. Top 3 under hinanden med beløb tæt på navnet. Blå **Donér**-knap (handlingen hedder `indskyd` i koden), "Dit bidrag" småt under knappen.
+   Under projekterne er der også en "Andet?"-række med "Send forslag". Forslag sendes via backend (`forslag` i core.js → `env.notify` → `NOTIFIKATION_MAIL` + evt. Google Chat) – ikke via mailto, så det virker uanset mailprogram.
 5. **Månedens kollega** – stem én gang pr. måned på en kollega (ikke sig selv) med påkrævet begrundelse. Tekst: godt arbejde, hjælp eller god stemning – resultater (salg, fakturering) tæller ikke. Viser præmie og sidste måneds vinder.
 
 Lukket shop (uden for 08:00–15:30 på hverdage, eller når admin har "Ikke til stede" i kalenderen): overlay "Shoppen har lukket", Bestil bliver til **Forudbestil** (`forud = ja` på bestillingen). Admin ser et banner i stedet.
@@ -23,10 +24,14 @@ Lukket shop (uden for 08:00–15:30 på hverdage, eller når admin har "Ikke til
 - Faner: **Aktivitet** (alle posteringer grupperet pr. måned med farvet ikon), **Optjening** (pr. måned fordelt på kilder), **Bestillinger** (med status). Disclaimer: "Tallene kan ændre sig, hvis der bliver rettet fejl."
 
 ### Admin (sidepanel)
+**Rasmus er ren admin:** står i `ADMIN_EMAILS`, men **ikke** i `Brugere`. Han har ingen initialer/gruppe, kan ikke bestille, dreje hjulet, donere eller stemme, bliver ikke vist som kollega og har ingen Min profil. Han lander på Admin → Bestillinger, og "Overblik (visning)" viser siden, som medarbejderne ser den.
 Bestillinger (udleveret / annullér med refusion / fortryd) · **Opgørelse** (kr pr. måned ud fra kostpris = beløbet der skal trækkes) · Brugere (opret/ret/gruppe/justér saldo) · Sortiment (menu inkl. varianter + kommer snart, projekter, lykkehjulets præmier/vægt/chance/pris) · **Månedens kollega** (præmie, stilling med anonyme begrundelser, tidligere vindere) · Regler (alle grupper) · Posteringer (alle + "Hent optjening nu").
 
 ### Design
 Lyst tema som standard, mørkt som valg. **Kun blå eller hvid/grå/mørk** – guld findes kun i Webcoin-mønten. Logo = officielt "best One"-SVG i blå (hvid i mørkt tema); en fortegnsfejl i O'ets indre kurve er rettet (det var derfor, logoet så forkert ud). b-mærket ligger halvskjult i saldo- og profilkortet. "Webshoppen" i 18px fed i samme blå som logoet (`--brand` #225581, hvid i mørkt tema). Let animeret baggrund (to blå/grå farveskyer, kun CSS-transform, stopper ved "Reducer bevægelse"). Lykkehjulet bruger blå og hvide/grå felter. Favicon = W-mønten.
+
+## Brugere
+Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den private Mac. Filen er **gitignored** (`*.local.*`), fordi repoet er offentligt – den skal kopieres ind i fanen `Brugere`, når arket sættes op. Fordelingen pr. gruppe står i filen og i fanen `Brugere`. Demoen bruger stadig opdigtede "Demo …"-navne.
 
 ## Ikke gjort endnu
 - Backend er ikke sat op i Google (tjekliste nedenfor).
@@ -64,14 +69,14 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 7. **Webshoppen → Slå automatisk hentning til**.
 
 Ændringer i `shared/core.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=40`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=42`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test
 ```bash
 cd ~/code/webshoppen && /System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc shared/core.js tests/core.test.js
 ```
-Dækker: login-afvisning, varianter, kommer snart, gave + refusion, admin-rettigheder, forudbestilling, saldo-tjek, lykkehjul (alle tre typer), skjulte vægte, stemmeregler, hemmelige stemmer, tie-breaker, idempotent optjening, åbningstider.
+Dækker: ren admin uden deltagelse, forslag, login-afvisning, varianter, kommer snart, gave + refusion, admin-rettigheder, forudbestilling, saldo-tjek, lykkehjul (alle tre typer), skjulte vægte, stemmeregler, hemmelige stemmer, tie-breaker, idempotent optjening, åbningstider.
 Demo-tricks: `?lukket=fravaer` / `?lukket=tid` viser lukket shop. "Nulstil demodata" på login-siden.
 
 ## Før go-live (kendte svagheder)
