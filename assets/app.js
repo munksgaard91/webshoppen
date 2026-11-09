@@ -335,6 +335,21 @@
     return '<span class="tag ' + esc(b.status) + '">' + (forud ? 'Forudbestilt' : esc(cap(b.status))) + '</span>';
   }
 
+  // Projekter: kun nr. 1 vises ("Top donator"); resten (top 10) ses ved hover på "Se resten"
+  function topRaekke(t, i, me) {
+    var med = ['🥇', '🥈', '🥉'][i] || (i + 1) + '.';
+    return '<li class="' + (t.initialer === me.initialer ? 'mig' : '') + '"><span class="t3-med">' + med + '</span><span class="t3-navn">' + esc(t.navn) + '</span>' +
+      '<span class="t3-beloeb num"><b>' + fmt(t.beloeb) + '</b> ' + enhed(t.beloeb) + '</span></li>';
+  }
+  function topDonator(p, me) {
+    if (!p.top.length) return '<div class="top-don"><span class="top-don-titel">Top donator</span><div class="faint" style="font-size:13px">Ingen bidrag endnu</div></div>';
+    return '<div class="top-don"><span class="top-don-titel">Top donator</span>' +
+      '<ol class="top3-list">' + topRaekke(p.top[0], 0, me) + '</ol>' +
+      (p.top.length > 1 ? '<span class="info top10" tabindex="0"><span class="se-resten">Se resten</span>' +
+        '<span class="pop" role="tooltip"><b class="pop-title">Top 10 donatorer</b><ol class="top3-list">' + p.top.map(function (t, i) { return topRaekke(t, i, me); }).join('') + '</ol></span></span>' : '') +
+      '</div>';
+  }
+
   function vareBillede(v) {
     if (v.billede) return '<span class="thumb"><img src="' + esc(v.billede) + '" alt="" loading="lazy"></span>';
     return '<span class="thumb">' + esc(v.ikon || '🛍️') + '</span>';
@@ -383,7 +398,6 @@
       '</section>';
 
     // 3. Projekter – liste i fuld bredde med top 3
-    var medaljer = ['🥇', '🥈', '🥉'];
     var projekter = '<section class="block"><h2 class="block-title">Projekter</h2>' +
       (S.projekter.length ? '<div class="card list">' + S.projekter.map(function (p) {
         var pp = p.maal > 0 ? Math.min(100, (p.indsamlet / p.maal) * 100) : 0;
@@ -394,10 +408,7 @@
           '<span class="bar-label num"><span class="bar-amt">' + (p.maal
             ? '<b>' + fmt(p.indsamlet) + '</b> af ' + fmt(p.maal) + ' ' + enhed(p.maal) + coin()
             : '<b>' + fmt(p.indsamlet) + '</b> ' + enhed(p.indsamlet) + coin()) + '</span>' + (p.maal ? '<b>' + pp.toFixed(0) + ' %</b>' : '') + '</span></div>' +
-          '<ol class="top3-list">' + (p.top.length ? p.top.map(function (t, i) {
-            return '<li class="' + (t.initialer === me.initialer ? 'mig' : '') + '"><span class="t3-med">' + medaljer[i] + '</span><span class="t3-navn">' + esc(t.navn) + '</span>' +
-              '<span class="t3-beloeb num"><b>' + fmt(t.beloeb) + '</b> ' + enhed(t.beloeb) + '</span></li>';
-          }).join('') : '<li class="faint">Ingen bidrag endnu</li>') + '</ol></div>' +
+          topDonator(p, me) + '</div>' +
           '<div class="proj-acts"><div class="donate">' + (p.maal > 0 && p.indsamlet >= p.maal
             ? '<button class="btn primary yehaw" data-act="yehaw">Yehaw! 🎉</button>'
             : '<button class="btn primary" data-act="indskyd" data-id="' + esc(p.id) + '"' + (kanKoebe && st.saldo > 0 ? '' : ' disabled') + '>Donér</button>') +

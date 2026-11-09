@@ -151,7 +151,7 @@ var Core = (function () {
         }
       });
       var top = Object.keys(pr).filter(function (i) { return pr[i] > 0; })
-        .sort(function (a, b) { return pr[b] - pr[a]; }).slice(0, 3)
+        .sort(function (a, b) { return pr[b] - pr[a]; }).slice(0, 10)
         .map(function (i) { return { initialer: i, navn: navne[i] || i, beloeb: pr[i] }; });
       return { id: str(p.id), navn: str(p.navn), ikon: str(p.ikon), maal: num(p.maal), aaben: sand(p.aaben), indsamlet: indsamlet, mitBidrag: mit, top: top };
     });

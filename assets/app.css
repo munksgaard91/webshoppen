@@ -668,3 +668,13 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 /* Fuldt projekt: grøn progressbar */
 .bar-big.fuld > i { background: linear-gradient(90deg, #8fdcb8, #4fc28f); }
 :root[data-theme="dark"] .bar-big.fuld > i { background: linear-gradient(90deg, rgba(79, 213, 154, .35), rgba(79, 213, 154, .6)); }
+
+/* Projekter: Top donator + "Se resten" (top 10 ved hover) */
+.top-don { margin-top: 12px; max-width: 400px; }
+.top-don-titel { display: block; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-bottom: 4px; }
+.top-don .top3-list { margin: 0; }
+.top10 { display: inline-block; margin-top: 4px; }
+.se-resten { font-size: 12px; font-weight: 700; color: var(--brand-2); cursor: help; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(47, 116, 181, .35); }
+.top10 .pop { left: 0; right: auto; top: calc(100% + 6px); width: 340px; z-index: 30; }
+.top10 .pop .top3-list { gap: 4px; }
+.top10:focus-within .pop { opacity: 1; visibility: visible; transform: none; }
