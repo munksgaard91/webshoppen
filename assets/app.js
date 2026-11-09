@@ -602,7 +602,7 @@
     var tekst = res.type === 'webcoins' ? '+' + wc(res.beloeb) + ' er lagt på din saldo.'
       : res.type === 'vare' ? 'Den bliver leveret til dig. Der kan være lidt ventetid.'
       : 'Bedre held næste gang.';
-    var besked = res.type === 'vare' ? 'Admin har fået besked og spørger, om du vil have den med det samme.'
+    var besked = res.type === 'vare' ? 'Admin har fået besked, hold øje med din chat.'
       : res.type === 'webcoins' ? 'Admin har fået besked om din gevinst.' : '';
     var ikon = res.type === 'webcoins' ? coin('coin-xl') : '<div class="win-ico">' + esc(res.ikon || '🎁') + '</div>';
     openModal('<div class="closed">' + ikon +
