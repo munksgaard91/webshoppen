@@ -752,3 +752,34 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .legend { display: grid; grid-template-columns: repeat(2, max-content); gap: 4px 16px; }
 /* Min profil: "I alt" under Optjent i sort, ikke fed */
 .pstat small.pstat-ialt { color: var(--text); font-weight: 400; white-space: nowrap; }
+
+/* Admin-overblik */
+.tag.ok { color: #1f7a4f; background: rgba(47, 163, 111, .12); }
+:root[data-theme="dark"] .tag.ok { color: #6fd4a4; }
+.adm-list { display: flex; flex-direction: column; }
+.adm-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.adm-row:first-child { border-top: 0; padding-top: 2px; }
+.adm-main { min-width: 0; }
+.adm-main small { display: block; margin-top: 2px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-ev { padding: 8px 0; }
+.adm-ev-top { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; margin-bottom: 6px; }
+.adm-ev .bar.fuld > i { background: linear-gradient(90deg, #34a874, #258a5a); }
+
+/* Sidepanel: fold sammen til kun ikoner (desktop) */
+.side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.side-fold { width: 32px; height: 32px; flex: none; }
+.side-fold svg { transition: transform .2s ease; }
+@media (min-width: 961px) {
+  .shell { transition: grid-template-columns .2s ease; }
+  .shell.foldet { grid-template-columns: 72px 1fr; }
+  .shell.foldet .side { padding: 22px 10px 14px; overflow-x: hidden; }
+  .shell.foldet .side-head { justify-content: center; padding: 0 0 20px; }
+  .shell.foldet .side-head .brand { display: none; }
+  .shell.foldet .side-fold svg { transform: rotate(180deg); }
+  .shell.foldet .nav a { justify-content: center; padding: 10px 0; position: relative; }
+  .shell.foldet .nav a > span:not(.badge) { display: none; }
+  .shell.foldet .nav .badge { position: absolute; top: 2px; right: 6px; margin: 0; font-size: 10px; min-width: 16px; padding: 0 4px; }
+  .shell.foldet .me { flex-direction: column; padding: 14px 0 0; }
+  .shell.foldet .me .who { display: none; }
+}
+@media (max-width: 960px) { .side-fold { display: none; } }

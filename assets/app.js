@@ -114,6 +114,7 @@
     sun: '<circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
     logout: '<path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 8l4 4-4 4M19 12H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
     burger: '<path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+    fold: '<path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
     gift: '<path d="M4 11h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM3 7h18v4H3zM12 7v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 7c-1.5-3-5-4-5-1.5S10 7 12 7zm0 0c1.5-3 5-4 5-1.5S14 7 12 7z" fill="none" stroke="currentColor" stroke-width="1.6"/>',
     info: '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="7.5" r="1.4"/>',
     sync: '<path d="M20 12a8 8 0 0 1-14 5.3M4 12a8 8 0 0 1 14-5.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 3v4h-4M6 21v-4h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
@@ -163,7 +164,6 @@
     app.innerHTML = '<div class="boot"><span class="spinner"></span></div>';
     api('state').then(function (s) {
       S = s;
-      if (S.me.admin && !S.me.initialer && !route()) location.hash = '#/admin/bestillinger';
       if (S.me.admin) return api('admin_state').then(function (a) { A = a; render(); });
       render();
     }).catch(function (e) {
@@ -234,7 +234,6 @@
     '': { titel: 'Overblik', fn: pageOverblik },
     'profil': { titel: 'Min profil', fn: pageProfil },
     'admin/bestillinger': { titel: 'Bestillinger', fn: pageAdminBestillinger, admin: true },
-    'admin/opgoerelse': { titel: 'Opgørelse', fn: pageAdminOpgoerelse, admin: true },
     'admin/brugere': { titel: 'Brugere', fn: pageAdminBrugere, admin: true },
     'admin/sortiment': { titel: 'Sortiment', fn: pageAdminSortiment, admin: true },
     'admin/kollega': { titel: 'Månedens kollega', fn: pageAdminKollega, admin: true },
@@ -244,7 +243,7 @@
 
   function navLink(path, ikon, tekst, extra) {
     var on = route() === path ? ' class="on"' : '';
-    return '<a href="#/' + path + '"' + on + '>' + (ikon ? ico(ikon) : '') + '<span>' + tekst + '</span>' + (extra || '') + '</a>';
+    return '<a href="#/' + path + '"' + on + ' title="' + esc(tekst) + '">' + (ikon ? ico(ikon) : '') + '<span>' + tekst + '</span>' + (extra || '') + '</a>';
   }
 
   function render() {
@@ -252,6 +251,8 @@
     var r = route();
     var side = SIDER[r] || SIDER[''];
     if (side.admin && !S.me.admin) side = SIDER[''];
+    // Admin deltager ikke: overblikket er et admin-overblik i stedet for medarbejdernes forside
+    if (side === SIDER[''] && S.me.admin) side = { titel: 'Overblik', fn: pageAdminOverblik, admin: true };
     if (side === SIDER.profil && !S.me.initialer) side = SIDER[''];
     if (side.admin && !A) {
       api('admin_state').then(function (a) { A = a; render(); }).catch(function (e) { toast('Fejl', e.message, true); });
@@ -278,19 +279,19 @@
       '<main class="main"><div class="wrap">' + indhold + '</div></main>';
   }
 
+  // Sidepanelet kan foldes sammen til kun ikoner. Valget huskes i browseren.
+  function sideFoldet() { try { return localStorage.getItem('ws-side-foldet') === '1'; } catch (e) { return false; } }
+
   // Admin: sidepanel med admin-sider.
   function adminShell(indhold) {
     var me = S.me;
     var nyeBest = A ? A.bestillinger.filter(function (b) { return b.status === 'ny'; }).length : 0;
-    return '<div class="shell" id="shell">' +
+    return '<div class="shell' + (sideFoldet() ? ' foldet' : '') + '" id="shell">' +
       '<div class="scrim" data-act="close-nav"></div>' +
       '<aside class="side">' +
-      '<div class="side-head">' + logo() + '</div>' +
-      '<nav class="nav">' + navLink('', 'home', S.me.initialer ? 'Overblik' : 'Overblik (visning)') + (S.me.initialer ? navLink('profil', 'user', 'Min profil') : '') + '</nav>' +
-      '<div class="nav-label">Admin</div>' +
-      '<nav class="nav">' +
+      '<div class="side-head">' + logo() + '<button class="icon-btn side-fold" data-act="fold-side" title="' + (sideFoldet() ? 'Fold ud' : 'Fold sammen') + '" aria-label="Fold sidepanelet">' + ico('fold') + '</button></div>' +
+      '<nav class="nav">' + navLink('', 'home', 'Overblik') +
       navLink('admin/bestillinger', 'cart', 'Bestillinger', nyeBest ? '<span class="badge">' + nyeBest + '</span>' : '') +
-      navLink('admin/opgoerelse', 'coin', 'Opgørelse') +
       navLink('admin/brugere', 'users', 'Brugere') +
       navLink('admin/sortiment', 'box', 'Sortiment') +
       navLink('admin/kollega', 'star', 'Månedens kollega') +
@@ -795,16 +796,60 @@
       '</section>';
   }
 
-  function pageAdminOpgoerelse() {
-    var rows = A.opgoerelse;
+  // Admin-overblik: det vigtigste samlet ét sted (bestillinger, økonomi, events, månedens kollega, aktivitet)
+  function pageAdminOverblik() {
     var nuKey = Core.maanedKey(new Date(S.nu)); // lokal tid, ikke UTC
+    var mNavn = MAANEDER[Number(nuKey.slice(5)) - 1];
+    var rows = A.opgoerelse;
     var denne = rows.filter(function (o) { return o.maaned === nuKey; })[0];
-    return adminHead('Opgørelse') +
-      '<div class="stat-grid">' +
-      statBox('Brugt i ' + MAANEDER[Number(nuKey.slice(5)) - 1], kr(denne ? denne.kr : 0), denne ? denne.antal + ' bestillinger' + (denne.aabne ? ' · ' + denne.aabne + ' ikke udleveret' : '') : 'Ingen bestillinger') +
-      statBox('Brugt i alt', kr(rows.reduce(function (s, o) { return s + o.kr; }, 0))) +
-      '</div>' +
-      '<section class="card"><div class="card-head"><h2 class="card-title">Pr. måned</h2></div>' +
+    var nye = A.bestillinger.filter(function (b) { return b.status === 'ny'; });
+    var omloeb = A.brugere.filter(function (u) { return u.aktiv; }).reduce(function (sum, u) { return sum + u.saldo; }, 0);
+    var tb = S.teambudget;
+    var shop = S.shop || { aaben: true };
+    var m = A.mdk;
+
+    var status = '<span class="tag' + (shop.aaben ? ' ok' : '') + '">' + (shop.aaben ? 'Shoppen er åben' : 'Shoppen er lukket' + (shop.grund === 'fravaer' ? ' (ikke til stede)' : '')) + '</span>';
+
+    var stats = '<div class="stat-grid">' +
+      statBox('Nye bestillinger', String(nye.length), nye.length ? 'Venter på levering' : 'Alt er leveret') +
+      statBox('Brugt i ' + mNavn, kr(denne ? denne.kr : 0), denne ? denne.antal + ' bestillinger' : 'Ingen bestillinger') +
+      statBox('Webcoins hos holdet', fmt(omloeb), A.brugere.filter(function (u) { return u.aktiv; }).length + ' brugere') +
+      (tb ? statBox('Teambudget tilbage', kr(tb.rest), 'Brugt i sæsonen: ' + kr(tb.brugt)) : '') +
+      '</div>';
+
+    var best = '<section class="card"><div class="card-head"><h2 class="card-title">Nye bestillinger</h2><a class="link" href="#/admin/bestillinger">Se alle</a></div>' +
+      (nye.length ? '<div class="adm-list">' + nye.slice(0, 6).map(function (b) {
+        return '<div class="adm-row"><div class="adm-main"><b>' + esc(b.vare) + '</b>' + (b.oenske ? ' <span class="faint">· ' + esc(b.oenske) + '</span>' : '') +
+          '<small class="faint">' + esc(b.fraNavn) + (b.til !== b.fra ? ' → 🎁 ' + esc(b.tilNavn) : '') + ' · ' + dato(b.tid) + (b.forud ? ' · forudbestilt' : '') + '</small></div>' +
+          '<div class="row-acts"><button class="btn primary sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="udleveret">Udleveret</button><button class="btn danger sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="annulleret">Annullér</button></div></div>';
+      }).join('') + '</div>' + (nye.length > 6 ? '<small class="faint">+ ' + (nye.length - 6) + ' flere</small>' : '') : '<div class="empty">Ingen nye bestillinger.</div>') +
+      '</section>';
+
+    var top = m.stilling.slice(0, 3);
+    var kollega = '<section class="card"><div class="card-head"><h2 class="card-title">Månedens kollega</h2><a class="link" href="#/admin/kollega">Åbn</a></div>' +
+      '<div class="rule"><span>Præmie i ' + mNavn + '</span>' + (m.praemie ? '<b>' + esc(m.praemie) + '</b>' : '<a class="link" href="#/admin/kollega">Coming soon – vælg præmie</a>') + '</div>' +
+      '<div class="rule"><span>Stemmer</span><b class="num">' + m.afgivet + '</b></div>' +
+      (top.length ? top.map(function (x, i) { return '<div class="rule"><span>' + ['🥇', '🥈', '🥉'][i] + ' ' + esc(x.navn) + '</span><b class="num">' + x.stemmer + '</b></div>'; }).join('') : '') +
+      (m.historik.length ? '<small class="faint">Sidste vinder: ' + esc(m.historik[0].vinder.navn) + ' (' + esc(maanedLabel(m.historik[0].maaned)) + ')</small>' : '') +
+      '</section>';
+
+    var events = A.projekter.filter(function (p) { return p.aaben; });
+    var ev = '<section class="card"><div class="card-head"><h2 class="card-title">Events</h2><a class="link" href="#/admin/sortiment">Ret</a></div>' +
+      (events.length ? events.map(function (p) {
+        var pp = p.maal > 0 ? Math.min(100, p.indsamlet / p.maal * 100) : 0;
+        return '<div class="adm-ev"><div class="adm-ev-top"><span>' + esc(p.ikon || '🎯') + ' <b>' + esc(p.navn) + '</b></span><span class="num faint">' + fmt(p.indsamlet) + (p.maal ? ' af ' + fmt(p.maal) : '') + ' · <b>' + pp.toFixed(0) + ' %</b></span></div>' +
+          '<div class="bar' + (pp >= 100 ? ' fuld' : '') + '"><i style="width:' + pp.toFixed(0) + '%"></i></div></div>';
+      }).join('') : '<div class="empty">Ingen åbne events.</div>') +
+      '</section>';
+
+    var akt = '<section class="card"><div class="card-head"><h2 class="card-title">Seneste aktivitet</h2><a class="link" href="#/admin/posteringer">Se alle</a></div>' +
+      (A.posteringer.length ? '<div class="adm-list">' + A.posteringer.filter(function (p) { return p.type !== 'gave_modtaget'; }).slice(0, 6).map(function (p) {
+        return '<div class="adm-row"><div class="adm-main"><b>' + esc(p.navn) + '</b><small class="faint">' + esc(TYPER[p.type] || p.type) + ' · ' + esc(p.tekst) + ' · ' + dato(p.tid) + '</small></div>' +
+          '<span class="num ' + (p.beloeb < 0 ? 'minus' : 'plus') + '">' + (p.beloeb > 0 ? '+' : '') + fmt(p.beloeb) + '</span></div>';
+      }).join('') + '</div>' : '<div class="empty">Ingen aktivitet endnu.</div>') +
+      '</section>';
+
+    var opg = '<section class="card"><div class="card-head"><h2 class="card-title">Opgørelse pr. måned</h2><span class="faint">Brugt i alt ' + kr(rows.reduce(function (sum, o) { return sum + o.kr; }, 0)) + '</span></div>' +
       (rows.length ? '<div class="table-wrap"><table><thead><tr><th>Måned</th><th>Varer</th><th class="r">Bestillinger</th><th class="r">Webcoins</th><th class="r">At trække</th></tr></thead><tbody>' +
         rows.map(function (o) {
           return '<tr><td><b>' + esc(maanedLabel(o.maaned)) + '</b>' + (o.aabne ? ' <span class="tag ny">' + o.aabne + ' ikke udleveret</span>' : '') + '</td>' +
@@ -812,6 +857,11 @@
             '<td class="r num">' + o.antal + '</td><td class="r num">' + wc(o.wc) + '</td><td class="r num"><b>' + kr(o.kr) + '</b></td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty">Ingen bestillinger endnu.</div>') +
       '</section>';
+
+    return adminHead('Overblik', status) + stats +
+      '<div class="grid-2 top0">' + best + kollega + '</div>' +
+      '<div class="grid-2">' + ev + akt + '</div>' +
+      '<div style="margin-top:20px">' + opg + '</div>';
   }
 
   function pageAdminBrugere() {
@@ -1095,6 +1145,13 @@
         var cur = document.documentElement.getAttribute('data-theme') === 'dark';
         if (cur) document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', 'dark');
         store('webshoppen-tema', cur ? null : 'dark');
+        break;
+      }
+      case 'fold-side': {
+        var fold = !sideFoldet();
+        try { localStorage.setItem('ws-side-foldet', fold ? '1' : '0'); } catch (e) {}
+        document.getElementById('shell').classList.toggle('foldet', fold);
+        t.title = fold ? 'Fold ud' : 'Fold sammen';
         break;
       }
       case 'open-nav': document.getElementById('shell').classList.add('open'); break;

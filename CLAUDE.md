@@ -33,7 +33,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
 |---|---|
 | `index.html` | Skal for hele appen |
 | `assets/config.js` | `API_URL` (Apps Script web app-URL) og `GOOGLE_CLIENT_ID`. Tom `API_URL` = demo-tilstand |
-| `assets/app.js` | Al UI-logik (vanilla JS, hash-routing `#/`, `#/profil`, `#/admin/bestillinger`, `…/opgoerelse`, `…/brugere`, `…/sortiment`, `…/kollega`, `…/regler`, `…/posteringer`) |
+| `assets/app.js` | Al UI-logik (vanilla JS, hash-routing `#/`, `#/profil`, `#/admin/bestillinger`, `…/brugere`, `…/sortiment`, `…/kollega`, `…/regler`, `…/posteringer`) |
 | `assets/app.css` | Design (lyst shop-look med blå + guld, mørkt tema som valg) |
 | `assets/mock.js` | Demo-backend i browseren (localStorage), bruger `shared/core.js` |
 | `shared/core.js` | **Al forretningslogik**, delt mellem demo og Apps Script. Ingen Google-API'er her |
@@ -50,7 +50,8 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
 - **Primært laptop (MacBook) og desktop.** Mobil skal bare fungere (ingen vandret scroll) – brug ikke tid på at finpudse mobil.
 - UI-tekster på dansk, korte. Ingen lange forklaringer i UI'et — funktionalitet og god UI.
 - Branding: Montserrat, Best One-blå `#225581`. **Farver: kun blå eller hvid/grå/mørk** – ingen gul/guld baggrunde, bjælker eller flader. Guld (`--gold`) bruges **kun** i selve Webcoin-mønten (`coin()`) **og** som baggrund på lykkehjulets hovedpræmie (største Webcoins-gevinst, `hoved` i state). Lyst tema som standard, mørkt som valg. Skal bevidst **ikke** ligne det mørke salgsdashboard 1:1. Favicon = Webcoin-mønten (`favicon.svg`).
-- Medarbejdere får topmenu (Overblik, Min profil) – intet sidepanel. Kun admin har sidepanel.
+- Medarbejdere får topmenu (Overblik, Min profil) – intet sidepanel. Kun admin har sidepanel – det kan foldes sammen til kun ikoner («-knappen øverst, huskes i `localStorage` `ws-side-foldet`).
+- **Admin-overblik** (`pageAdminOverblik`, route `#/` for admin): status på shoppen, nøgletal (nye bestillinger, brugt i måneden, Webcoins hos holdet, teambudget), nye bestillinger med Udleveret/Annullér, Månedens kollega (præmie/stilling), events, seneste aktivitet og opgørelse pr. måned. Admin ser **ikke** medarbejdernes forside og har ingen Min profil; den gamle Opgørelse-side er lagt ind i overblikket.
 - **Logo = det officielle "best One"-ordmærke som SVG** (`boLogo()`, `LOGO_PATHS` i app.js). Må **kun** vises i blå (`--brand`) eller hvid (mørkt tema). Ikke en tekst-efterligning. "Webshoppen" ved siden af er fed og en anelse mindre end logoet.
 - **b-mærket** (`bMark()`, samme glyf som b'et i logoet) bruges som halvskjult dekoration i højre side af saldo-kortet og profilkortet – hvidt, lav opacitet.
 - Min profil: topkort (gruppe, navn, saldo uden ordet "Saldo"), tre visuelle nøgletal (Optjent, Brugt, Donationer) og faner Aktivitet / Optjening / Bestillinger. Ingen initialer i toppen.
