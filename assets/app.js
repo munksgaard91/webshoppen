@@ -828,7 +828,9 @@
       (m.historik.length ? '<small class="faint">Sidste vinder: ' + esc(m.historik[0].vinder.navn) + ' (' + esc(maanedLabel(m.historik[0].maaned)) + ')</small>' : '') +
       '</section>';
 
-    var events = A.projekter.filter(function (p) { return p.aaben; });
+    // Sorteret efter højeste procent først
+    var pct = function (p) { return p.maal > 0 ? p.indsamlet / p.maal : 0; };
+    var events = A.projekter.filter(function (p) { return p.aaben; }).sort(function (a, b) { return pct(b) - pct(a); });
     var ev = '<section class="card"><div class="card-head"><h2 class="card-title">Events</h2><a class="link" href="#/admin/sortiment">Ret</a></div>' +
       (events.length ? events.map(function (p) {
         var pp = p.maal > 0 ? Math.min(100, p.indsamlet / p.maal * 100) : 0;
