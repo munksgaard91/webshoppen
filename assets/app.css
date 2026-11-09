@@ -739,5 +739,5 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 :root[data-theme="dark"] .mdk-pill b { color: var(--brand-2); }
 .mdk-pill .coin { width: 18px; height: 18px; }
 /* "Vinder i <måned>" større og øverst i feltet */
-.mdk-spot { justify-content: flex-start; padding-top: 22px; }
+.mdk-spot { justify-content: center; }
 .mdk-spot .mdk-eyebrow { font-size: 15px; font-weight: 800; letter-spacing: .1em; opacity: .95; margin-bottom: 14px; }
