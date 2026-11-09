@@ -689,7 +689,7 @@
     var stats = '<div class="pstats">' +
       '<div class="pstat"><div class="pstat-top"><span class="pico in">' + ico('down') + '</span><span>Optjent i ' + mNavn + '</span></div>' +
       '<b class="num">' + wc(st.optjentMaaned) + '</b>' + spark(st.forloeb.map(function (f) { return f.beloeb; })) +
-      '<small class="plus num">I alt ' + wc(st.optjentTotal) + '</small></div>' +
+      '<small class="pstat-ialt num">I alt ' + wc(st.optjentTotal) + '</small></div>' +
       '<div class="pstat"><div class="pstat-top"><span class="pico out">' + ico('cart') + '</span><span>Brugt i alt</span></div>' +
       '<b class="num">' + wc(st.brugt) + '</b>' +
       '<div class="split"><i class="s1" style="width:' + del(st.brugtSelv).toFixed(1) + '%"></i><i class="s2" style="width:' + del(st.givet).toFixed(1) + '%"></i><i class="s3" style="width:' + del(st.indskudt).toFixed(1) + '%"></i><i class="s4" style="width:' + del(st.spins).toFixed(1) + '%"></i></div>' +
