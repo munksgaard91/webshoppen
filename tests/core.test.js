@@ -89,9 +89,13 @@ t('ikke nok Webcoins', function () {
 });
 t('lykkehjul: vare, webcoins og intet', function () {
   var foer = saldo(B);
-  tal = 0.1; eq(Core.handle(db, B, 'spin', {}, env).id, 'h1');
-  tal = 0.5; eq(Core.handle(db, B, 'spin', {}, env).id, 'h2');
-  tal = 0.9; eq(Core.handle(db, B, 'spin', {}, env).id, 'h3');
+  kaster(function () { Core.handle(db, B, 'spin', {}, env); }, 'Køb et drej');
+  var drej = function (v) { Core.handle(db, B, 'koeb_drej', {}, env); tal = v; return Core.handle(db, B, 'spin', {}, env).id; };
+  eq(drej(0.1), 'h1'); eq(drej(0.5), 'h2'); eq(drej(0.9), 'h3');
+  Core.handle(db, B, 'koeb_drej', {}, env);
+  eq(Core.handle(db, B, 'state', {}, env).hjul.klar, 1, 'et drej klar');
+  kaster(function () { Core.handle(db, B, 'koeb_drej', {}, env); }, 'allerede');
+  tal = 0.9; Core.handle(db, B, 'spin', {}, env); foer -= 15;
   eq(saldo(B), foer - 45 + 25, 'saldo efter 3 drej');
   eq(data.Bestillinger.filter(function (b) { return b.vare === 'Gevinst: Candybar'; }).length, 1);
 });
@@ -134,6 +138,7 @@ t('ren admin deltager ikke, men kan moderere', function () {
   eq(R.admin, true); eq(R.initialer, '');
   kaster(function () { Core.handle(db, R, 'bestil', { vareId: 'mon' }, env); }, 'initialer');
   kaster(function () { Core.handle(db, R, 'spin', {}, env); }, 'initialer');
+  kaster(function () { Core.handle(db, R, 'koeb_drej', {}, env); }, 'initialer');
   kaster(function () { Core.handle(db, R, 'stem', { til: 'BBB', begrundelse: 'Lang nok begrundelse' }, env); }, 'initialer');
   kaster(function () { Core.handle(db, B, 'stem', { til: '', begrundelse: 'Lang nok begrundelse' }, env); }, 'kollega');
   var navne = Core.handle(db, B, 'state', {}, env).kolleger.map(function (k) { return k.initialer; });

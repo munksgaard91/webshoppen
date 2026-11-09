@@ -108,6 +108,8 @@
     down: '<path d="M17 7 7 17M7 9v8h8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
     heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
     send: '<path d="M21 3 10 14M21 3l-7 18-4-7-7-4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>',
+    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/>',
+    unlock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
     list: '<rect x="3" y="4" width="18" height="3" rx="1"/><rect x="3" y="10.5" width="18" height="3" rx="1"/><rect x="3" y="17" width="12" height="3" rx="1"/>',
     sun: '<circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
     logout: '<path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 8l4 4-4 4M19 12H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -460,11 +462,18 @@
   function lucky(kanKoebe) {
     var h = S.hjul;
     if (!h || !h.felter.length) return '';
-    var kan = kanKoebe && S.stats.saldo >= h.pris;
+    var klar = h.klar > 0;
+    var kanKoebeDrej = kanKoebe && !klar && S.stats.saldo >= h.pris;
+    var knapper = '<div class="lucky-acts">' +
+      (klar
+        ? '<span class="tag ny">' + ico('unlock') + 'Dit drej er klar</span>'
+        : '<button class="btn" data-act="koeb-drej"' + (kanKoebeDrej ? '' : ' disabled') + '>Køb et drej</button>') +
+      '<button class="btn primary lg' + (klar ? '' : ' locked') + '" data-act="spin"' + (klar && kanKoebe ? '' : ' disabled') + '>' + ico(klar ? 'unlock' : 'lock') + 'Drej hjulet</button></div>';
     return '<section class="block"><h2 class="block-title">Feelin\' Lucky?</h2><div class="card lucky">' + hjulSvg(h.felter) +
-      '<div class="lucky-main"><p class="lucky-price num">Drej hjulet for ' + wc(h.pris) + coin() + '</p>' +
+      '<div class="lucky-main"><div class="lucky-price"><span class="lp-label">Drej hjulet for</span>' +
+      '<span class="row-price num"><span class="amt">' + fmt(h.pris) + '</span><span class="unit">' + enhed(h.pris) + '</span>' + coin() + '</span></div>' +
       '<div class="prizes">' + h.felter.map(function (f) { return '<span class="tag">' + esc(f.ikon) + ' ' + esc(f.navn) + '</span>'; }).join('') + '</div>' +
-      '<button class="btn primary lg" data-act="spin"' + (kan ? '' : ' disabled') + '>Drej hjulet</button></div></div></section>';
+      knapper + '</div></div></section>';
   }
 
   function visGevinst(res) {
@@ -906,6 +915,13 @@
       case 'giv': openKoeb(t.dataset.id, true); break;
       case 'koeb-mode': koebState.gave = t.dataset.g === '1'; renderKoeb(); break;
       case 'koeb-variant': koebState.variant = t.dataset.v; renderKoeb(); break;
+      case 'koeb-drej':
+        busy(t, true);
+        api('koeb_drej').then(function () {
+          toast('Drej købt', 'Hjulet er låst op. Tryk på Drej hjulet.');
+          return refresh();
+        }).catch(function (e) { busy(t, false); if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true); });
+        break;
       case 'spin': {
         if (ui.spinning) break;
         ui.spinning = true;

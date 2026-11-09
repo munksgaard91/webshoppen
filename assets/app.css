@@ -436,7 +436,10 @@ td.r, th.r { text-align: right; }
 .wheel-hub { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 46px; height: 46px; border-radius: 50%; background: var(--card); display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0, 0, 0, .2); }
 .wheel-hub .coin { width: 32px; height: 32px; }
 .lucky-main { flex: 1; min-width: 0; }
-.lucky-price { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 800; margin: 0 0 14px; }
+.lucky-price { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; }
+.lp-label { font-size: 16px; font-weight: 700; }
+.lucky-price .row-price { font-size: 14px; font-weight: 700; gap: 0; min-width: 0; }
+.lucky-price .row-price .amt { min-width: 0; }
 .prizes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
 .btn.lg { padding: 13px 30px; font-size: 16px; border-radius: 14px; }
 .win-ico { font-size: 64px; line-height: 1; margin-bottom: 12px; }
@@ -549,3 +552,9 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 /* Teambudget: brugt-beløbet i en mild rød */
 .tb-sub .brugt { color: #c4545e; }
 :root[data-theme="dark"] .tb-sub .brugt { color: #f19aa1; }
+
+/* Feelin' Lucky?: køb et drej, derefter låses Drej hjulet op */
+.lucky-acts { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.lucky-acts .tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px; }
+.lucky-acts .tag svg, .btn.lg svg { width: 16px; height: 16px; }
+.btn.primary.locked:disabled { background: var(--card-2); border-color: var(--line-2); color: var(--muted); opacity: 1; }

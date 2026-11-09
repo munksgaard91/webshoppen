@@ -17,6 +17,7 @@ var Core = (function () {
     Brugere: ['email', 'initialer', 'navn', 'gruppe', 'aktiv'],
     Menu: ['id', 'navn', 'ikon', 'billede', 'pris', 'kostpris', 'varianter', 'snart', 'aktiv'],
     Stemmer: ['id', 'tid', 'maaned', 'fra', 'til', 'begrundelse'],
+    Spil: ['id', 'tid', 'initialer', 'status', 'resultat'],
     Hjul: ['id', 'navn', 'ikon', 'type', 'beloeb', 'kostpris', 'vaegt', 'aktiv'],
     Projekter: ['id', 'navn', 'ikon', 'maal', 'aaben'],
     Posteringer: ['id', 'tid', 'initialer', 'type', 'beloeb', 'tekst', 'ref'],
@@ -256,7 +257,7 @@ var Core = (function () {
         return { maaned: mk, minStemme: min ? { initialer: min, navn: navne[min] || min, begrundelse: minHvorfor } : null, praemie: mdkPraemie(db),
           sidste: vinder ? { maaned: sidst, initialer: vinder.initialer, navn: vinder.navn } : null };
       })(),
-      hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 15))), felter: hjulFelter(db, false).map(function (f) { return { id: f.id, navn: f.navn, ikon: f.ikon }; }) }
+      hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 15))), klar: me.initialer ? ubrugteDrej(db, me.initialer) : 0, felter: hjulFelter(db, false).map(function (f) { return { id: f.id, navn: f.navn, ikon: f.ikon }; }) }
     };
   }
 
@@ -371,13 +372,33 @@ var Core = (function () {
   }
 
   // Feelin' Lucky? – gevinsten afgøres altid her (server), aldrig i browseren.
-  function spin(db, me, data, env) {
+  // Trin 1: køb et drej (betaling). Trin 2: drej (resultat). Et købt drej ligger i fanen Spil, til det bruges.
+  function koebDrej(db, me, data, env) {
     kraevBruger(me);
     var pris = Math.max(0, Math.floor(num(cfgVal(db, 'HJUL_PRIS', 15))));
     var felter = hjulFelter(db, false);
+    if (!felter.length) throw err('BAD', 'Hjulet er ikke sat op endnu.');
+    if (ubrugteDrej(db, me.initialer) > 0) throw err('BAD', 'Du har allerede et drej klar.');
+    if (saldoFor(db.all('Posteringer'), me.initialer) < pris) throw err('FUNDS', 'Du har ikke nok Webcoins.');
+    var id = env.uuid(), tid = env.now().toISOString();
+    if (pris) db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'hjul', beloeb: -pris, tekst: "Feelin' Lucky?", ref: id });
+    db.insert('Spil', { id: id, tid: tid, initialer: me.initialer, status: 'koebt', resultat: '' });
+    return { id: id };
+  }
+
+  function ubrugteDrej(db, initialer) {
+    return db.all('Spil').filter(function (x) { return ini(x.initialer) === initialer && str(x.status) === 'koebt'; }).length;
+  }
+
+  // Feelin' Lucky? – gevinsten afgøres altid her (server), aldrig i browseren.
+  function spin(db, me, data, env) {
+    kraevBruger(me);
+    var spil = null;
+    db.all('Spil').forEach(function (x) { if (!spil && ini(x.initialer) === me.initialer && str(x.status) === 'koebt') spil = x; });
+    if (!spil) throw err('BAD', 'Køb et drej først.');
+    var felter = hjulFelter(db, false);
     var total = felter.reduce(function (s, f) { return s + Math.max(0, f.vaegt); }, 0);
     if (!felter.length || total <= 0) throw err('BAD', 'Hjulet er ikke sat op endnu.');
-    if (saldoFor(db.all('Posteringer'), me.initialer) < pris) throw err('FUNDS', 'Du har ikke nok Webcoins.');
     var x = (env.random ? env.random() : Math.random()) * total;
     var vinder = felter[felter.length - 1];
     for (var i = 0, acc = 0; i < felter.length; i++) {
@@ -385,18 +406,19 @@ var Core = (function () {
       if (x < acc) { vinder = felter[i]; break; }
     }
     var tid = env.now().toISOString();
-    var ref = env.uuid();
-    if (pris) db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'hjul', beloeb: -pris, tekst: "Feelin' Lucky?", ref: ref });
+    var ref = str(spil.id);
+    db.update('Spil', spil, { status: 'drejet', resultat: vinder.navn });
     if (vinder.type === 'webcoins' && vinder.beloeb > 0) {
       db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'gevinst', beloeb: Math.floor(vinder.beloeb), tekst: 'Gevinst: ' + vinder.navn, ref: ref });
     } else if (vinder.type === 'vare') {
       var shop = env.shop ? env.shop() : { aaben: true };
-      db.insert('Bestillinger', { id: ref, tid: tid, fra: me.initialer, til: me.initialer, vare: 'Gevinst: ' + vinder.navn, pris: 0, kostpris: vinder.kostpris, status: 'ny', forud: shop.aaben ? '' : 'ja' });
+      db.insert('Bestillinger', { id: env.uuid(), tid: tid, fra: me.initialer, til: me.initialer, vare: 'Gevinst: ' + vinder.navn, pris: 0, kostpris: vinder.kostpris, status: 'ny', forud: shop.aaben ? '' : 'ja' });
       db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'gevinst', beloeb: 0, tekst: 'Gevinst: ' + vinder.navn, ref: ref });
       env.notify({ emne: 'Gevinst: ' + vinder.navn + ' til ' + me.navn, tekst: me.navn + ' (' + me.initialer + ") har vundet " + vinder.ikon + ' ' + vinder.navn + " på Feelin' Lucky?." });
     }
     return { id: vinder.id, navn: vinder.navn, ikon: vinder.ikon, type: vinder.type, beloeb: vinder.beloeb };
   }
+
 
   function indskyd(db, me, data, env) {
     kraevBruger(me);
@@ -613,6 +635,7 @@ var Core = (function () {
     bestil: bestil,
     indskyd: indskyd,
     spin: spin,
+    koeb_drej: koebDrej,
     stem: stem,
     forslag: forslag,
     admin_mdk_praemie: adminMdkPraemie,
@@ -626,7 +649,7 @@ var Core = (function () {
     admin_justering: adminJustering,
     admin_sync: function (db, me, data, env) { kraevAdmin(me); return env.sync(); }
   };
-  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, stem: 1, admin_mdk_praemie: 1, admin_hjul: 1, admin_hjul_pris: 1, admin_bestilling: 1, admin_bruger: 1, admin_vare: 1, admin_projekt: 1, admin_justering: 1, admin_sync: 1 };
+  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_hjul: 1, admin_hjul_pris: 1, admin_bestilling: 1, admin_bruger: 1, admin_vare: 1, admin_projekt: 1, admin_justering: 1, admin_sync: 1 };
 
   function handle(db, me, action, data, env) {
     var fn = HANDLINGER[action];

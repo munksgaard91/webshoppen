@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v14';
+  var KEY = 'webshoppen-demo-v15';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -17,6 +17,7 @@ window.Mock = (function () {
       Brugere: BRUGERE.map(function (b) { return Object.assign({}, b); }),
       Config: [{ noegle: 'HJUL_PRIS', vaerdi: 15 }, { noegle: 'MDK_PRAEMIE', vaerdi: 'En snack efter eget valg' }],
       Stemmer: [],
+      Spil: [],
       Menu: [
         { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 10, kostpris: 8, varianter: 'Pepsi Max, Faxe Kondi, Faxe Kondi 0 kalorier, Danskvand', aktiv: 'ja' },
         { id: 'monster', navn: 'Monster', ikon: '⚡', pris: 20, kostpris: 15, varianter: 'Hvid Monster', aktiv: 'ja' },
