@@ -390,12 +390,13 @@
         return '<div class="row proj-item">' +
           '<span class="thumb">' + esc(p.ikon || '🎯') + '</span>' +
           '<div class="row-main"><b>' + esc(p.navn) + '</b>' +
-          '<div class="bar bar-big"><i style="width:' + pp.toFixed(0) + '%"></i>' +
+          '<div class="bar bar-big' + (p.maal > 0 && p.indsamlet >= p.maal ? ' fuld' : '') + '"><i style="width:' + pp.toFixed(0) + '%"></i>' +
           '<span class="bar-label num"><span class="bar-amt">' + (p.maal
             ? '<b>' + fmt(p.indsamlet) + '</b> af ' + fmt(p.maal) + ' ' + enhed(p.maal) + coin()
             : '<b>' + fmt(p.indsamlet) + '</b> ' + enhed(p.indsamlet) + coin()) + '</span>' + (p.maal ? '<b>' + pp.toFixed(0) + ' %</b>' : '') + '</span></div>' +
           '<ol class="top3-list">' + (p.top.length ? p.top.map(function (t, i) {
-            return '<li class="' + (t.initialer === me.initialer ? 'mig' : '') + '"><span>' + medaljer[i] + '</span>' + esc(t.navn) + '<b class="num">' + wc(t.beloeb) + '</b></li>';
+            return '<li class="' + (t.initialer === me.initialer ? 'mig' : '') + '"><span class="t3-med">' + medaljer[i] + '</span><span class="t3-navn">' + esc(t.navn) + '</span>' +
+              '<span class="t3-beloeb num"><b>' + fmt(t.beloeb) + '</b> ' + enhed(t.beloeb) + '</span></li>';
           }).join('') : '<li class="faint">Ingen bidrag endnu</li>') + '</ol></div>' +
           '<div class="proj-acts"><div class="donate">' + (p.maal > 0 && p.indsamlet >= p.maal
             ? '<button class="btn primary yehaw" data-act="yehaw">Yehaw! 🎉</button>'
@@ -498,18 +499,23 @@
     return '<div class="reel-card ' + cls + '">' + indhold + '</div>';
   }
 
-  // Tilfældigt kort efter chancen – kun til at fylde rullen ud, ikke til at afgøre gevinsten
-  function reelTraek(felter) {
-    var x = Math.random(), acc = 0;
-    for (var i = 0; i < felter.length; i++) { acc += felter[i].andel || 0; if (x < acc) return felter[i]; }
-    return felter[felter.length - 1];
+  // Tilfældigt kort efter chancen – kun til at fylde rullen ud, ikke til at afgøre gevinsten.
+  // Samme præmie må ikke stå lige efter hinanden (heller ikke de to før), så rullen virker tilfældig.
+  function reelTraek(felter, forrige) {
+    var undgaa = (forrige || []).map(function (f) { return f && f.navn; });
+    for (var forsoeg = 0; forsoeg < 12; forsoeg++) {
+      var x = Math.random(), acc = 0, valgt = felter[felter.length - 1];
+      for (var i = 0; i < felter.length; i++) { acc += felter[i].andel || 0; if (x < acc) { valgt = felter[i]; break; } }
+      if (undgaa.indexOf(valgt.navn) < 0) return valgt;
+    }
+    return felter.filter(function (f) { return undgaa.indexOf(f.navn) < 0; })[0] || felter[0];
   }
 
   function reelStart(felter) {
-    // Viser alle præmier i rækkefølge, gentaget så rullen er fyldt ud
+    // Tilfældig rækkefølge (efter chancen) i stedet for samme mønster hver gang
     var kort = [];
-    while (kort.length < 24) kort = kort.concat(felter);
-    return kort.slice(0, 24);
+    for (var i = 0; i < 24; i++) kort.push(reelTraek(felter, kort.slice(-2)));
+    return kort;
   }
 
   // Lille i-ikon med chancerne (vises ved hover), samlet pr. præmie og sorteret efter chance
@@ -549,7 +555,11 @@
     var vinder = felter.filter(function (f) { return f.id === res.id; })[0] || res;
     var VINDER = 62, ANTAL = 68;
     var kort = [];
-    for (var i = 0; i < ANTAL; i++) kort.push(i === VINDER ? vinder : reelTraek(felter));
+    for (var i = 0; i < ANTAL; i++) {
+      // Kortene lige omkring vinderen må ikke være samme præmie som vinderen
+      var naer = i >= VINDER - 2 && i <= VINDER + 2 && i !== VINDER;
+      kort.push(i === VINDER ? vinder : reelTraek(felter, kort.slice(-2).concat(naer ? [vinder] : [])));
+    }
     var html = kort.map(reelKort).join('');
     var bredde = box ? box.clientWidth : 600;
     var jitter = (Math.random() - 0.5) * 70; // stopper ikke altid præcis midt på kortet

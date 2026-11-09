@@ -654,3 +654,17 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .reel.stoppet .reel-card { opacity: .4; }
 .reel.stoppet .reel-card.vinder { box-shadow: 0 0 0 3px var(--brand), 0 10px 26px rgba(16, 35, 61, .3); }
 .reel.stoppet .reel-card.vinder.hoved { box-shadow: 0 0 0 3px var(--brand), 0 0 28px rgba(246, 195, 68, .9); }
+.reel-card { border-radius: 4px; }
+.reel { border-radius: 8px; }
+
+/* Top 3: faste kolonner (medalje | navn | beløb højrestillet), så det flugter uanset navn og antal cifre */
+.top3-list { max-width: 400px; }
+.top3-list li { display: grid; grid-template-columns: 24px minmax(0, 1fr) 120px; align-items: center; gap: 6px; }
+.top3-list .t3-navn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.top3-list .t3-beloeb { text-align: right; white-space: nowrap; }
+.top3-list .t3-beloeb b { margin: 0; color: var(--text); }
+.top3-list li.mig .t3-beloeb b { color: var(--brand-2); }
+.top3-list li.faint { display: block; }
+/* Fuldt projekt: grøn progressbar */
+.bar-big.fuld > i { background: linear-gradient(90deg, #8fdcb8, #4fc28f); }
+:root[data-theme="dark"] .bar-big.fuld > i { background: linear-gradient(90deg, rgba(79, 213, 154, .35), rgba(79, 213, 154, .6)); }

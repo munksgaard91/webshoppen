@@ -67,7 +67,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
 - Saldo-kortet: **"Hvordan optjener jeg?"** + i-ikon; klik åbner en boks med gruppens regler, hover viser en boble.
 - Teambudget: rest i alt som stort tal; "Brugt i sæsonen" står i **mild rød** (`.tb-sub .brugt`).
 - Månedens kollega: begrundelse påkrævet; teksten siger, at resultater (salg, fakturering) ikke tæller.
-- Røde tal = brugt/minus, grønne = optjent/plus. Ellers kun blå, hvid, grå og mørk.
+- Røde tal = brugt/minus, grønne = optjent/plus. Grøn bruges også til progressbaren på et projekt, der er nået 100 %. Ellers kun blå, hvid, grå og mørk.
 
 - Escape altid brugerdata med `esc()` i app.js før det sættes ind i HTML.
 - Danske Google Sheets bruger `;` i formler.
