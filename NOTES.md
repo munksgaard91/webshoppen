@@ -26,7 +26,7 @@ Lukket shop (uden for 08:00–15:30 på hverdage, eller når admin har "Ikke til
 Bestillinger (udleveret / annullér med refusion / fortryd) · **Opgørelse** (kr pr. måned ud fra kostpris = beløbet der skal trækkes) · Brugere (opret/ret/gruppe/justér saldo) · Sortiment (menu inkl. varianter + kommer snart, projekter, lykkehjulets præmier/vægt/chance/pris) · **Månedens kollega** (præmie, stilling med anonyme begrundelser, tidligere vindere) · Regler (alle grupper) · Posteringer (alle + "Hent optjening nu").
 
 ### Design
-Lyst tema som standard (Best One-blå + guld Webcoin-mønt), mørkt som valg. Logo = ordmærket "best one." i tekst (Montserrat 900, guld punktum) + "Webshoppen" i 18px fed blå – en anelse mindre end logoet. Let animeret baggrund (to farveskyer, kun CSS-transform, stopper ved "Reducer bevægelse"). Favicon = W-mønten.
+Lyst tema som standard, mørkt som valg. **Kun blå eller hvid/grå/mørk** – guld findes kun i Webcoin-mønten. Logo = officielt "best One"-SVG i blå (hvid i mørkt tema); en fortegnsfejl i O'ets indre kurve er rettet (det var derfor, logoet så forkert ud). b-mærket ligger halvskjult i saldo- og profilkortet. "Webshoppen" i 18px fed blå ved siden af logoet. Let animeret baggrund (to blå/grå farveskyer, kun CSS-transform, stopper ved "Reducer bevægelse"). Lykkehjulet bruger blå og hvide/grå felter. Favicon = W-mønten.
 
 ## Ikke gjort endnu
 - Backend er ikke sat op i Google (tjekliste nedenfor).
@@ -64,7 +64,7 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 7. **Webshoppen → Slå automatisk hentning til**.
 
 Ændringer i `shared/core.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=36`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=38`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test

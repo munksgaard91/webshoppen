@@ -46,9 +46,10 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
 - **Skriv altid "Webcoins" helt ud** ("1 Webcoin" i ental) – aldrig WC eller andre forkortelser. Brug `wc(n)` i app.js. Mønt-ikonet (`coin()`) står **kun én gang og til sidst** efter beløbet, f.eks. "245 af 1.500 Webcoins 🪙" – aldrig foran eller midt i.
 - **Primært laptop (MacBook) og desktop.** Mobil skal bare fungere (ingen vandret scroll) – brug ikke tid på at finpudse mobil.
 - UI-tekster på dansk, korte. Ingen lange forklaringer i UI'et — funktionalitet og god UI.
-- Branding: Montserrat, Best One-blå `#225581` + guld Webcoin-mønt (`--gold`). Lyst tema som standard, mørkt som valg. Skal bevidst **ikke** ligne det mørke salgsdashboard 1:1. Favicon = Webcoin-mønten (`favicon.svg`).
+- Branding: Montserrat, Best One-blå `#225581`. **Farver: kun blå eller hvid/grå/mørk** – ingen gul/guld baggrunde, bjælker eller flader. Guld (`--gold`) bruges **kun** i selve Webcoin-mønten (`coin()`). Lyst tema som standard, mørkt som valg. Skal bevidst **ikke** ligne det mørke salgsdashboard 1:1. Favicon = Webcoin-mønten (`favicon.svg`).
 - Medarbejdere får topmenu (Overblik, Min profil) – intet sidepanel. Kun admin har sidepanel.
-- Logo = ordmærket "best one." som tekst (`boLogo()`), ikke SVG. "Webshoppen" ved siden af er fed og en anelse mindre end logoet.
+- **Logo = det officielle "best One"-ordmærke som SVG** (`boLogo()`, `LOGO_PATHS` i app.js). Må **kun** vises i blå (`--brand`) eller hvid (mørkt tema). Ikke en tekst-efterligning. "Webshoppen" ved siden af er fed og en anelse mindre end logoet.
+- **b-mærket** (`bMark()`, samme glyf som b'et i logoet) bruges som halvskjult dekoration i højre side af saldo-kortet og profilkortet – hvidt, lav opacitet.
 - Min profil: topkort (gruppe, navn, saldo uden ordet "Saldo"), tre visuelle nøgletal (Optjent, Brugt, Donationer) og faner Aktivitet / Optjening / Bestillinger. Ingen initialer i toppen.
 - "Donationer" = gaver givet til kolleger; projekter bruger knappen "Donér".
 - Forsidens prioritet: 1) saldo + teambudget (stort tal = rest i alt, derunder kun "Brugt i sæsonen", sæson som tag fra `TEAMBUDGET_SAESON`) + regler (i-ikon), 2) menu/bestil (kompakt liste), 3) Feelin' Lucky?, 4) projekter, 5) Månedens kollega (nederst). Optjent, forbrug, bevægelser og bestillinger ligger **kun** på Min profil.
