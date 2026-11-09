@@ -713,3 +713,9 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .mdk-facts-titel { background: none !important; padding: 0 !important; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .8; }
 .mdk-facts span small { font-size: 11px; font-weight: 600; opacity: .75; margin-right: 4px; text-transform: none; letter-spacing: 0; }
 .tb-card .tb-big { margin: 10px 0 6px; }
+
+/* Tombola i tomgang: ruller langsomt i ring for at friste (pauser ved hover, slået fra ved "Reducer bevægelse") */
+.reel-track.tomgang { animation: tomgang 70s linear infinite; }
+.reel:hover .reel-track.tomgang { animation-play-state: paused; }
+@keyframes tomgang { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .reel-track.tomgang { animation: none; } }

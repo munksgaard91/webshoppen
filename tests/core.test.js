@@ -170,4 +170,18 @@ t('fuldt projekt kan ikke få flere donationer', function () {
   Core.handle(db, A, 'indskyd', { projektId: 'p2', beloeb: 20 }, env);
   kaster(function () { Core.handle(db, A, 'indskyd', { projektId: 'p2', beloeb: 1 }, env); }, 'fuldt');
 });
+t('saldoen kan aldrig gå i minus', function () {
+  data.Brugere.push({ email: 'f@best-one.dk', initialer: 'FFF', navn: 'Fattig F', gruppe: 'Support', aktiv: 'ja' });
+  var F = Core.resolveUser(db, { email: 'f@best-one.dk' }, []);
+  data.Posteringer.push({ id: 'f1', tid: '2026-11-01T10:00:00.000Z', initialer: 'FFF', type: 'justering', beloeb: 12, tekst: 'Start' });
+  kaster(function () { Core.handle(db, F, 'bestil', { vareId: 'mon' }, env); }, 'ikke nok');
+  kaster(function () { Core.handle(db, F, 'bestil', { vareId: 'mon', til: 'BBB' }, env); }, 'ikke nok');
+  kaster(function () { Core.handle(db, F, 'koeb_drej', {}, env); }, 'ikke nok');
+  kaster(function () { Core.handle(db, F, 'indskyd', { projektId: 'p0', beloeb: 13 }, env); }, 'ikke nok');
+  kaster(function () { Core.handle(db, A, 'admin_justering', { initialer: 'FFF', beloeb: -13, tekst: 'Fejl' }, env); }, 'minus');
+  Core.handle(db, F, 'bestil', { vareId: 'cola', oenske: '' }, env);
+  eq(Core.handle(db, F, 'state', {}, env).stats.saldo, 2, 'kun det, der var råd til');
+  Core.handle(db, A, 'admin_justering', { initialer: 'FFF', beloeb: -2, tekst: 'Ned til nul' }, env);
+  eq(Core.handle(db, F, 'state', {}, env).stats.saldo, 0);
+});
 print('OK: ' + ok + '  FEJL: ' + fejl);

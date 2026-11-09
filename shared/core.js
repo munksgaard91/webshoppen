@@ -611,6 +611,9 @@ var Core = (function () {
     if (!beloeb) throw err('BAD', 'Angiv et beløb.');
     var findes = db.all('Brugere').some(function (u) { return ini(u.initialer) === i; });
     if (!findes) throw err('BAD', 'Ukendte initialer.');
+    // Saldoen må aldrig gå i minus – heller ikke ved en admin-justering
+    var nu = saldoFor(db.all('Posteringer'), i);
+    if (nu + beloeb < 0) throw err('FUNDS', 'Saldoen må ikke gå i minus. ' + i + ' har kun ' + nu + (nu === 1 ? ' Webcoin.' : ' Webcoins.'));
     db.insert('Posteringer', { id: env.uuid(), tid: env.now().toISOString(), initialer: i, type: 'justering', beloeb: beloeb, tekst: str(data.tekst).trim() || 'Justering', ref: '' });
     return { ok: true };
   }

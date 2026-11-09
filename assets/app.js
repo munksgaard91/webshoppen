@@ -550,10 +550,13 @@
         ? '<span class="tag ny">' + ico('unlock') + 'Dit drej er klar</span>'
         : '<button class="btn lg" data-act="koeb-drej"' + (kanKoebeDrej ? '' : ' disabled') + '>Køb et drej</button>') +
       '<button class="btn primary lg' + (klar ? '' : ' locked') + '" data-act="spin"' + (klar && kanKoebe ? '' : ' disabled') + '>' + (klar ? '<span class="btn-emoji">🎰</span>' : ico('lock')) + 'Drej hjulet</button></div>';
-    var spor = ui.reel ? ui.reel.html : reelStart(h.felter).map(reelKort).join('');
+    // Uden et nyligt resultat ruller tombolaen langsomt i ring for at friste (rækken er dubleret, så loopet er sømløst)
+    var start = ui.reelStart || (ui.reelStart = reelStart(h.felter).map(reelKort).join(''));
+    var spor = ui.reel ? ui.reel.html : start + start;
     var x = ui.reel ? ui.reel.x : 0;
+    var tomgang = !ui.reel;
     return '<section class="block"><h2 class="block-title">Feelin\' Lucky?</h2><div class="card lucky2">' +
-      '<div class="reel" id="reel-box"><span class="reel-marker"></span><div class="reel-track" id="reel" style="transform:translateX(' + x + 'px)">' + spor + '</div></div>' +
+      '<div class="reel" id="reel-box"><span class="reel-marker"></span><div class="reel-track' + (tomgang ? ' tomgang' : '') + '" id="reel"' + (tomgang ? '' : ' style="transform:translateX(' + x + 'px)"') + '>' + spor + '</div></div>' +
       '<div class="lucky-bund"><div class="lucky-price"><span class="lp-label">Drej hjulet</span>' + chancePop(h.felter) +
       '<span class="row-price num"><span class="amt">' + fmt(h.pris) + '</span><span class="unit">' + enhed(h.pris) + '</span>' + coin() + '</span></div>' +
       knapper + '</div></div></section>';
@@ -578,6 +581,7 @@
     var forbi = slut - (14 + Math.random() * 16); // glider lidt for langt og retter sig ind, som i CS
     ui.reel = { html: html, x: slut };
     if (!spor || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) { faerdig(); return; }
+    spor.classList.remove('tomgang');
     spor.style.transition = 'none';
     spor.innerHTML = html;
     spor.style.transform = 'translateX(0px)';
@@ -1051,6 +1055,7 @@
       case 'koeb-drej':
         busy(t, true);
         api('koeb_drej').then(function () {
+          ui.reel = null;
           toast('Drej købt', 'Hjulet er låst op. Tryk på Drej hjulet.');
           return refresh();
         }).catch(function (e) { busy(t, false); if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true); });
