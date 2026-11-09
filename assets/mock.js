@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v24';
+  var KEY = 'webshoppen-demo-v25';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -15,7 +15,7 @@ window.Mock = (function () {
   function seed() {
     return {
       Brugere: BRUGERE.map(function (b) { return Object.assign({}, b); }),
-      Config: [{ noegle: 'HJUL_PRIS', vaerdi: 20 }, { noegle: 'MDK_PRAEMIE', vaerdi: 'En snack efter eget valg' }],
+      Config: [{ noegle: 'HJUL_PRIS', vaerdi: 15 }, { noegle: 'MDK_PRAEMIE', vaerdi: 'En snack efter eget valg' }],
       Stemmer: [],
       Spil: [],
       Menu: [
@@ -27,12 +27,12 @@ window.Mock = (function () {
       Hjul: [
         { id: 'h-50', navn: '50 Webcoins', ikon: '🏆', type: 'webcoins', beloeb: 50, kostpris: 0, vaegt: 20, aktiv: 'ja' },
         { id: 'h-nitte', navn: 'Nitte', ikon: '🙈', type: 'intet', beloeb: 0, kostpris: 0, vaegt: 133, aktiv: 'ja' },
-        { id: 'h-5', navn: '5 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 5, kostpris: 0, vaegt: 200, aktiv: 'ja' },
+        { id: 'h-5', navn: '5 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 5, kostpris: 0, vaegt: 170, aktiv: 'ja' },
         { id: 'h-sodavand', navn: 'Sodavand', ikon: '🥤', type: 'vare', beloeb: 0, kostpris: 8, vaegt: 127, aktiv: 'ja' },
         { id: 'h-10', navn: '10 Webcoins', ikon: '💫', type: 'webcoins', beloeb: 10, kostpris: 0, vaegt: 190, aktiv: 'ja' },
         { id: 'h-candybar', navn: 'Candybar', ikon: '🍫', type: 'vare', beloeb: 0, kostpris: 6, vaegt: 80, aktiv: 'ja' },
         { id: 'h-15', navn: '15 Webcoins', ikon: '💎', type: 'webcoins', beloeb: 15, kostpris: 0, vaegt: 160, aktiv: 'ja' },
-        { id: 'h-monster', navn: 'Hvid Monster', ikon: '⚡', type: 'vare', beloeb: 0, kostpris: 15, vaegt: 30, aktiv: 'ja' },
+        { id: 'h-monster', navn: 'Hvid Monster', ikon: '⚡', type: 'vare', beloeb: 0, kostpris: 15, vaegt: 60, aktiv: 'ja' },
         { id: 'h-20', navn: '20 Webcoins', ikon: '💰', type: 'webcoins', beloeb: 20, kostpris: 0, vaegt: 60, aktiv: 'ja' }
       ],
       Projekter: [

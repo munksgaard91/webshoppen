@@ -632,3 +632,4 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .chance-navn { display: inline-flex; align-items: center; gap: 6px; }
 .chance-info .pop { width: 240px; }
 .lucky-bund { position: relative; z-index: 5; }
+.closed .win-besked { font-size: 13px; color: var(--muted); background: var(--card-2); border-radius: 10px; padding: 8px 12px; margin: 6px 0 18px; }

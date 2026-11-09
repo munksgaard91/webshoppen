@@ -581,9 +581,12 @@
     var tekst = res.type === 'webcoins' ? '+' + wc(res.beloeb) + ' er lagt på din saldo.'
       : res.type === 'vare' ? 'Den bliver leveret til dig. Der kan være lidt ventetid.'
       : 'Bedre held næste gang.';
-    openModal('<div class="closed"><div class="win-ico">' + esc(res.ikon || '🎁') + '</div>' +
+    var besked = res.type === 'vare' ? 'Admin har fået besked og spørger, om du vil have den med det samme.'
+      : res.type === 'webcoins' ? 'Admin har fået besked om din gevinst.' : '';
+    var ikon = res.type === 'webcoins' ? coin('coin-xl') : '<div class="win-ico">' + esc(res.ikon || '🎁') + '</div>';
+    openModal('<div class="closed">' + ikon +
       '<h2>' + (res.type === 'intet' ? 'Ingen gevinst denne gang' : 'Du vandt ' + esc(res.navn) + '!') + '</h2>' +
-      '<p>' + esc(tekst) + '</p><button class="btn primary grow" data-act="close">' + (res.type === 'intet' ? 'Øv' : 'Fedt!') + '</button></div>');
+      '<p>' + esc(tekst) + '</p>' + (besked ? '<p class="win-besked">📣 ' + esc(besked) + '</p>' : '') + '<button class="btn primary grow" data-act="close">' + (res.type === 'intet' ? 'Øv' : 'Fedt!') + '</button></div>');
   }
 
   // Ikon og farve pr. posteringstype i aktivitetslisten
@@ -1144,6 +1147,7 @@
   window.addEventListener('hashchange', function () { window.scrollTo(0, 0); render(); });
 
   window.addEventListener('demo-notify', function (e) {
+    if (ui.spinning || /^Hjul/.test(e.detail.emne)) return; // gevinsten må ikke afsløres før rullen stopper
     toast('📣 Admin får besked', e.detail.emne);
   });
 
