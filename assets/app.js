@@ -354,7 +354,7 @@
         '<span class="pop" role="tooltip"><b class="pop-title">' + esc(me.gruppe) + '</b>' + mineRegler() + '</span></span>' : '') +
       '</div>' +
       (kanKoebe
-        ? '<div class="saldo-big num"><span>' + fmt(st.saldo) + '</span><small>' + enhed(st.saldo) + '</small>' + coin('coin-lg') + '</div>'
+        ? '<div class="saldo-big num">' + coin('coin-lg') + '<span>' + fmt(st.saldo) + '</span><small>' + enhed(st.saldo) + '</small></div>'
         : '<div class="saldo-big"><span style="font-size:40px">Admin</span></div><div class="saldo-sub">Du deltager ikke. Her ser du siden, som medarbejderne gør.</div>') +
       '</section>';
 
