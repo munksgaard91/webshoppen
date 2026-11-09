@@ -545,3 +545,7 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .list .row.forslag-row .row-acts { width: 280px; }
 .proj-item + .forslag-row, .list .forslag-row { padding-top: 14px; padding-bottom: 14px; }
 #f-tekst { resize: vertical; min-height: 96px; }
+
+/* Teambudget: brugt-beløbet i en mild rød */
+.tb-sub .brugt { color: #c4545e; }
+:root[data-theme="dark"] .tb-sub .brugt { color: #f19aa1; }

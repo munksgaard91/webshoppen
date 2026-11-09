@@ -359,7 +359,7 @@
     var team = tb ? '<section class="card tb-card"><div class="tb-head"><span class="eyebrow">Teambudget</span>' +
       (tb.saeson ? '<span class="tag">Sæson ' + esc(tb.saeson) + '</span>' : '') + '</div>' +
       '<div class="tb-big num">' + kr(tb.rest) + '</div>' +
-      '<div class="tb-sub num">Brugt i sæsonen: <b>' + kr(tb.brugt) + '</b></div></section>'
+      '<div class="tb-sub num">Brugt i sæsonen: <b class="brugt">' + kr(tb.brugt) + '</b></div></section>'
       : (me.admin ? '<section class="card tb-card"><div class="eyebrow">Teambudget</div><div class="empty">Ikke koblet på arket endnu.</div></section>' : '');
 
     var top = '<div class="row-top' + (team ? '' : ' solo') + '">' + saldo + team + '</div>';
@@ -367,10 +367,10 @@
     // 2. Bestil – liste i fuld bredde
     var menu = '<section class="block"><div class="block-head"><h2 class="block-title">Bestil</h2>' +
       (lukket ? '<span class="tag annulleret">Lukket' + (shop.tekst ? ' · ' + esc(shop.tekst) : '') + '</span>' : '') +
-      '<span class="note">' + (lukket ? 'Forudbestil, så leveres det, når shoppen åbner.' : 'Personlig levering, så der kan være lidt ventetid.') + '</span></div>' +
+      '<span class="note">' + (lukket ? 'Forudbestil, så leveres det, når shoppen åbner.' : 'Personlig levering, forvent lidt ventetid.') + '</span></div>' +
       (S.menu.length ? '<div class="card list compact">' + S.menu.map(function (v) {
         var raad = st.saldo >= v.pris && kanKoebe && !v.snart;
-        if (v.snart) return forslagRaekke(vareBillede(v), v.navn, 'Har du en idé til menuen?', 'vare', kanKoebe);
+        if (v.snart) return forslagRaekke(vareBillede(v), v.navn, 'Har du en idé?', 'vare', kanKoebe);
         return '<div class="row">' + vareBillede(v) +
           '<div class="row-main"><b>' + esc(v.navn) + '</b>' + (v.varianter.length ? '<small class="variants">' + v.varianter.map(esc).join(' · ') + '</small>' : '') + '</div>' +
           '<div class="row-price num">' + (v.snart ? '<span class="tag">Kommer snart</span>' : '<span class="amt">' + fmt(v.pris) + '</span><span class="unit">' + enhed(v.pris) + '</span>' + coin()) + '</div>' +
@@ -781,7 +781,7 @@
       (k.gave ? '<div class="field"><label for="koeb-til">Kollega</label><select class="input" id="koeb-til" data-act="koeb-til"><option value="">Vælg …</option>' + kollegaer + '</select></div>' : '') +
       '<div class="sum"><span class="muted">Pris</span><b class="num">' + wc(v.pris) + '</b></div>' +
       '<div class="sum"><span class="muted">Saldo efter</span><b class="num ' + (efter < 0 ? 'minus' : '') + '">' + wc(efter) + '</b></div>' +
-      '<p class="note" style="margin:6px 0 0">' + (forud ? 'Shoppen har lukket. Den leveres, når shoppen åbner.' : 'Personlig levering, så der kan være lidt ventetid.') + '</p>' +
+      '<p class="note" style="margin:6px 0 0">' + (forud ? 'Shoppen har lukket. Den leveres, når shoppen åbner.' : 'Personlig levering, forvent lidt ventetid.') + '</p>' +
       '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="koeb-ok"' + (efter < 0 || mangler || (k.gave && !k.til) ? ' disabled' : '') + '>' + (forud ? (k.gave ? 'Forudbestil donation' : 'Forudbestil') : (k.gave ? 'Donér' : 'Bestil')) + '</button></div>');
   }
 
@@ -930,7 +930,7 @@
         var forud = S.shop && !S.shop.aaben;
         submit(t, 'bestil', { vareId: k.vare.id, variant: k.variant, til: k.gave ? k.til : '' },
           forud ? (k.gave ? 'Din donation er forudbestilt 🎁' : k.vare.navn + ' er forudbestilt') : (k.gave ? 'Din donation er sendt 🎁' : k.vare.navn + ' er bestilt'),
-          forud ? 'Den leveres, når shoppen åbner.' : 'Personlig levering, så der kan være lidt ventetid.');
+          forud ? 'Den leveres, når shoppen åbner.' : 'Personlig levering, forvent lidt ventetid.');
         break;
       }
       case 'indskyd': openIndskyd(t.dataset.id); break;
