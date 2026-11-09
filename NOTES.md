@@ -9,7 +9,7 @@ Alt kører i **demo-tilstand** (tom `API_URL`) på https://munksgaard91.github.i
 
 ### Medarbejder – Overblik (`#/`)
 Rækkefølge (se også CLAUDE.md):
-1. **Saldo-kort** (blåt, halvskjult "b" i højre side) med hilsen, saldo og i-ikon med egne optjeningsregler (hover/klik). Ved siden af **Teambudget**: rest i alt som stort tal, "Brugt i sæsonen: kr x", sæson som tag (`TEAMBUDGET_SAESON`).
+1. **Saldo-kort** (blåt, halvskjult "b" i højre side) med hilsen, saldo og "Hvordan optjener jeg?" + i-ikon i hjørnet: hover viser en lille boble, klik åbner en boks med gruppens optjeningsregler. Ved siden af **Teambudget**: rest i alt som stort tal, "Brugt i sæsonen: kr x", sæson som tag (`TEAMBUDGET_SAESON`).
 2. **Bestil** – kompakt liste med skiftevis hvid/lysegrå rækker. Priser er højrestillede tal (1–3 cifre flugter) + "Webcoins" + mønt til sidst. Knapper: Giv (gave til kollega) og Bestil. Varer med `varianter` åbner et valg (Sodavand, Candybar); én variant vælges automatisk (Monster → Hvid Monster). `snart = ja` → "Kommer snart", kan ikke bestilles (Andet). Note om ventetid (personlig levering).
 3. **Feelin' Lucky?** – lykkehjul, fast pris pr. drej. Gevinsten afgøres i backend; browseren animerer kun hjulet hen til resultatet.
 4. **Projekter** – liste med skiftevis baggrund. Stor progressbar med "**245** af 1.500 Webcoins 🪙" og fed procent. Top 3 under hinanden med beløb tæt på navnet. Blå **Donér**-knap (handlingen hedder `indskyd` i koden), "Dit bidrag" småt under knappen.
@@ -64,7 +64,7 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 7. **Webshoppen → Slå automatisk hentning til**.
 
 Ændringer i `shared/core.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=39`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=40`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test

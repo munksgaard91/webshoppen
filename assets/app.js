@@ -345,7 +345,7 @@
     // 1. Saldo + teambudget + regler
     var saldo = '<section class="saldo-card"><span class="saldo-deco" aria-hidden="true">' + bMark() + '</span>' +
       '<div class="saldo-top"><span class="hello">' + hilsen() + ', ' + esc(fornavn(me.navn)) + ' 👋</span>' +
-      (me.gruppe ? '<span class="info" tabindex="0" data-act="info"><button class="info-btn" aria-label="Sådan optjener du Webcoins">' + ico('info') + '</button>' +
+      (me.gruppe ? '<span class="info"><button class="info-link" data-act="regler-boks"><span class="info-txt">Hvordan optjener jeg?</span><span class="info-btn">' + ico('info') + '</span></button>' +
         '<span class="pop" role="tooltip"><b class="pop-title">' + esc(me.gruppe) + '</b>' + mineRegler() + '</span></span>' : '') +
       '</div>' +
       '<div class="saldo-big num"><span>' + fmt(st.saldo) + '</span><small>' + enhed(st.saldo) + '</small>' + coin('coin-lg') + '</div>' +
@@ -848,7 +848,13 @@
     if (t.tagName === 'SELECT') return;
 
     switch (act) {
-      case 'info': t.classList.toggle('open'); break;
+      case 'regler-boks':
+        openModal('<h2><span class="info-btn dark">' + ico('info') + '</span>Sådan optjener du Webcoins</h2>' +
+          '<p class="muted" style="margin:-8px 0 14px">Gælder for din gruppe: <b>' + esc(S.me.gruppe) + '</b></p>' +
+          '<div class="rules-box">' + mineRegler() + '</div>' +
+          '<p class="note" style="margin:14px 0 0">Webcoins hentes automatisk og lægges på din saldo hver måned.</p>' +
+          '<div class="modal-acts"><button class="btn primary grow" data-act="close">Forstået</button></div>');
+        break;
       case 'me-menu': t.parentNode.classList.toggle('open'); break;
       case 'demo-login':
         session = { email: t.dataset.email };
