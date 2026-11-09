@@ -373,18 +373,10 @@
         : '<div class="saldo-big"><span style="font-size:40px">Admin</span></div><div class="saldo-sub">Du deltager ikke. Her ser du siden, som medarbejderne gør.</div>') +
       '</section>';
 
-    var team = tb ? (function () {
-      // Ring der viser hvor stor en del af budgettet der er tilbage
-      var andel = tb.budget > 0 ? Math.max(0, Math.min(1, tb.rest / tb.budget)) : 0;
-      var omkreds = 2 * Math.PI * 30;
-      var ring = '<svg class="tb-ring" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="30" class="tb-ring-bg"/>' +
-        '<circle cx="36" cy="36" r="30" class="tb-ring-fg" stroke-dasharray="' + (omkreds * andel).toFixed(1) + ' ' + omkreds.toFixed(1) + '" transform="rotate(-90 36 36)"/>' +
-        '<text x="36" y="36" text-anchor="middle" dominant-baseline="central">' + Math.round(andel * 100) + ' %</text></svg>';
-      return '<section class="card tb-card"><span class="tb-deco" aria-hidden="true">' + bMark() + '</span>' +
-        '<div class="tb-head"><span class="eyebrow">Teambudget</span>' + (tb.saeson ? '<span class="tag">Sæson ' + esc(tb.saeson) + '</span>' : '') + '</div>' +
-        '<div class="tb-body"><div><div class="tb-big num">' + kr(tb.rest) + '</div><div class="tb-label">tilbage</div>' +
-        '<div class="tb-sub num">Brugt i sæsonen: <b class="brugt">' + kr(tb.brugt) + '</b></div></div>' + ring + '</div></section>';
-    })()
+    var team = tb ? '<section class="card tb-card"><span class="tb-deco" aria-hidden="true">' + bMark() + '</span>' +
+      '<div class="tb-head"><span class="eyebrow">Teambudget</span>' + (tb.saeson ? '<span class="tag">Sæson ' + esc(tb.saeson) + '</span>' : '') + '</div>' +
+      '<div class="tb-big num">' + kr(tb.rest) + '</div>' +
+      '<div class="tb-sub num">Brugt i sæsonen: <b class="brugt">' + kr(tb.brugt) + '</b></div></section>'
       : (me.admin ? '<section class="card tb-card"><div class="eyebrow">Teambudget</div><div class="empty">Ikke koblet på arket endnu.</div></section>' : '');
 
     var top = '<div class="row-top' + (team ? '' : ' solo') + '">' + saldo + team + '</div>';
