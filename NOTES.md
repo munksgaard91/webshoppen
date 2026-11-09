@@ -1,7 +1,7 @@
 # NOTES – status og næste skridt
 
 Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskine.
-Sidst opdateret: **2026-11-09** (privat Mac). Seneste kodegennemgang: 2026-11-09 – alle filer parser, `tests/core.test.js` 18/18 OK, alle sider klikket igennem i demo uden konsolfejl.
+Sidst opdateret: **2026-11-09** (privat Mac). Seneste kodegennemgang: 2026-11-09 (aften) – alle filer parser, `tests/core.test.js` 18/18 OK, alle sider klikket igennem som ren admin og som medarbejder uden konsolfejl, ingen rigtige navne/numre i sporede filer.
 
 ## Status
 
@@ -9,8 +9,8 @@ Alt kører i **demo-tilstand** (tom `API_URL`) på https://munksgaard91.github.i
 
 ### Medarbejder – Overblik (`#/`)
 Rækkefølge (se også CLAUDE.md):
-1. **Saldo-kort** (blåt, halvskjult "b" i højre side) med hilsen, saldo og "Hvordan optjener jeg?" + i-ikon i hjørnet: hover viser en lille boble, klik åbner en boks med gruppens optjeningsregler. Ved siden af **Teambudget**: rest i alt som stort tal, "Brugt i sæsonen: kr x", sæson som tag (`TEAMBUDGET_SAESON`).
-2. **Bestil** – kompakt liste med skiftevis hvid/lysegrå rækker. Priser er højrestillede tal (1–3 cifre flugter) + "Webcoins" + mønt til sidst. Knapper: **Donér til en kollega** (gave – hed før "Giv") og Bestil. Knapkolonnen er 280px i både Bestil og Projekter, så de flugter. Varer med `varianter` åbner et valg (Sodavand, Candybar); én variant vælges automatisk (Monster → Hvid Monster). `snart = ja` → rækken bliver en **"Andet?"-række** med én hvid knap "Send forslag" (kan ikke bestilles). Note om ventetid (personlig levering).
+1. **Saldo-kort** (blåt, halvskjult "b" i højre side) med hilsen, saldo og "Hvordan optjener jeg?" + i-ikon i hjørnet: hover viser en lille boble, klik åbner en boks med gruppens optjeningsregler. Ved siden af **Teambudget**: rest i alt som stort tal, "Brugt i sæsonen: kr x" i mild rød, sæson som tag (`TEAMBUDGET_SAESON`).
+2. **Bestil** – kompakt liste med skiftevis hvid/lysegrå rækker. Priser er højrestillede tal (1–3 cifre flugter) + "Webcoins" + mønt til sidst. Knapper: **Donér til en kollega** (gave – hed før "Giv") og Bestil. Note: "Personlig levering, forvent lidt ventetid." Knapkolonnen er 280px i både Bestil og Projekter, så de flugter. Varer med `varianter` åbner et valg (Sodavand, Candybar); én variant vælges automatisk (Monster → Hvid Monster). `snart = ja` → rækken bliver en **"Andet?"-række** med én hvid knap "Send forslag" (kan ikke bestilles). Note om ventetid (personlig levering).
 3. **Feelin' Lucky?** – lykkehjul, fast pris pr. drej. Gevinsten afgøres i backend; browseren animerer kun hjulet hen til resultatet.
 4. **Projekter** – liste med skiftevis baggrund. Stor progressbar med "**245** af 1.500 Webcoins 🪙" og fed procent. Top 3 under hinanden med beløb tæt på navnet. Blå **Donér**-knap (handlingen hedder `indskyd` i koden), "Dit bidrag" småt under knappen.
    Under projekterne er der også en "Andet?"-række med "Send forslag". Forslag sendes via backend (`forslag` i core.js → `env.notify` → `NOTIFIKATION_MAIL` + evt. Google Chat) – ikke via mailto, så det virker uanset mailprogram.

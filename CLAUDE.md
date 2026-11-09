@@ -56,6 +56,15 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
 - **Ingen rigtige navne/mails i repoet** (det er offentligt). Rigtig brugerliste ligger i `brugere.local.csv` (gitignored). Demo bruger "Demo …"-navne.
 - Forsidens prioritet: 1) saldo + teambudget (stort tal = rest i alt, derunder kun "Brugt i sæsonen", sæson som tag fra `TEAMBUDGET_SAESON`) + regler (i-ikon), 2) menu/bestil (kompakt liste), 3) Feelin' Lucky?, 4) projekter, 5) Månedens kollega (nederst). Optjent, forbrug, bevægelser og bestillinger ligger **kun** på Min profil.
 - Bestil- og projektlisten deler kolonner (billede | indhold | beløb | knapper) – hold dem aligned.
+### Faste tekster og farver (aftalt med Rasmus)
+- Gave til kollega hedder **"Donér til en kollega"** (knap og dialog); bekræftelse "Din donation er sendt 🎁". Projekter bruger knappen **"Donér"**.
+- Ventetid: **"Personlig levering, forvent lidt ventetid."**
+- "Andet?"-rækker (menu: "Har du en idé?", projekter: "Har du en idé til et projekt?") har én hvid knap **"Send forslag"**. Forslag sendes via backend (`forslag` → `env.notify` → `NOTIFIKATION_MAIL`/Chat), ikke mailto.
+- Saldo-kortet: **"Hvordan optjener jeg?"** + i-ikon; klik åbner en boks med gruppens regler, hover viser en boble.
+- Teambudget: rest i alt som stort tal; "Brugt i sæsonen" står i **mild rød** (`.tb-sub .brugt`).
+- Månedens kollega: begrundelse påkrævet; teksten siger, at resultater (salg, fakturering) ikke tæller.
+- Røde tal = brugt/minus, grønne = optjent/plus. Ellers kun blå, hvid, grå og mørk.
+
 - Escape altid brugerdata med `esc()` i app.js før det sættes ind i HTML.
 - Danske Google Sheets bruger `;` i formler.
 - Hemmeligheder (webhook-URL'er m.m.) ligger i fanen `Config` i arket — aldrig i repoet.
