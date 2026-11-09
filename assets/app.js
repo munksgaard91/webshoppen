@@ -592,7 +592,7 @@
       '<div class="table-wrap"><table><thead><tr><th></th><th>Præmie</th><th>Type</th><th class="r">Kostpris</th><th class="r">Vægt</th><th class="r">Chance</th><th>Status</th><th></th></tr></thead><tbody>' +
       h.felter.map(function (f) {
         var chance = f.aktiv && total > 0 ? (f.vaegt / total * 100) : 0;
-        return '<tr' + (f.aktiv ? '' : ' style="opacity:.5"') + '><td style="font-size:22px">' + esc(f.ikon) + '</td><td><b>' + esc(f.navn) + '</b></td><td>' + esc(typeNavn[f.type] || f.type) + (f.type === 'webcoins' ? ' · ' + wc(f.beloeb) : '') + '</td>' +
+        return '<tr' + (f.aktiv ? '' : ' style="opacity:.5"') + '><td style="font-size:22px">' + esc(f.ikon) + '</td><td><b>' + esc(f.navn) + '</b></td><td>' + (f.type === 'webcoins' ? wc(f.beloeb) : esc(typeNavn[f.type] || f.type)) + '</td>' +
           '<td class="r num">' + (f.type === 'vare' ? kr(f.kostpris) : '–') + '</td><td class="r num">' + fmt(f.vaegt) + '</td><td class="r num">' + chance.toFixed(1).replace('.', ',') + ' %</td>' +
           '<td>' + (f.aktiv ? '<span class="tag udleveret">Aktiv</span>' : '<span class="tag">Skjult</span>') + '</td><td><div class="row-acts"><button class="btn sm" data-act="ret-hjul" data-id="' + esc(f.id) + '">Rediger</button></div></td></tr>';
       }).join('') + '</tbody></table></div></section>';
