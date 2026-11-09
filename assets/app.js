@@ -97,6 +97,8 @@
     box: '<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/>',
     coin: '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 9.5 10 15l2-3.6 2 3.6 1.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
     star: '<path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z"/>',
+    down: '<path d="M17 7 7 17M7 9v8h8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+    heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
     list: '<rect x="3" y="4" width="18" height="3" rx="1"/><rect x="3" y="10.5" width="18" height="3" rx="1"/><rect x="3" y="17" width="12" height="3" rx="1"/>',
     sun: '<circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
     logout: '<path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 8l4 4-4 4M19 12H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -454,78 +456,83 @@
       '<p>' + esc(tekst) + '</p><button class="btn primary grow" data-act="close">' + (res.type === 'intet' ? 'Øv' : 'Fedt!') + '</button></div>');
   }
 
+  // Ikon og farve pr. posteringstype i aktivitetslisten
+  var AKT = {
+    optjent: ['in', 'down'], gevinst: ['in', 'star'], refusion: ['in', 'sync'],
+    koeb: ['out', 'cart'], hjul: ['out', 'coin'], projekt: ['out', 'heart'],
+    gave: ['gift', 'gift'], gave_modtaget: ['gift', 'gift'], justering: ['neutral', 'list']
+  };
+
   function pageProfil() {
     var me = S.me, st = S.stats, nu = new Date(S.nu);
     var mNavn = MAANEDER[nu.getMonth()];
+    var fane = ui.profilFane || 'aktivitet';
 
-    // Optjent pr. måned, fordelt på kilde (teksten er "Kilde · måned år")
-    var maaneder = {};
-    S.historik.forEach(function (p) {
-      if (p.type !== 'optjent') return;
-      var m = maaneder[p.maaned] = maaneder[p.maaned] || { maaned: p.maaned, total: 0, kilder: {} };
-      var kilde = String(p.tekst).split(' · ')[0];
-      m.total += p.beloeb;
-      m.kilder[kilde] = (m.kilder[kilde] || 0) + p.beloeb;
-    });
-    var mRows = Object.keys(maaneder).sort().reverse().map(function (k) { return maaneder[k]; });
-    var maxM = Math.max.apply(null, mRows.map(function (m) { return m.total; }).concat([1]));
+    var head = '<section class="profile-card">' + avatar(me, true) +
+      '<div class="pc-who">' + (me.gruppe ? '<span>' + esc(me.gruppe) + '</span>' : '') + '<h1>' + esc(me.navn) + '</h1></div>' +
+      '<div class="pc-saldo"><span>Saldo</span><b class="num">' + wc(st.saldo) + coin() + '</b></div></section>';
 
-    var head = '<div class="profile-head">' + avatar(me, true) +
-      '<div>' + (me.gruppe ? '<div class="eyebrow">' + esc(me.gruppe) + '</div>' : '') + '<h1>' + esc(me.navn) + '</h1></div>' +
-      '<span class="saldo-pill big num">' + 'Du har ' + wc(st.saldo) + coin() + '</span></div>';
-
-    var stats = '<div class="stats three">' +
-      '<div class="card stat"><div class="eyebrow">Du har optjent i alt</div><div class="val num">' + wcSmall(st.optjentTotal) + '</div>' +
-      '<div class="breakdown num"><div><span>Heraf i ' + mNavn + '</span><b>' + wc(st.optjentMaaned) + '</b></div></div></div>' +
-      '<div class="card stat"><div class="eyebrow">Du har brugt i alt</div><div class="val num">' + wcSmall(st.brugt) + '</div>' +
-      '<div class="breakdown num">' +
-      '<div><span>Til dig selv</span><b>' + wc(st.brugtSelv) + '</b></div>' +
-      '<div><span>Donationer</span><b>' + wc(st.givet) + '</b></div>' +
-      '<div><span>I projekter</span><b>' + wc(st.indskudt) + '</b></div></div></div>' +
-      '<div class="card stat"><div class="eyebrow">Gaver</div><div class="val num">' + st.gaverModtaget + ' <small>modtaget</small></div>' +
-      '<div class="breakdown num"><div><span>Givet væk</span><b>' + st.givetAntal + (st.givetAntal === 1 ? ' gave' : ' gaver') + '</b></div></div></div>' +
+    var stats = '<div class="pstats">' +
+      '<div class="pstat"><span>Optjent i ' + mNavn + '</span><b class="num">' + wc(st.optjentMaaned) + '</b><small class="plus num">i alt ' + wc(st.optjentTotal) + '</small></div>' +
+      '<div class="pstat"><span>Brugt i alt</span><b class="num">' + wc(st.brugt) + '</b><small class="num">Selv ' + fmt(st.brugtSelv) + ' · Gaver ' + fmt(st.givet) + ' · Projekter ' + fmt(st.indskudt) + '</small></div>' +
+      '<div class="pstat"><span>Gaver</span><b class="num">' + st.gaverModtaget + ' modtaget</b><small class="num">' + st.givetAntal + ' givet</small></div>' +
       '</div>';
 
-    var optjent = '<section class="block"><h2 class="block-title">Optjent pr. måned</h2>' +
-      (mRows.length ? '<div class="card list">' + mRows.map(function (m) {
-        return '<div class="row month-row"><div class="month-name"><b>' + esc(maanedLabel(m.maaned)) + '</b></div>' +
+    var faner = { aktivitet: 'Aktivitet', optjening: 'Optjening', bestillinger: 'Bestillinger' };
+    var tabs = '<nav class="ptabs">' + Object.keys(faner).map(function (k) {
+      return '<button class="' + (fane === k ? 'on' : '') + '" data-act="pfane" data-f="' + k + '">' + faner[k] + '</button>';
+    }).join('') + '</nav>';
+
+    var indhold;
+    if (fane === 'optjening') {
+      var maaneder = {};
+      S.historik.forEach(function (p) {
+        if (p.type !== 'optjent') return;
+        var m = maaneder[p.maaned] = maaneder[p.maaned] || { maaned: p.maaned, total: 0, kilder: {} };
+        var kilde = String(p.tekst).split(' · ')[0];
+        m.total += p.beloeb;
+        m.kilder[kilde] = (m.kilder[kilde] || 0) + p.beloeb;
+      });
+      var mRows = Object.keys(maaneder).sort().reverse().map(function (k) { return maaneder[k]; });
+      var maxM = Math.max.apply(null, mRows.map(function (m) { return m.total; }).concat([1]));
+      indhold = mRows.length ? mRows.map(function (m) {
+        return '<div class="prow month-row"><div class="month-name"><b>' + esc(maanedLabel(m.maaned)) + '</b></div>' +
           '<div class="row-main"><div class="bar"><i style="width:' + ((m.total / maxM) * 100).toFixed(0) + '%"></i></div>' +
           '<div class="top3">' + Object.keys(m.kilder).map(function (k) { return '<span>' + esc(k) + ' <b class="num">' + wc(m.kilder[k]) + '</b></span>'; }).join('') + '</div></div>' +
-          '<div class="row-price num plus">+' + wc(m.total) + '</div></div>';
-      }).join('') + '</div>' : '<div class="card empty">Intet optjent endnu.</div>') + '</section>';
-
-    var bestillinger = '<section class="block"><h2 class="block-title">Mine bestillinger</h2>' +
-      (S.bestillinger.length ? '<div class="card list">' + S.bestillinger.map(function (b) {
+          '<span class="pamt plus num">+' + wc(m.total) + '</span></div>';
+      }).join('') : '<div class="empty">Intet optjent endnu.</div>';
+    } else if (fane === 'bestillinger') {
+      indhold = S.bestillinger.length ? S.bestillinger.map(function (b) {
         var tekst = b.fra === me.initialer
           ? (b.til !== b.fra ? b.vare + ' til ' + b.tilNavn : b.vare)
           : b.vare + ' fra ' + b.fraNavn;
         var b2 = b.fra === me.initialer ? -b.pris : 0;
-        return '<div class="row slim"><div class="row-main"><b>' + esc(tekst) + '</b><small class="faint" style="display:block">' + dato(b.tid) + '</small></div>' +
-          statusTag(b) +
-          '<div class="row-price num" style="justify-content:flex-end">' + (b2 ? beloebCell(b2) : '<span class="zero">Gave</span>') + '</div></div>';
-      }).join('') + '</div>' : '<div class="card empty">Intet bestilt endnu.</div>') + '</section>';
+        var type = b.fra !== me.initialer || b.til !== b.fra ? 'gift' : 'out';
+        return '<div class="prow"><span class="pico ' + type + '">' + ico(type === 'gift' ? 'gift' : 'cart') + '</span>' +
+          '<div class="row-main"><b>' + esc(tekst) + '</b><small>' + dato(b.tid) + '</small></div>' + statusTag(b) +
+          '<span class="pamt num">' + (b2 ? beloebCell(b2) : '<span class="zero">Gave</span>') + '</span></div>';
+      }).join('') : '<div class="empty">Intet bestilt endnu.</div>';
+    } else {
+      var grupper = [], sidst = null;
+      // Grupperet efter den måned posteringen hører til (optjening tæller i den måned, den er tjent)
+      S.historik.slice().sort(function (x, y) { return String(y.maaned).localeCompare(String(x.maaned)) || String(y.tid).localeCompare(String(x.tid)); }).forEach(function (p) {
+        var k = String(p.maaned || String(p.tid).slice(0, 7));
+        if (k !== sidst) { grupper.push({ maaned: k, rows: [] }); sidst = k; }
+        grupper[grupper.length - 1].rows.push(p);
+      });
+      indhold = grupper.length ? grupper.map(function (g) {
+        return '<div class="pmonth">' + esc(cap(MAANEDER[Number(g.maaned.slice(5)) - 1] || '')) + ' ' + esc(g.maaned.slice(0, 4)) + '</div>' +
+          g.rows.map(function (p) {
+            var a = AKT[p.type] || ['neutral', 'list'];
+            return '<div class="prow"><span class="pico ' + a[0] + '">' + ico(a[1]) + '</span>' +
+              '<div class="row-main"><b>' + esc(p.tekst) + '</b><small>' + esc(TYPER[p.type] || p.type) + ' · ' + dato(p.tid) + '</small></div>' +
+              '<span class="pamt num">' + (p.beloeb ? beloebCell(p.beloeb) : '<span class="zero">' + (p.type === 'gave_modtaget' ? 'Gave' : '–') + '</span>') + '</span></div>';
+          }).join('');
+      }).join('') : '<div class="empty">Ingen bevægelser endnu.</div>';
+    }
 
-    var filtre = { alle: 'Alle', optjent: 'Optjent', koeb: 'Køb', gave: 'Gaver', projekt: 'Projekter', andet: 'Andet' };
-    var match = {
-      alle: function () { return true; },
-      optjent: function (p) { return p.type === 'optjent'; },
-      koeb: function (p) { return p.type === 'koeb'; },
-      gave: function (p) { return p.type === 'gave' || p.type === 'gave_modtaget'; },
-      projekt: function (p) { return p.type === 'projekt'; },
-      andet: function (p) { return p.type === 'refusion' || p.type === 'justering'; }
-    }[ui.profilFilter] || function () { return true; };
-    var rows = S.historik.filter(match);
-
-    var historik = '<section class="block"><div class="block-head"><h2 class="block-title">Alle bevægelser</h2><div class="chips" style="margin-left:auto">' +
-      Object.keys(filtre).map(function (k) { return '<button class="chip' + (ui.profilFilter === k ? ' on' : '') + '" data-act="pfilter" data-f="' + k + '">' + filtre[k] + '</button>'; }).join('') +
-      '</div></div><section class="card">' +
-      (rows.length ? '<div class="table-wrap"><table><thead><tr><th>Dato</th><th>Type</th><th>Tekst</th><th class="r">Beløb</th></tr></thead><tbody>' +
-        rows.map(function (p) {
-          return '<tr><td class="faint">' + dato(p.tid) + '</td><td><span class="tag">' + esc(TYPER[p.type] || p.type) + '</span></td><td>' + esc(p.tekst) + '</td><td class="r">' + beloebCell(p.beloeb) + '</td></tr>';
-        }).join('') + '</tbody></table></div>' : '<div class="empty">Intet at vise.</div>') +
-      '<p class="disclaimer">Tallene kan ændre sig, hvis der bliver rettet fejl.</p></section></section>';
-
-    return head + stats + optjent + bestillinger + historik;
+    return head + stats + tabs + '<section class="card plist">' + indhold +
+      '<p class="disclaimer">Tallene kan ændre sig, hvis der bliver rettet fejl.</p></section>';
   }
 
   function statBox(label, val, sub) {
@@ -875,6 +882,7 @@
         break;
 
       case 'pfilter': ui.profilFilter = t.dataset.f; render(); break;
+      case 'pfane': ui.profilFane = t.dataset.f; render(); break;
       case 'bfilter': ui.bestFilter = t.dataset.f; render(); break;
       case 'ptype': ui.postType = t.dataset.f; render(); break;
       case 'bstatus':

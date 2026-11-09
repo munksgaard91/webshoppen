@@ -469,3 +469,42 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .mdk .vote-form:first-of-type { margin-bottom: 10px; }
 .voted q { display: block; font-style: italic; color: var(--muted); margin-top: 4px; font-size: 14px; }
 .why-list { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: var(--muted); display: grid; gap: 2px; }
+
+/* Min profil v3: topkort, nøgletal, faner og én liste */
+.profile-card { display: flex; align-items: center; gap: 18px; background: var(--brand); color: #fff; border-radius: 22px; padding: 22px 26px; box-shadow: var(--shadow-lg); }
+:root[data-theme="dark"] .profile-card { background: #1e4875; }
+.profile-card .avatar { background: rgba(255, 255, 255, .18); color: #fff; border-color: transparent; box-shadow: none; }
+.pc-who { flex: 1; min-width: 0; }
+.pc-who span { font-size: 13px; opacity: .8; }
+.pc-who h1 { margin: 2px 0 0; font-size: 26px; font-weight: 800; letter-spacing: -0.01em; }
+.pc-saldo { text-align: right; }
+.pc-saldo span { font-size: 13px; opacity: .8; }
+.pc-saldo b { display: flex; align-items: center; gap: 8px; font-size: 26px; font-weight: 900; margin-top: 2px; }
+.pc-saldo .coin { width: 22px; height: 22px; }
+.pstats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 14px 0 26px; }
+.pstat { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 18px; display: grid; gap: 2px; box-shadow: var(--shadow); }
+.pstat span { font-size: 13px; color: var(--muted); }
+.pstat b { font-size: 20px; font-weight: 800; }
+.pstat small { font-size: 12px; color: var(--muted); }
+.pstat small.plus { color: var(--plus); }
+.ptabs { display: inline-flex; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 99px; padding: 4px; margin-bottom: 14px; }
+.ptabs button { border: 0; background: transparent; border-radius: 99px; padding: 8px 18px; font-weight: 700; font-size: 14px; color: var(--muted); }
+.ptabs button:hover { color: var(--text); }
+.ptabs button.on { background: var(--brand-soft); color: var(--brand); }
+:root[data-theme="dark"] .ptabs button.on { color: var(--brand-2); }
+.plist { padding: 6px 24px 18px; }
+.pmonth { font-size: 13px; font-weight: 700; color: var(--muted); padding: 16px 0 6px; }
+.prow { display: flex; align-items: center; gap: 14px; padding: 11px 0; border-top: 1px solid var(--line); }
+.pmonth + .prow { border-top: 0; }
+.plist > .prow:first-child { border-top: 0; }
+.prow .row-main > b { font-size: 14px; font-weight: 600; display: block; }
+.prow .row-main small { font-size: 12px; color: var(--faint); }
+.pico { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+.pico svg { width: 16px; height: 16px; }
+.pico.in { background: rgba(18, 134, 87, .12); color: var(--plus); }
+.pico.out { background: rgba(207, 60, 74, .1); color: var(--minus); }
+.pico.gift { background: var(--gold-soft); color: var(--warn); }
+.pico.neutral { background: var(--card-2); color: var(--muted); }
+.pamt { min-width: 140px; text-align: right; font-size: 14px; }
+.prow .tag { margin-right: 6px; }
+@media (max-width: 720px) { .pstats { grid-template-columns: 1fr; } .profile-card { flex-wrap: wrap; } .pc-saldo { text-align: left; } .pamt { min-width: 0; } }
