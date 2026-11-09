@@ -334,7 +334,7 @@
       (me.gruppe ? '<span class="info" tabindex="0" data-act="info"><button class="info-btn" aria-label="Sådan optjener du Webcoins">' + ico('info') + '</button>' +
         '<span class="pop" role="tooltip"><b class="pop-title">' + esc(me.gruppe) + '</b>' + mineRegler() + '</span></span>' : '') +
       '</div>' +
-      '<div class="saldo-big num">' + coin('coin-lg') + '<span>' + fmt(st.saldo) + '</span><small>' + enhed(st.saldo) + '</small></div>' +
+      '<div class="saldo-big num"><span>' + fmt(st.saldo) + '</span><small>' + enhed(st.saldo) + '</small>' + coin('coin-lg') + '</div>' +
       (kanKoebe ? '' : '<div class="saldo-sub">Din konto er ikke tilknyttet initialer endnu.</div>') +
       '</section>';
 
@@ -354,7 +354,7 @@
         var raad = st.saldo >= v.pris && kanKoebe;
         return '<div class="row">' + vareBillede(v) +
           '<div class="row-main"><b>' + esc(v.navn) + '</b></div>' +
-          '<div class="row-price num">' + coin() + wc(v.pris) + '</div>' +
+          '<div class="row-price num">' + wc(v.pris) + coin() + '</div>' +
           '<div class="row-acts">' +
           '<button class="btn sm" data-act="giv" data-id="' + esc(v.id) + '"' + (raad && S.kolleger.length ? '' : ' disabled') + '>' + ico('gift') + 'Giv</button>' +
           '<button class="btn primary sm" data-act="koeb" data-id="' + esc(v.id) + '"' + (raad ? '' : ' disabled') + '>' + (lukket ? 'Forudbestil' : 'Bestil') + '</button></div></div>';
@@ -371,8 +371,8 @@
           '<div class="row-main"><b>' + esc(p.navn) + '</b>' +
           '<div class="bar bar-big"><i style="width:' + pp.toFixed(0) + '%"></i>' +
           '<span class="bar-label num"><span class="bar-amt">' + (p.maal
-            ? '<b>' + fmt(p.indsamlet) + '</b>' + coin() + 'af ' + fmt(p.maal) + coin() + enhed(p.maal)
-            : '<b>' + fmt(p.indsamlet) + '</b>' + coin() + enhed(p.indsamlet)) + '</span>' + (p.maal ? '<span>' + pp.toFixed(0) + ' %</span>' : '') + '</span></div>' +
+            ? '<b>' + fmt(p.indsamlet) + '</b> af ' + fmt(p.maal) + ' ' + enhed(p.maal) + coin()
+            : '<b>' + fmt(p.indsamlet) + '</b> ' + enhed(p.indsamlet) + coin()) + '</span>' + (p.maal ? '<span>' + pp.toFixed(0) + ' %</span>' : '') + '</span></div>' +
           '<ol class="top3-list">' + (p.top.length ? p.top.map(function (t, i) {
             return '<li class="' + (t.initialer === me.initialer ? 'mig' : '') + '"><span>' + medaljer[i] + '</span>' + esc(t.navn) + '<b class="num">' + wc(t.beloeb) + '</b></li>';
           }).join('') : '<li class="faint">Ingen bidrag endnu</li>') + '</ol></div>' +
@@ -402,7 +402,7 @@
 
     var head = '<div class="profile-head">' + avatar(me, true) +
       '<div><div class="eyebrow">' + esc([me.gruppe, me.initialer].filter(Boolean).join(' · ')) + '</div><h1>' + esc(me.navn) + '</h1></div>' +
-      '<span class="saldo-pill big num">' + coin() + 'Du har ' + wc(st.saldo) + '</span></div>';
+      '<span class="saldo-pill big num">' + 'Du har ' + wc(st.saldo) + coin() + '</span></div>';
 
     var stats = '<div class="stats three">' +
       '<div class="card stat"><div class="eyebrow">Du har optjent i alt</div><div class="val num">' + wcSmall(st.optjentTotal) + '</div>' +
