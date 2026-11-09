@@ -516,24 +516,56 @@
     return '<div class="reel-card ' + cls + '">' + indhold + '</div>';
   }
 
-  // Tilfældigt kort efter chancen – kun til at fylde rullen ud, ikke til at afgøre gevinsten.
-  // Samme præmie må ikke stå lige efter hinanden (heller ikke de to før), så rullen virker tilfældig.
+  // Kort til rullen – kun visuelt, afgør ikke gevinsten. Fordelingen er balanceret, så man ser
+  // varer lige så tit som Webcoins: kategori først (vare 45 %, Webcoins 40 %, Nitte 15 %), så en præmie
+  // i kategorien. To Webcoins-kort står aldrig lige efter hinanden, og samme præmie ikke inden for 2 kort.
+  function reelKat(f) { return f.type === 'webcoins' ? 'coins' : f.type === 'intet' ? 'nitte' : 'vare'; }
   function reelTraek(felter, forrige) {
-    var undgaa = (forrige || []).map(function (f) { return f && f.navn; });
-    for (var forsoeg = 0; forsoeg < 12; forsoeg++) {
-      var x = Math.random(), acc = 0, valgt = felter[felter.length - 1];
-      for (var i = 0; i < felter.length; i++) { acc += felter[i].andel || 0; if (x < acc) { valgt = felter[i]; break; } }
-      if (undgaa.indexOf(valgt.navn) < 0) return valgt;
+    forrige = (forrige || []).filter(Boolean);
+    var undgaa = forrige.map(function (f) { return f.navn; });
+    var sidsteKat = forrige.length ? reelKat(forrige[forrige.length - 1]) : '';
+    var kat = { vare: [], coins: [], nitte: [] };
+    felter.forEach(function (f) { kat[reelKat(f)].push(f); });
+    var vaegt = { vare: kat.vare.length ? 45 : 0, coins: kat.coins.length ? 40 : 0, nitte: kat.nitte.length ? 15 : 0 };
+    if (sidsteKat === 'coins') vaegt.coins = 0;
+    if (sidsteKat === 'nitte') vaegt.nitte = 0;
+    for (var forsoeg = 0; forsoeg < 20; forsoeg++) {
+      var sum = vaegt.vare + vaegt.coins + vaegt.nitte, x = Math.random() * sum;
+      var k = x < vaegt.vare ? 'vare' : x < vaegt.vare + vaegt.coins ? 'coins' : 'nitte';
+      var liste = kat[k].filter(function (f) { return undgaa.indexOf(f.navn) < 0; });
+      if (!liste.length) continue;
+      // Hovedpræmien vises sjældnere end de andre
+      var vl = liste.map(function (f) { return f.hoved ? 0.35 : 1; });
+      var y = Math.random() * vl.reduce(function (a, b) { return a + b; }, 0);
+      for (var i = 0; i < liste.length; i++) { y -= vl[i]; if (y <= 0) return liste[i]; }
+      return liste[liste.length - 1];
     }
     return felter.filter(function (f) { return undgaa.indexOf(f.navn) < 0; })[0] || felter[0];
   }
 
   function reelStart(felter) {
-    // Tilfældig rækkefølge (efter chancen) i stedet for samme mønster hver gang
     var kort = [];
     for (var i = 0; i < 24; i++) kort.push(reelTraek(felter, kort.slice(-2)));
+    // Sømløst loop: sidste og første kort må heller ikke være to Webcoins / samme præmie
+    if (reelKat(kort[0]) === 'coins' && reelKat(kort[23]) === 'coins' || kort[0].navn === kort[23].navn) kort[23] = reelTraek(felter, [kort[22], kort[0]]);
     return kort;
   }
+
+  // Tomgang: JS flytter rullen langsomt og husker positionen (ui.idle), så den aldrig springer tilbage ved
+  // opdateringer. Den står stille, når musen er over den, og er slået fra ved "Reducer bevægelse".
+  var IDLE_FART = 75; // px pr. sekund
+  function idleLoop(ts) {
+    var spor = document.getElementById('reel'), box = document.getElementById('reel-box');
+    var sidst = ui.idleTs || ts;
+    ui.idleTs = ts;
+    if (spor && spor.classList.contains('tomgang') && ui.reelStartKort) {
+      var periode = ui.reelStartKort.length * KORT_B;
+      if (!(box && box.matches(':hover'))) ui.idleOffset = ((ui.idleOffset || 0) + Math.min(100, ts - sidst) / 1000 * IDLE_FART) % periode;
+      spor.style.transform = 'translateX(' + (-ui.idleOffset).toFixed(1) + 'px)';
+    }
+    requestAnimationFrame(idleLoop);
+  }
+  if (!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) requestAnimationFrame(idleLoop);
 
   // Lille i-ikon med chancerne (vises ved hover), samlet pr. præmie og sorteret efter chance
   function chancePop(felter) {
@@ -557,12 +589,13 @@
         : '<button class="btn lg" data-act="koeb-drej"' + (kanKoebeDrej ? '' : ' disabled') + '>Køb et drej</button>') +
       '<button class="btn primary lg' + (klar ? '' : ' locked') + '" data-act="spin"' + (klar && kanKoebe ? '' : ' disabled') + '>' + (klar ? '<span class="btn-emoji">🎰</span>' : ico('lock')) + 'Drej hjulet</button></div>';
     // Uden et nyligt resultat ruller tombolaen langsomt i ring for at friste (rækken er dubleret, så loopet er sømløst)
-    var start = ui.reelStart || (ui.reelStart = reelStart(h.felter).map(reelKort).join(''));
+    if (!ui.reelStartKort) ui.reelStartKort = reelStart(h.felter);
+    var start = ui.reelStartKort.map(reelKort).join('');
     var spor = ui.reel ? ui.reel.html : start + start;
-    var x = ui.reel ? ui.reel.x : 0;
+    var x = ui.reel ? ui.reel.x : -(ui.idleOffset || 0);
     var tomgang = !ui.reel;
     return '<section class="block"><h2 class="block-title">Feelin\' Lucky?</h2><div class="card lucky2">' +
-      '<div class="reel" id="reel-box"><span class="reel-marker"></span><div class="reel-track' + (tomgang ? ' tomgang' : '') + '" id="reel"' + (tomgang ? '' : ' style="transform:translateX(' + x + 'px)"') + '>' + spor + '</div></div>' +
+      '<div class="reel" id="reel-box"><span class="reel-marker"></span><div class="reel-track' + (tomgang ? ' tomgang' : '') + '" id="reel" style="transform:translateX(' + x + 'px)">' + spor + '</div></div>' +
       '<div class="lucky-bund"><div class="lucky-price"><span class="lp-label">Drej hjulet</span>' + chancePop(h.felter) +
       '<span class="row-price num"><span class="amt">' + fmt(h.pris) + '</span><span class="unit">' + enhed(h.pris) + '</span>' + coin() + '</span></div>' +
       knapper + '</div></div></section>';
@@ -573,9 +606,12 @@
     var box = document.getElementById('reel-box'), spor = document.getElementById('reel');
     var felter = S.hjul.felter;
     var vinder = felter.filter(function (f) { return f.id === res.id; })[0] || res;
-    var VINDER = 62, ANTAL = 68;
-    var kort = [];
-    for (var i = 0; i < ANTAL; i++) {
+    // Start med præcis de kort, der står nu (tomgang), så rullen fortsætter flydende fra hvor den er
+    var startKort = ui.reel ? [] : (ui.reelStartKort || []).concat(ui.reelStartKort || []);
+    var x0 = ui.reel ? 0 : -(ui.idleOffset || 0);
+    var VINDER = startKort.length + 62, ANTAL = VINDER + 6;
+    var kort = startKort.slice();
+    for (var i = kort.length; i < ANTAL; i++) {
       // Kortene lige omkring vinderen må ikke være samme præmie som vinderen
       var naer = i >= VINDER - 2 && i <= VINDER + 2 && i !== VINDER;
       kort.push(i === VINDER ? vinder : reelTraek(felter, kort.slice(-2).concat(naer ? [vinder] : [])));
@@ -590,7 +626,7 @@
     spor.classList.remove('tomgang');
     spor.style.transition = 'none';
     spor.innerHTML = html;
-    spor.style.transform = 'translateX(0px)';
+    spor.style.transform = 'translateX(' + x0.toFixed(1) + 'px)';
     void spor.offsetWidth; // tving browseren til at tegne startpositionen
     box.classList.remove('stoppet');
     // 8,5 sek. med en lang, langsom afslutning
@@ -876,6 +912,13 @@
 
   // ---------- Modaler ----------
 
+  // Skifter kun indholdet i en allerede åben boks (ingen fade/blink), ellers åbnes en ny
+  function modalIndhold(html) {
+    var m = modalRoot.querySelector('.modal');
+    if (m) { m.innerHTML = html; return; }
+    openModal(html);
+  }
+
   function openModal(html) {
     modalRoot.innerHTML = '<div class="modal-bg" data-act="modal-bg"><div class="modal" role="dialog" aria-modal="true">' + html + '</div></div>';
     var f = modalRoot.querySelector('input:not([type=checkbox]):not([type=hidden]), select');
@@ -918,7 +961,7 @@
       return '<option value="' + esc(u.initialer) + '"' + (k.til === u.initialer ? ' selected' : '') + '>' + esc(u.navn) + ' · ' + esc(u.gruppe) + '</option>';
     }).join('');
     var mangler = v.varianter.length > 1 && !k.variant;
-    openModal('<h2><span class="ico">' + esc(v.ikon || '🛍️') + '</span>' + esc(v.navn) + '</h2>' +
+    modalIndhold('<h2><span class="ico">' + esc(v.ikon || '🛍️') + '</span>' + esc(v.navn) + '</h2>' +
       (v.varianter.length > 1 ? '<div class="field"><label>Vælg</label><div class="choices">' + v.varianter.map(function (x) {
         return '<button class="choice' + (k.variant === x ? ' on' : '') + '" data-act="koeb-variant" data-v="' + esc(x) + '">' + esc(x) + '</button>';
       }).join('') + '</div></div>' : !v.oenskeFelt ? '' : '<div class="field"><label for="koeb-oenske">Dit ønske</label><input class="input" id="koeb-oenske" maxlength="200" value="' + esc(k.oenske || '') + '" placeholder="Skriv dit ønske, fx Pepsi Max"></div>') +
