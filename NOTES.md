@@ -12,7 +12,9 @@ Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskin
 - Forside v2: "Du har" + "Du har optjent +x Webcoins i <måned>". Bestil og Projekter er lister i fuld bredde. Projekter viser top 3 bidragydere + dit bidrag. Statistik = kun dine tal: optjent i måneden + brugt i alt fordelt på til dig selv / donationer / i projekter. Disclaimer under Bevægelser.
 - Min profil v2: saldo-pille, kort for optjent i alt (heraf i måneden), brugt i alt (selv/donationer/projekter) og gaver. Derefter "Optjent pr. måned" fordelt på kilder, "Mine bestillinger" med status og "Alle bevægelser" med filtre + disclaimer.
 - Varer kan have et billede (kolonne `billede` i Menu-fanen, URL eller sti som `assets/varer/monster.jpg`). Uden billede vises emoji.
-- Åbningstid 08:00–15:30 på hverdage + lukket når admin har "Ikke til stede" i kalenderen → overlay "Shoppen har lukket" og bestil-knapper slået fra (håndhæves også i backend). Admin ser et banner i stedet.
+- Åbningstid 08:00–15:30 på hverdage + lukket når admin har "Ikke til stede" i kalenderen → overlay "Shoppen har lukket". Bestil bliver til **Forudbestil**: bestillingen gemmes med `forud = ja` (ny kolonne i Bestillinger), admin får "Forudbestilling · …" og den vises som "Forudbestilt", indtil den er udleveret. Admin ser et banner i stedet for overlay.
+- Topmenu (2026-11-09): rigtigt Best One-logo (SVG fra salgsdashboardet, `boLogo()` i app.js, farves med `currentColor`), Overblik/Min profil centreret, ingen Webcoins-saldo i toppen, "Log ud" ligger i dropdown under brugerens badge.
+- Forside v3 (2026-11-09): kompakt bestil-liste, højere projektrækker med samme kolonner som menuen, "Du har optjent …" fjernet fra saldo-kortet, teambudget viser rest i alt som stort tal, derunder "Brugt i sæsonen: kr x" og sæsonen som tag (Config `TEAMBUDGET_SAESON`, fx `2026/27`). Statistik, bevægelser og bestillinger er flyttet helt til Min profil.
 - Note om ventetid ved bestilling (personlig levering).
 - Min profil: nøgletal + fuld historik med filtre.
 - Regler-side for alle grupper (kun admin; medarbejdere ser egne regler via i-ikonet).
@@ -55,12 +57,20 @@ Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskin
 6. Udfyld fanen `Brugere` (email, initialer, navn, gruppe, aktiv=ja) – eller gør det fra admin-siden.
 7. Udfyld `Kilder` (ark-ID, fane, kolonnebogstaver for initialer/værdi/dato). Tom `kol_vaerdi` = tæl rækker (fx anmeldelser).
 8. Åbningstid: `AABNER`, `LUKKER`, `AABNE_DAGE` (1-5 = man–fre), `LUK_VED_FRAVAER` (ja/nej), `KALENDER_ID` (tom = din primære kalender).
-9. Valgfrit: `CHAT_WEBHOOK` (Google Chat → space → Apps & integrations → Webhooks), `NOTIFIKATION_MAIL`, `TEAMBUDGET_*`.
+9. Valgfrit: `CHAT_WEBHOOK` (Google Chat → space → Apps & integrations → Webhooks), `NOTIFIKATION_MAIL`, `TEAMBUDGET_*` (inkl. `TEAMBUDGET_SAESON`, fx `2026/27`).
 10. **Webshoppen → Slå automatisk hentning til**.
 
 Ved ændringer i `shared/core.js` eller `Code.gs`: kopiér ind i Apps Script og lav **Administrer implementeringer → Rediger → Ny version** (så URL'en bevares).
 Ved ændringer i assets: bump `?v=` i `index.html`.
 Demo af lukket shop: tilføj `?lukket=fravaer` eller `?lukket=tid` til adressen.
+
+## Før go-live (fundet ved kodegennemgang 2026-11-09)
+
+Skal tages op ved fejlsøgning og før lancering:
+1. **Login udløber hver time** – Google ID-token (~1 t) gemmes i localStorage; ved udløb sendes brugeren til login (`api()` → `logout` på TOKEN_EXPIRED). Overvej stille fornyelse.
+2. **Månedsfejl omkring midnat** – `pageAdminOpgoerelse` bruger `S.nu.slice(0,7)` (UTC). Den 1. i måneden kl. 00–01/02 dansk tid vises forrige måned i "Brugt i <måned>".
+3. **Ingen refusion ved lukkede projekter** – indskud (`type: projekt`) kan ikke gives tilbage.
+4. **Forældede optjeningsposteringer** – `applyEarnings` opdaterer kun refs, den stadig beregner. Ved gruppeskift eller fjernet regel bliver gamle `optjent`-posteringer liggende.
 
 ## Næste skridt
 

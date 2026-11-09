@@ -46,7 +46,8 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs")
 - UI-tekster på dansk, korte. Ingen lange forklaringer i UI'et — funktionalitet og god UI.
 - Branding: Montserrat, Best One-blå `#225581` + guld Webcoin-mønt (`--gold`). Lyst tema som standard, mørkt som valg. Skal bevidst **ikke** ligne det mørke salgsdashboard 1:1. Favicon = Webcoin-mønten (`favicon.svg`).
 - Medarbejdere får topmenu (Overblik, Min profil) – intet sidepanel. Kun admin har sidepanel.
-- Forsidens prioritet: 1) saldo + teambudget + regler (i-ikon), 2) menu/bestil, 3) projekter, 4) statistik, 5) bevægelser + mine bestillinger.
+- Forsidens prioritet: 1) saldo + teambudget (stort tal = rest i alt, derunder kun "Brugt i sæsonen", sæson som tag fra `TEAMBUDGET_SAESON`) + regler (i-ikon), 2) menu/bestil (kompakt liste), 3) projekter. Optjent, forbrug, bevægelser og bestillinger ligger **kun** på Min profil.
+- Bestil- og projektlisten deler kolonner (billede | indhold | beløb | knapper) – hold dem aligned.
 - Escape altid brugerdata med `esc()` i app.js før det sættes ind i HTML.
 - Danske Google Sheets bruger `;` i formler.
 - Hemmeligheder (webhook-URL'er m.m.) ligger i fanen `Config` i arket — aldrig i repoet.

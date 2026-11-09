@@ -129,7 +129,7 @@ function teambudget_() {
     var ark = SpreadsheetApp.openById(conf.TEAMBUDGET_ARK_ID);
     var budget = Core.num(ark.getRange(conf.TEAMBUDGET_BUDGET_CELLE).getValue());
     var brugt = conf.TEAMBUDGET_BRUGT_CELLE ? Core.num(ark.getRange(conf.TEAMBUDGET_BRUGT_CELLE).getValue()) : 0;
-    var tb = { budget: budget, brugt: brugt, rest: budget - brugt };
+    var tb = { budget: budget, brugt: brugt, rest: budget - brugt, saeson: conf.TEAMBUDGET_SAESON || '' };
     cache.put('teambudget', JSON.stringify(tb), 600);
     return tb;
   } catch (e) {
@@ -331,7 +331,8 @@ function opsaet() {
     { noegle: 'OPTJENING_FRA', vaerdi: Core.maanedKey(new Date()) },
     { noegle: 'TEAMBUDGET_ARK_ID', vaerdi: '' },
     { noegle: 'TEAMBUDGET_BUDGET_CELLE', vaerdi: '' },
-    { noegle: 'TEAMBUDGET_BRUGT_CELLE', vaerdi: '' }
+    { noegle: 'TEAMBUDGET_BRUGT_CELLE', vaerdi: '' },
+    { noegle: 'TEAMBUDGET_SAESON', vaerdi: '' }
   ]);
   seed('Menu', [
     { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 10, kostpris: 8, aktiv: 'ja' },

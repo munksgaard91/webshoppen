@@ -81,7 +81,7 @@ window.Mock = (function () {
       notify: function (b) {
         window.dispatchEvent(new CustomEvent('demo-notify', { detail: b }));
       },
-      teambudget: function () { return { budget: 25000, brugt: 8450, rest: 16550 }; },
+      teambudget: function () { return { budget: 25000, brugt: 8450, rest: 16550, saeson: '2026/27' }; },
       // Demo: åben som standard. ?lukket=tid eller ?lukket=fravaer viser lukket shop.
       shop: function () {
         var m = (location.search.match(/[?&]lukket=(\w+)/) || [])[1];
