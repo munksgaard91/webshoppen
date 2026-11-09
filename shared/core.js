@@ -257,7 +257,7 @@ var Core = (function () {
         return { maaned: mk, minStemme: min ? { initialer: min, navn: navne[min] || min, begrundelse: minHvorfor } : null, praemie: mdkPraemie(db),
           sidste: vinder ? { maaned: sidst, initialer: vinder.initialer, navn: vinder.navn } : null };
       })(),
-      hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 15))), klar: me.initialer ? ubrugteDrej(db, me.initialer) : 0, felter: hjulFelter(db, false).map(function (f) { return { id: f.id, navn: f.navn, ikon: f.ikon }; }) }
+      hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 20))), klar: me.initialer ? ubrugteDrej(db, me.initialer) : 0, felter: hjulFelter(db, false).map(function (f) { return { id: f.id, navn: f.navn, ikon: f.ikon }; }) }
     };
   }
 
@@ -377,7 +377,7 @@ var Core = (function () {
   // Trin 1: køb et drej (betaling). Trin 2: drej (resultat). Et købt drej ligger i fanen Spil, til det bruges.
   function koebDrej(db, me, data, env) {
     kraevBruger(me);
-    var pris = Math.max(0, Math.floor(num(cfgVal(db, 'HJUL_PRIS', 15))));
+    var pris = Math.max(0, Math.floor(num(cfgVal(db, 'HJUL_PRIS', 20))));
     var felter = hjulFelter(db, false);
     if (!felter.length) throw err('BAD', 'Hjulet er ikke sat op endnu.');
     if (ubrugteDrej(db, me.initialer) > 0) throw err('BAD', 'Du har allerede et drej klar.');
@@ -497,7 +497,7 @@ var Core = (function () {
       }),
       menu: menu(db, true),
       projekter: projekterMedStatus(db, ''),
-      hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 15))), felter: hjulFelter(db, true) },
+      hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 20))), felter: hjulFelter(db, true) },
       mdk: (function () {
         var mk = maanedKey(nu), hist = [], m = mk;
         var afgivet = db.all('Stemmer').filter(function (v) { return str(v.maaned) === mk; }).length;

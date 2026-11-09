@@ -490,10 +490,10 @@
     var n = felter.length, c = 120, rr = 114, seg = 360 / n;
     var pt = function (deg, rad) { var a = deg * Math.PI / 180; return [(c + rad * Math.sin(a)).toFixed(2), (c - rad * Math.cos(a)).toFixed(2)]; };
     var dele = felter.map(function (f, i) {
-      var a0 = i * seg, a1 = (i + 1) * seg, p0 = pt(a0, rr), p1 = pt(a1, rr), m = pt(a0 + seg / 2, 80);
+      var a0 = i * seg, a1 = (i + 1) * seg, p0 = pt(a0, rr), p1 = pt(a1, rr), m = pt(a0 + seg / 2, n > 9 ? 86 : 80);
       var farve = HJUL_FARVER[farveIdx(i, n)];
       return '<path d="M' + c + ' ' + c + ' L' + p0[0] + ' ' + p0[1] + ' A' + rr + ' ' + rr + ' 0 ' + (seg > 180 ? 1 : 0) + ' 1 ' + p1[0] + ' ' + p1[1] + ' Z" fill="' + farve[0] + '"><title>' + esc(f.navn) + '</title></path>' +
-        '<text x="' + m[0] + '" y="' + m[1] + '" text-anchor="middle" dominant-baseline="central" font-size="24">' + esc(f.ikon || '🎁') + '</text>';
+        '<text x="' + m[0] + '" y="' + m[1] + '" text-anchor="middle" dominant-baseline="central" font-size="' + (n > 9 ? 19 : n > 7 ? 21 : 24) + '">' + esc(f.ikon || '🎁') + '</text>';
     }).join('');
     return '<div class="wheel-wrap"><span class="wheel-pointer"></span>' +
       '<svg class="wheel" id="wheel" viewBox="0 0 240 240" style="transform:rotate(' + (ui.hjulRot || 0) + 'deg)">' +
@@ -515,7 +515,7 @@
     return '<section class="block"><h2 class="block-title">Feelin\' Lucky?</h2><div class="card lucky">' + hjulSvg(h.felter) +
       '<div class="lucky-main"><div class="lucky-price"><span class="lp-label">Drej hjulet for</span>' +
       '<span class="row-price num"><span class="amt">' + fmt(h.pris) + '</span><span class="unit">' + enhed(h.pris) + '</span>' + coin() + '</span></div>' +
-      '<div class="prizes">' + h.felter.map(function (f) { return '<span class="tag">' + esc(f.ikon) + ' ' + esc(f.navn) + '</span>'; }).join('') + '</div>' +
+      '<div class="prizes">' + h.felter.filter(function (f, i, alle) { return alle.map(function (x) { return x.navn; }).indexOf(f.navn) === i; }).map(function (f) { return '<span class="tag">' + esc(f.ikon) + ' ' + esc(f.navn) + '</span>'; }).join('') + '</div>' +
       knapper + '</div></div></section>';
   }
 
