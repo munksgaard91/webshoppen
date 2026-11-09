@@ -448,3 +448,18 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .row-price .amt { display: inline-block; min-width: 3ch; text-align: right; font-weight: 800; }
 .row-price .unit { margin-left: 5px; color: var(--muted); font-weight: 600; }
 .row-price .amt + .unit + .coin { margin-left: 7px; width: 16px; height: 16px; }
+
+/* Månedens kollega */
+.mdk { display: flex; gap: 40px; align-items: stretch; padding: 26px 30px; }
+.mdk-main { flex: 1; min-width: 0; }
+.mdk-why { margin: 0 0 16px; color: var(--muted); max-width: 560px; }
+.vote-form { display: flex; gap: 10px; max-width: 560px; margin-bottom: 8px; }
+.vote-form .input { flex: 1; }
+.voted { display: flex; align-items: center; gap: 14px; background: var(--brand-soft); border-radius: 14px; padding: 14px 16px; max-width: 560px; }
+.voted small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+.voted-ico { width: 32px; height: 32px; border-radius: 50%; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 800; flex: none; }
+.mdk-side { width: 280px; flex: none; display: grid; gap: 12px; align-content: start; }
+.mdk-prize, .mdk-last { background: var(--card-2); border-radius: 14px; padding: 14px 16px; display: grid; gap: 4px; }
+.mdk-prize { background: var(--gold-soft); }
+.mdk-side b { font-size: 16px; }
+@media (max-width: 720px) { .mdk { flex-direction: column; } .mdk-side { width: auto; } }

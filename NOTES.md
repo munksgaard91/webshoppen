@@ -18,6 +18,7 @@ Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskin
 - Projekter (2026-11-09): knappen hedder **Donér** (handlingen hedder stadig `indskyd` i koden). Beløb og mål står inde i en større progressbar ("245 Webcoins af 1.500 Webcoins" + procent), så rækken ikke har en separat beløbskolonne. "Dit bidrag" står småt under knappen.
 - Menu (2026-11-09): Sodavand (valg: Pepsi Max, Faxe Kondi, Faxe Kondi 0 kalorier, Danskvand), Monster (kun Hvid Monster), Candybar (valg: Marsbar, Snickers), Andet ("Kommer snart"). Nye kolonner i Menu: `varianter` (kommasepareret) og `snart` (ja). Valget gemmes i bestillingen som "Sodavand · Pepsi Max". Kakao er fjernet. Priserne står mindre med højrestillede tal (`.amt` min 3 tegn), så 1–3 cifre flugter. **Priser og kostpriser er pladsholdere.**
 - **Feelin' Lucky?** mellem Bestil og Projekter: lykkehjul med fast pris (Config `HJUL_PRIS`, standard 15). Præmier i ny fane `Hjul` (id, navn, ikon, type `vare`/`webcoins`/`intet`, beloeb, kostpris, vaegt, aktiv). Vægt = relativ chance. **Gevinsten afgøres i backend** (`spin` i core.js), browseren animerer kun hjulet hen til resultatet. Præmier (seed): Candybar, 5 Webcoins, Ingen gevinst, Sodavand, 25 Webcoins, Hvid Monster, 50 Webcoins. Vare-gevinst → bestilling til admin (pris 0, kostpris tæller i opgørelsen). Nye posteringstyper `hjul` og `gevinst`. Admin retter præmier, vægt og pris under Sortiment. Præmier og chancer er pladsholdere – skal regnes igennem sammen med optjeningen.
+- **Månedens kollega** (nederst på forsiden): alle med en gruppe kan stemme én gang pr. måned på en kollega (ikke sig selv). Ny fane `Stemmer` (id, tid, maaned, fra, til). Stemmer er hemmelige: brugere ser kun deres egen stemme og sidste måneds vinder. Vinder = flest stemmer i måneden; ved lighed vinder den, der fik sin første stemme først. Præmie er fritekst i Config `MDK_PRAEMIE` (rettes under Admin → Månedens kollega) og gives manuelt. Admin ser stilling + tidligere vindere.
 - Let animeret baggrund: to bløde farveskyer (kun CSS-transform), stopper ved "Reducer bevægelse".
 - Mønt-ikonet står kun én gang og til sidst efter beløb. Brug ikke 🪙-emoji som præmieikon.
 - Note om ventetid ved bestilling (personlig levering).
@@ -67,7 +68,7 @@ Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskin
 
 Ved ændringer i `shared/core.js` eller `Code.gs`: kopiér ind i Apps Script og lav **Administrer implementeringer → Rediger → Ny version** (så URL'en bevares).
 Ved ændringer i assets: bump `?v=` i `index.html`.
-Når arket allerede er sat op: tilføj kolonnerne `varianter` og `snart` sidst i Menu, opret fanen `Hjul` med kolonnerne ovenfor, og tilføj `HJUL_PRIS` i Config ("Opsæt faner" udfylder kun tomme faner).
+Når arket allerede er sat op: tilføj kolonnerne `varianter` og `snart` sidst i Menu, opret fanerne `Hjul` og `Stemmer` med kolonnerne ovenfor (sæt kolonnen `maaned` til tekstformat), og tilføj `HJUL_PRIS` og `MDK_PRAEMIE` i Config ("Opsæt faner" udfylder kun tomme faner).
 Demo af lukket shop: tilføj `?lukket=fravaer` eller `?lukket=tid` til adressen.
 
 ## Før go-live (fundet ved kodegennemgang 2026-11-09)

@@ -298,7 +298,7 @@ var SheetDB = (function () {
 
 function opsaet() {
   var ss = SpreadsheetApp.getActive();
-  var tekstKol = ['id', 'tid', 'initialer', 'fra', 'til', 'ref', 'email', 'sheet_id', 'noegle', 'vaerdi'];
+  var tekstKol = ['id', 'tid', 'maaned', 'initialer', 'fra', 'til', 'ref', 'email', 'sheet_id', 'noegle', 'vaerdi'];
   Object.keys(Core.TABELLER).forEach(function (navn) {
     var headers = Core.TABELLER[navn];
     var sh = ss.getSheetByName(navn) || ss.insertSheet(navn);
@@ -333,7 +333,8 @@ function opsaet() {
     { noegle: 'TEAMBUDGET_BUDGET_CELLE', vaerdi: '' },
     { noegle: 'TEAMBUDGET_BRUGT_CELLE', vaerdi: '' },
     { noegle: 'TEAMBUDGET_SAESON', vaerdi: '' },
-    { noegle: 'HJUL_PRIS', vaerdi: 15 }
+    { noegle: 'HJUL_PRIS', vaerdi: 15 },
+    { noegle: 'MDK_PRAEMIE', vaerdi: 'En snack efter eget valg' }
   ]);
   seed('Menu', [
     { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 10, kostpris: 8, varianter: 'Pepsi Max, Faxe Kondi, Faxe Kondi 0 kalorier, Danskvand', aktiv: 'ja' },

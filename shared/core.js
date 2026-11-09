@@ -16,6 +16,7 @@ var Core = (function () {
     Config: ['noegle', 'vaerdi'],
     Brugere: ['email', 'initialer', 'navn', 'gruppe', 'aktiv'],
     Menu: ['id', 'navn', 'ikon', 'billede', 'pris', 'kostpris', 'varianter', 'snart', 'aktiv'],
+    Stemmer: ['id', 'tid', 'maaned', 'fra', 'til'],
     Hjul: ['id', 'navn', 'ikon', 'type', 'beloeb', 'kostpris', 'vaegt', 'aktiv'],
     Projekter: ['id', 'navn', 'ikon', 'maal', 'aaben'],
     Posteringer: ['id', 'tid', 'initialer', 'type', 'beloeb', 'tekst', 'ref'],
@@ -247,6 +248,14 @@ var Core = (function () {
       grupper: GRUPPER,
       teambudget: env.teambudget ? env.teambudget() : null,
       shop: env.shop ? env.shop() : { aaben: true },
+      mdk: (function () {
+        var mk = maanedKey(nu), sidst = forrigeMaaned(mk);
+        var min = null;
+        db.all('Stemmer').forEach(function (v) { if (str(v.maaned) === mk && ini(v.fra) === me.initialer) min = ini(v.til); });
+        var vinder = mdkStilling(db, sidst)[0] || null;
+        return { maaned: mk, minStemme: min ? { initialer: min, navn: navne[min] || min } : null, praemie: mdkPraemie(db),
+          sidste: vinder ? { maaned: sidst, initialer: vinder.initialer, navn: vinder.navn } : null };
+      })(),
       hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 15))), felter: hjulFelter(db, false).map(function (f) { return { id: f.id, navn: f.navn, ikon: f.ikon }; }) }
     };
   }
@@ -300,6 +309,52 @@ var Core = (function () {
         : me.navn + ' (' + me.initialer + ') har ' + (forud ? 'forudbestilt ' : 'bestilt ') + str(vare.ikon) + ' ' + vareNavn + '.') + ' Pris: ' + pris + ' Webcoins.'
     });
     return { id: id, forud: forud };
+  }
+
+  // ---------- Månedens kollega ----------
+  // Én stemme pr. person pr. måned. Flest stemmer vinder; ved lighed vinder den, der fik sin første stemme først.
+  function forrigeMaaned(mk) {
+    var p = mk.split('-');
+    return maanedKey(new Date(Number(p[0]), Number(p[1]) - 2, 1));
+  }
+  function mdkStilling(db, mk) {
+    var navne = {};
+    db.all('Brugere').forEach(function (u) { navne[ini(u.initialer)] = str(u.navn); });
+    var m = {};
+    db.all('Stemmer').forEach(function (v) {
+      if (str(v.maaned) !== mk) return;
+      var t = ini(v.til);
+      var o = m[t] = m[t] || { initialer: t, navn: navne[t] || t, stemmer: 0, foerste: str(v.tid) };
+      o.stemmer++;
+      if (str(v.tid) < o.foerste) o.foerste = str(v.tid);
+    });
+    return Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, b) {
+      return b.stemmer - a.stemmer || a.foerste.localeCompare(b.foerste);
+    });
+  }
+  function mdkPraemie(db) { return str(cfgVal(db, 'MDK_PRAEMIE', 'En snack efter eget valg')); }
+
+  function stem(db, me, data, env) {
+    kraevBruger(me);
+    var mk = maanedKey(env.now());
+    var har = db.all('Stemmer').some(function (v) { return str(v.maaned) === mk && ini(v.fra) === me.initialer; });
+    if (har) throw err('BAD', 'Du har allerede stemt i ' + maanedNavn(mk).split(' ')[0] + '.');
+    var t = ini(data.til);
+    if (!t || t === me.initialer) throw err('BAD', 'Vælg en kollega.');
+    var ok = aktiveBrugere(db).some(function (u) { return ini(u.initialer) === t && str(u.gruppe); });
+    if (!ok) throw err('BAD', 'Kollegaen findes ikke.');
+    db.insert('Stemmer', { id: env.uuid(), tid: env.now().toISOString(), maaned: mk, fra: me.initialer, til: t });
+    return { ok: true };
+  }
+
+  function adminMdkPraemie(db, me, data) {
+    kraevAdmin(me);
+    var tekst = str(data.praemie).trim();
+    if (!tekst) throw err('BAD', 'Skriv en præmie.');
+    var row = null;
+    db.all('Config').forEach(function (r) { if (str(r.noegle).trim() === 'MDK_PRAEMIE') row = r; });
+    if (row) db.update('Config', row, { vaerdi: tekst }); else db.insert('Config', { noegle: 'MDK_PRAEMIE', vaerdi: tekst });
+    return { ok: true };
   }
 
   // Feelin' Lucky? – gevinsten afgøres altid her (server), aldrig i browseren.
@@ -390,6 +445,16 @@ var Core = (function () {
       menu: menu(db, true),
       projekter: projekterMedStatus(db, ''),
       hjul: { pris: Math.floor(num(cfgVal(db, 'HJUL_PRIS', 15))), felter: hjulFelter(db, true) },
+      mdk: (function () {
+        var mk = maanedKey(nu), hist = [], m = mk;
+        var afgivet = db.all('Stemmer').filter(function (v) { return str(v.maaned) === mk; }).length;
+        for (var i = 0; i < 6; i++) {
+          m = forrigeMaaned(m);
+          var st = mdkStilling(db, m);
+          if (st.length) hist.push({ maaned: m, vinder: st[0], stemmer: st.reduce(function (s, x) { return s + x.stemmer; }, 0) });
+        }
+        return { maaned: mk, stilling: mdkStilling(db, mk), afgivet: afgivet, praemie: mdkPraemie(db), historik: hist };
+      })(),
       regler: regler(db),
       grupper: GRUPPER
     };
@@ -535,6 +600,8 @@ var Core = (function () {
     bestil: bestil,
     indskyd: indskyd,
     spin: spin,
+    stem: stem,
+    admin_mdk_praemie: adminMdkPraemie,
     admin_hjul: adminHjulFelt,
     admin_hjul_pris: adminHjulPris,
     admin_state: adminState,
@@ -545,7 +612,7 @@ var Core = (function () {
     admin_justering: adminJustering,
     admin_sync: function (db, me, data, env) { kraevAdmin(me); return env.sync(); }
   };
-  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, admin_hjul: 1, admin_hjul_pris: 1, admin_bestilling: 1, admin_bruger: 1, admin_vare: 1, admin_projekt: 1, admin_justering: 1, admin_sync: 1 };
+  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, stem: 1, admin_mdk_praemie: 1, admin_hjul: 1, admin_hjul_pris: 1, admin_bestilling: 1, admin_bruger: 1, admin_vare: 1, admin_projekt: 1, admin_justering: 1, admin_sync: 1 };
 
   function handle(db, me, action, data, env) {
     var fn = HANDLINGER[action];

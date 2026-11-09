@@ -96,6 +96,7 @@
     users: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5z"/><circle cx="17" cy="9" r="2.8"/><path d="M16.5 14.2c3 .2 5.5 2 5.5 5.3h-4"/>',
     box: '<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/>',
     coin: '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 9.5 10 15l2-3.6 2 3.6 1.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
+    star: '<path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z"/>',
     list: '<rect x="3" y="4" width="18" height="3" rx="1"/><rect x="3" y="10.5" width="18" height="3" rx="1"/><rect x="3" y="17" width="12" height="3" rx="1"/>',
     sun: '<circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
     logout: '<path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 8l4 4-4 4M19 12H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -224,6 +225,7 @@
     'admin/opgoerelse': { titel: 'Opgørelse', fn: pageAdminOpgoerelse, admin: true },
     'admin/brugere': { titel: 'Brugere', fn: pageAdminBrugere, admin: true },
     'admin/sortiment': { titel: 'Sortiment', fn: pageAdminSortiment, admin: true },
+    'admin/kollega': { titel: 'Månedens kollega', fn: pageAdminKollega, admin: true },
     'admin/regler': { titel: 'Regler', fn: pageRegler, admin: true },
     'admin/posteringer': { titel: 'Posteringer', fn: pageAdminPosteringer, admin: true }
   };
@@ -278,6 +280,7 @@
       navLink('admin/opgoerelse', 'coin', 'Opgørelse') +
       navLink('admin/brugere', 'users', 'Brugere') +
       navLink('admin/sortiment', 'box', 'Sortiment') +
+      navLink('admin/kollega', 'star', 'Månedens kollega') +
       navLink('admin/regler', 'book', 'Regler') +
       navLink('admin/posteringer', 'list', 'Posteringer') + '</nav>' +
       '<div class="side-foot">' +
@@ -382,7 +385,26 @@
       }).join('') + '</div>' : '<div class="card empty">Ingen åbne projekter.</div>') + '</section>';
 
     var banner = lukket && me.admin ? '<div class="banner">Shoppen er lukket for medarbejderne lige nu' + (shop.grund === 'fravaer' ? ' (du er ikke til stede)' : '') + '. ' + esc(shop.tekst || '') + '</div>' : '';
-    return banner + top + menu + lucky(kanKoebe) + projekter;
+    return banner + top + menu + lucky(kanKoebe) + projekter + kollega(kanKoebe);
+  }
+
+  // ---------- Månedens kollega ----------
+
+  function kollega(kanKoebe) {
+    var m = S.mdk;
+    if (!m) return '';
+    var mNavn = MAANEDER[Number(m.maaned.slice(5)) - 1];
+    var kandidater = S.kolleger.filter(function (u) { return u.gruppe; });
+    var stem = m.minStemme
+      ? '<div class="voted"><span class="voted-ico">✓</span><div>Du har stemt på <b>' + esc(m.minStemme.navn) + '</b> i ' + mNavn + '.<small>Vinderen findes, når måneden er slut.</small></div></div>'
+      : (kanKoebe ? '<div class="vote-form"><select class="input" id="mdk-til"><option value="">Vælg en kollega …</option>' +
+          kandidater.map(function (u) { return '<option value="' + esc(u.initialer) + '">' + esc(u.navn) + ' · ' + esc(u.gruppe) + '</option>'; }).join('') +
+          '</select><button class="btn primary" data-act="stem">Stem</button></div><small class="faint">Du kan stemme én gang i ' + mNavn + '. Stemmerne er hemmelige.</small>' : '');
+    return '<section class="block"><h2 class="block-title">Månedens kollega</h2><div class="card mdk">' +
+      '<div class="mdk-main"><p class="mdk-why">Stem på en kollega, der har gjort noget godt, hjulpet med noget bestemt eller bare skabt god stemning i hverdagen.</p>' + stem + '</div>' +
+      '<div class="mdk-side"><div class="mdk-prize"><span class="eyebrow">Præmie</span><b>🎁 ' + esc(m.praemie) + '</b></div>' +
+      (m.sidste ? '<div class="mdk-last"><span class="eyebrow">' + cap(MAANEDER[Number(m.sidste.maaned.slice(5)) - 1]) + 's kollega</span><b>🏆 ' + esc(m.sidste.navn) + '</b></div>' : '') +
+      '</div></div></section>';
   }
 
   // ---------- Feelin' Lucky? ----------
@@ -620,6 +642,25 @@
       '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="hjul-ok">Gem</button></div>');
   }
 
+  function pageAdminKollega() {
+    var m = A.mdk;
+    var mNavn = MAANEDER[Number(m.maaned.slice(5)) - 1];
+    return adminHead('Månedens kollega') +
+      '<section class="card" style="margin-bottom:20px"><div class="card-head"><h2 class="card-title">Præmie</h2></div>' +
+      '<div class="vote-form"><input class="input" id="mdk-praemie" value="' + esc(m.praemie) + '" placeholder="fx En snack efter eget valg eller 50 Webcoins"><button class="btn primary" data-act="mdk-praemie-ok">Gem</button></div>' +
+      '<small class="faint">Præmien gives manuelt. Webcoins kan lægges ind under Brugere → Justér.</small></section>' +
+      '<div class="grid-2 top0"><section class="card"><div class="card-head"><h2 class="card-title">Stilling i ' + mNavn + '</h2><span class="tag">' + m.afgivet + ' stemmer</span></div>' +
+      (m.stilling.length ? '<div class="table-wrap"><table><thead><tr><th>#</th><th>Kollega</th><th class="r">Stemmer</th><th class="r">Første stemme</th></tr></thead><tbody>' +
+        m.stilling.map(function (x, i) {
+          return '<tr><td>' + (i === 0 ? '🏆' : i + 1) + '</td><td><b>' + esc(x.navn) + '</b></td><td class="r num">' + x.stemmer + '</td><td class="r faint">' + dato(x.foerste) + '</td></tr>';
+        }).join('') + '</tbody></table></div>' : '<div class="empty">Ingen stemmer endnu.</div>') +
+      '<small class="faint">Kun synlig for admin. Ved lighed vinder den, der fik sin første stemme først.</small></section>' +
+      '<section class="card"><div class="card-head"><h2 class="card-title">Tidligere vindere</h2></div>' +
+      (m.historik.length ? '<div class="mini-list">' + m.historik.map(function (h) {
+        return '<div class="mini"><div class="t"><b>' + esc(h.vinder.navn) + '</b><small>' + esc(maanedLabel(h.maaned)) + '</small></div><span class="muted num">' + h.vinder.stemmer + ' af ' + h.stemmer + ' stemmer</span></div>';
+      }).join('') + '</div>' : '<div class="empty">Ingen vindere endnu.</div>') + '</section></div>';
+  }
+
   function pageAdminPosteringer() {
     var typer = ['alle'].concat(Object.keys(TYPER));
     var rows = A.posteringer.filter(function (p) {
@@ -853,6 +894,17 @@
         break;
       case 'nyt-projekt': openProjekt(''); break;
       case 'nyt-hjul': openHjulFelt(''); break;
+      case 'stem': {
+        var til = val('mdk-til');
+        if (!til) { toast('Vælg en kollega', '', true); break; }
+        var navn = (S.kolleger.filter(function (u) { return u.initialer === til; })[0] || {}).navn || til;
+        if (!confirm('Stem på ' + navn + '? Du kan kun stemme én gang i denne måned.')) break;
+        submit(t, 'stem', { til: til }, 'Tak for din stemme');
+        break;
+      }
+      case 'mdk-praemie-ok':
+        submit(t, 'admin_mdk_praemie', { praemie: val('mdk-praemie') }, 'Præmie gemt');
+        break;
       case 'ret-hjul': openHjulFelt(t.dataset.id); break;
       case 'hjul-ok':
         submit(t, 'admin_hjul', { id: val('h-id'), navn: val('h-navn'), ikon: val('h-ikon'), type: val('h-type'), vaegt: val('h-vaegt'), beloeb: val('h-beloeb'), kostpris: val('h-kost'), aktiv: checked('h-aktiv') }, 'Præmie gemt');
