@@ -1,6 +1,6 @@
 # Webshoppen
 
-Intern "shop" for webafdelingen hos Best One A/S. Medarbejdere optjener **Webcoins** automatisk ud fra faktureringsark, anmeldelser m.m., og bruger dem på ting fra menuen (sodavand, Monster …), gaver til kolleger eller fælles projekter (teamfrokost, biograf …). Admin (Rasmus, `rmu`) får besked ved hver bestilling og kan rette i alt.
+Intern "shop" for webafdelingen hos Best One A/S. Medarbejdere optjener **Webcoins** automatisk ud fra faktureringsark, anmeldelser m.m., og bruger dem på ting fra menuen (sodavand, Monster …), gaver til kolleger eller fælles events (teamfrokost, biograf …). Admin (Rasmus, `rmu`) får besked ved hver bestilling og kan rette i alt.
 
 Læs altid `NOTES.md` for status, næste skridt og beslutninger, før du går i gang.
 
@@ -21,9 +21,9 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs" +
 - **Login:** Google Identity Services i browseren giver et ID-token. Backend verificerer det mod `oauth2.googleapis.com/tokeninfo` (aud = CLIENT_ID, domæne = best-one.dk) og slår mailen op i fanen `Brugere`. Ukendt mail → "Du er desværre ikke registreret".
 - **Grupper:** Hjemmeside, Redaktør, Fotograf, Support. Alle ser samme dashboard; tallene afhænger af bruger og gruppe (optjeningsregler pr. gruppe i fanen `Regler`).
 - **Saldoen må aldrig gå i minus.** Alle handlinger der trækker Webcoins (`bestil`, `koeb_drej`, `indskyd`, `admin_justering`) tjekker saldoen i backend under lås. Nye handlinger skal gøre det samme.
-- **Webcoins er en posteringslog** (fanen `Posteringer`). Saldo = sum af posteringer. Typer: `optjent`, `koeb`, `gave`, `gave_modtaget` (0 Webcoins, kun historik), `projekt` (donation til projekt), `refusion`, `justering`, `hjul` (betaling for lykkehjul), `gevinst`.
+- **Webcoins er en posteringslog** (fanen `Posteringer`). Saldo = sum af posteringer. Typer: `optjent`, `koeb`, `gave`, `gave_modtaget` (0 Webcoins, kun historik), `projekt` (donation til et event), `refusion`, `justering`, `hjul` (betaling for lykkehjul), `gevinst`.
 - **Lykkehjulet er to trin:** `koeb_drej` (betaling, gemmes i fanen `Spil`) og `spin` (resultat). Drej-knappen er låst, indtil der er købt et drej. Hvert resultat registreres i `Spil`, og admin får **altid** besked med "via lykkehjulet". **Visningen er en tombola-rulle i CS-kasse-stil** (ikke et hjul): hvid rulle (passer til siden), præmiekort med ikon + tekst (Webcoins-gevinster bruger `coin()`, varer/Nitte emoji; ingen bjælke i bunden; hovedpræmien er et guld-kort), hvid markørstreg. Rullen fyldes med kort trukket efter chancen, vinderen (fra backend) lægges på plads 62, ca. 8,5 sek. med langsom afslutning, og rullen glider lidt forbi og retter sig ind (`reelKoer()`). "Køb et drej" og "Drej hjulet" er lige store; åben Drej-knap har 🎰.
-- **Tilfældighed og afstemninger afgøres altid i backend** (`spin` og `stem` i core.js) – aldrig i browseren. Hjulets vægte og stemmetal sendes kun til admin.
+- **Tilfældighed og afstemninger afgøres altid i backend** (`spin` og `stem` i core.js) – aldrig i browseren. Chancerne pr. præmie vises åbent (i-ikon) – vægtene står i `shared/sortiment.js`. Stemmetal sendes kun til admin.
 - **Optjening er idempotent:** én postering pr. `optjent:<kilde>:<YYYY-MM>:<initialer>` (feltet `ref`), som opdateres ved hver synk.
 - **Økonomi: 1 kr = 2 Webcoins.** Priser, gevinster, præmier og optjeningsregler er sat efter det (kostpris i kr er uændret).
 - Personer identificeres **altid med initialer** (JST, DSI …) i kildeark.
@@ -59,10 +59,11 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs" +
 - Min profil: topkort (gruppe, navn, saldo uden ordet "Saldo"), tre visuelle nøgletal (Optjent, Brugt, Donationer) og faner Aktivitet / Optjening / Bestillinger. Ingen initialer i toppen.
 - "Donationer" = gaver givet til kolleger; events bruger knappen "Donér".
 - **"Projekter" hedder "Events" i hele UI'et.** I koden hedder det stadig `projekt`/`projekter` (posteringstype, funktioner); eventene selv står i `SORTIMENT.events` – det ændres ikke, så eksisterende data virker.
-- **Admin (rmu) deltager ikke**: står kun i `ADMIN_EMAILS`, ikke i `Brugere`. Ingen bestilling, hjul, donation, stemme eller profil – kun moderering.
+- **Admin (rmu) deltager ikke**: står kun i `ADMIN_EMAILS`, ikke i `Brugere`. Ingen bestilling, hjul, donation, stemme eller profil – kun moderering. Admin-sider: Overblik, Bestillinger, Brugere, Månedens kollega, Regler, Posteringer (ingen Sortiment – det rettes i `shared/sortiment.js`).
+- **Demobrugere bruger opdigtede mails** (`demo.<ini>@best-one.dk`, `ade@…` osv.) – aldrig kollegernes rigtige adresser.
 - **Demo-saldo er altid 67 Webcoins** for alle testbrugere (justering til sidst i seed i `mock.js`). Ændres demo-data, skal saldoen stadig ende på 67 – og bump `KEY` i mock.js, så demoen nulstilles.
 - **Ingen rigtige navne/mails i repoet** (det er offentligt). Rigtig brugerliste ligger i `brugere.local.csv` (gitignored). Demo bruger "Demo …"-navne.
-- Forsidens prioritet: 1) saldo + teambudget (stort tal = rest i alt, derunder kun "Brugt i sæsonen", sæson som tag fra `TEAMBUDGET_SAESON`) + regler (i-ikon), 2) menu/bestil (kompakt liste), 3) Feelin' Lucky?, 4) projekter, 5) Månedens kollega (nederst). Optjent, forbrug, bevægelser og bestillinger ligger **kun** på Min profil.
+- Forsidens prioritet: 1) saldo + teambudget (stort tal = rest i alt, derunder kun "Brugt i sæsonen", sæson som tag fra `TEAMBUDGET_SAESON`) + regler (i-ikon), 2) menu/bestil (kompakt liste), 3) Feelin' Lucky?, 4) events, 5) Månedens kollega (nederst). Optjent, forbrug, bevægelser og bestillinger ligger **kun** på Min profil.
 - Bestil- og eventlisten deler kolonner (billede | indhold | beløb | knapper) – hold dem aligned.
 ### Faste tekster og farver (aftalt med Rasmus)
 - Gave til kollega hedder **"Donér til en kollega"** (knap og dialog); bekræftelse "Din donation er sendt 🎁". Events bruger knappen **"Donér"**.

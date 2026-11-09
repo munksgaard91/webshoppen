@@ -540,9 +540,7 @@ var Core = (function () {
       posteringer: poster.slice().sort(nyesteFoerst).slice(0, 2000).map(function (p) {
         return { id: str(p.id), tid: str(p.tid), initialer: str(p.initialer), navn: navne[p.initialer] || p.initialer, type: str(p.type), beloeb: num(p.beloeb), tekst: str(p.tekst), maaned: postMaaned(p) };
       }),
-      menu: menu(db, true),
       projekter: projekterMedStatus(db, ''),
-      hjul: { pris: Math.floor(num(sortiment().hjulPris)), felter: hjulFelter(db, true) },
       mdk: (function () {
         var mk = maanedKey(nu), hist = [], m = mk;
         var afgivet = db.all('Stemmer').filter(function (v) { return str(v.maaned) === mk; }).length;

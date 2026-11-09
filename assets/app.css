@@ -274,13 +274,6 @@ a { color: inherit; }
 
 /* 3. Projekter */
 .proj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
-.proj-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.proj-top .ico { font-size: 28px; width: 48px; height: 48px; display: grid; place-items: center; background: var(--card-2); border-radius: 14px; flex: none; }
-.proj-top .t { flex: 1; min-width: 0; }
-.proj-top b { display: block; }
-.proj-top small { color: var(--muted); font-size: 13px; }
-.proj-row { padding: 14px 0; border-top: 1px solid var(--line); }
-.proj-row:first-of-type { border-top: 0; padding-top: 0; }
 
 /* 4. Statistik */
 .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
@@ -348,7 +341,6 @@ td.r, th.r { text-align: right; }
 .profile-head h1, .page-head h1 { font-size: 32px; font-weight: 900; letter-spacing: -0.02em; margin: 4px 0 0; }
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
 .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
-.rules { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
 
 /* ---------- Formularer / modal ---------- */
 
@@ -573,17 +565,9 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .mdk-avatar.sm { width: 40px; height: 40px; font-size: 13px; border-width: 2px; background: var(--brand-soft); color: var(--brand); border-color: transparent; }
 :root[data-theme="dark"] .mdk-avatar.sm { color: var(--brand-2); }
 .mdk-name { font-size: 20px; font-weight: 800; }
-.mdk-facts { display: grid; gap: 6px; margin-top: 8px; width: 100%; }
-.mdk-facts span { background: rgba(255, 255, 255, .12); border-radius: 10px; padding: 8px 12px; font-size: 13px; font-weight: 600; }
 .mdk-vote { padding: 24px 28px; min-width: 0; }
 .mdk-q { margin: 0 0 6px; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
 .mdk-vote .mdk-why { margin: 0 0 16px; color: var(--muted); font-size: 14px; max-width: 620px; }
-.mdk-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-bottom: 14px; }
-.mdk-person { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); transition: border-color .15s, background .15s, transform .15s; }
-.mdk-person:hover { border-color: var(--brand-2); transform: translateY(-2px); }
-.mdk-person.on { border-color: var(--brand); background: var(--brand-soft); }
-.mdk-person.on .mdk-avatar.sm { background: var(--brand); color: #fff; }
-.mdk-pname { font-size: 13px; font-weight: 600; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mdk-vote .vote-why { max-width: none; }
 .mdk-send { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .mdk-fine { font-size: 12px; color: var(--faint); }
@@ -707,12 +691,8 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .list > .row:last-child { border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius); }
 .list > .row { position: relative; }
 .list > .row:hover, .list > .row:focus-within { z-index: 6; }
-.mdk-facts span { display: flex; align-items: center; justify-content: center; gap: 6px; }
 
 /* Månedens kollega: tydelig opdeling mellem sidste vinder og denne måneds afstemning */
-.mdk-facts { border-top: 1px solid rgba(255, 255, 255, .2); padding-top: 14px; margin-top: 14px; }
-.mdk-facts-titel { background: none !important; padding: 0 !important; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .8; }
-.mdk-facts span small { font-size: 11px; font-weight: 600; opacity: .75; margin-right: 4px; text-transform: none; letter-spacing: 0; }
 .tb-card .tb-big { margin: 10px 0 6px; }
 
 /* Tombola i tomgang: ruller langsomt i ring for at friste (pauser ved hover, slået fra ved "Reducer bevægelse") */

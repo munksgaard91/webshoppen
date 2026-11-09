@@ -1060,11 +1060,6 @@
         break;
       }
       case 'yehaw': konfetti(); break;
-      case 'mdk-valg':
-        document.querySelectorAll('.mdk-person').forEach(function (el) { el.classList.toggle('on', el === t); });
-        document.getElementById('mdk-til').value = t.dataset.ini;
-        document.getElementById('mdk-hvorfor').focus();
-        break;
       case 'regler-boks':
         openModal('<h2><span class="info-btn dark">' + ico('info') + '</span>Sådan optjener du Webcoins</h2>' +
           '<p class="muted" style="margin:-8px 0 14px">Gælder for din gruppe: <b>' + esc(S.me.gruppe) + '</b></p>' +
