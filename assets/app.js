@@ -828,7 +828,7 @@
     openModal('<h2><span class="ico">' + esc(v.ikon || '🛍️') + '</span>' + esc(v.navn) + '</h2>' +
       (v.varianter.length > 1 ? '<div class="field"><label>Vælg</label><div class="choices">' + v.varianter.map(function (x) {
         return '<button class="choice' + (k.variant === x ? ' on' : '') + '" data-act="koeb-variant" data-v="' + esc(x) + '">' + esc(x) + '</button>';
-      }).join('') + '</div></div>' : '<div class="field"><label for="koeb-oenske">Dit ønske (valgfrit)</label><input class="input" id="koeb-oenske" maxlength="200" value="' + esc(k.oenske || '') + '" placeholder="' + (v.varianter.length === 1 ? esc(v.varianter[0]) + ', gerne kold' : 'Fx Snickers, tak') + '"></div>') +
+      }).join('') + '</div></div>' : !v.oenskeFelt ? '' : '<div class="field"><label for="koeb-oenske">Dit ønske</label><input class="input" id="koeb-oenske" maxlength="200" value="' + esc(k.oenske || '') + '" placeholder="Skriv dit ønske, fx Pepsi Max"></div>') +
       '<div class="seg"><button class="' + (k.gave ? '' : 'on') + '" data-act="koeb-mode" data-g="0">Til mig</button><button class="' + (k.gave ? 'on' : '') + '" data-act="koeb-mode" data-g="1">Donér til en kollega</button></div>' +
       (k.gave ? '<div class="field"><label for="koeb-til">Kollega</label><select class="input" id="koeb-til" data-act="koeb-til"><option value="">Vælg …</option>' + kollegaer + '</select></div>' : '') +
       '<div class="sum"><span class="muted">Pris</span><b class="num">' + wc(v.pris) + '</b></div>' +
@@ -882,6 +882,7 @@
       '<div class="row-2"><div class="field"><label for="v-pris">Pris (Webcoins)</label><input class="input num" id="v-pris" type="number" min="0" value="' + esc(v.pris) + '"></div>' +
       '<div class="field"><label for="v-kost">Kostpris (kr)</label><input class="input num" id="v-kost" type="number" min="0" step="0.5" value="' + esc(v.kostpris || '') + '"></div></div>' +
       '<div class="field"><label for="v-var">Valgmuligheder (kommasepareret, valgfrit)</label><input class="input" id="v-var" value="' + esc((v.varianter || []).join(', ')) + '" placeholder="Pepsi Max, Faxe Kondi"></div>' +
+      '<label class="check"><input type="checkbox" id="v-oenske"' + (v.oenskeFelt ? ' checked' : '') + '> Vis ønske-felt ved bestilling (kun varer uden valgmuligheder)</label>' +
       '<label class="check"><input type="checkbox" id="v-snart"' + (v.snart ? ' checked' : '') + '> Kommer snart (kan ikke bestilles endnu)</label>' +
       '<label class="check"><input type="checkbox" id="v-aktiv"' + (v.aktiv ? ' checked' : '') + '> Vises i menuen</label>' +
       '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="vare-ok">Gem</button></div>');
@@ -1024,7 +1025,7 @@
       case 'ny-vare': openVare(''); break;
       case 'ret-vare': openVare(t.dataset.id); break;
       case 'vare-ok':
-        submit(t, 'admin_vare', { id: val('v-id'), navn: val('v-navn'), ikon: val('v-ikon'), billede: val('v-billede'), pris: val('v-pris'), kostpris: val('v-kost'), varianter: val('v-var'), snart: checked('v-snart'), aktiv: checked('v-aktiv') }, 'Vare gemt');
+        submit(t, 'admin_vare', { id: val('v-id'), navn: val('v-navn'), ikon: val('v-ikon'), billede: val('v-billede'), pris: val('v-pris'), kostpris: val('v-kost'), varianter: val('v-var'), oenskeFelt: checked('v-oenske'), snart: checked('v-snart'), aktiv: checked('v-aktiv') }, 'Vare gemt');
         break;
       case 'nyt-projekt': openProjekt(''); break;
       case 'nyt-hjul': openHjulFelt(''); break;

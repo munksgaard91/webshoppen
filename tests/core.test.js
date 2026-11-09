@@ -15,6 +15,7 @@ var data = {
   Menu: [
     { id: 'soda', navn: 'Sodavand', pris: 10, kostpris: 8, varianter: 'Pepsi Max, Danskvand', aktiv: 'ja' },
     { id: 'mon', navn: 'Monster', pris: 20, kostpris: 15, varianter: 'Hvid Monster', aktiv: 'ja' },
+    { id: 'cola', navn: 'Sodavand uden valg', pris: 10, kostpris: 8, oenske: 'ja', aktiv: 'ja' },
     { id: 'andet', navn: 'Andet', pris: 0, snart: 'ja', aktiv: 'ja' }
   ],
   Hjul: [
@@ -63,9 +64,11 @@ t('én variant vælges automatisk', function () {
   Core.handle(db, A, 'bestil', { vareId: 'mon' }, env);
   eq(data.Bestillinger[1].vare, 'Monster · Hvid Monster');
 });
-t('ønske gemmes kun på varer uden valg', function () {
-  Core.handle(db, A, 'bestil', { vareId: 'mon', oenske: 'Gerne kold' }, env);
-  eq(data.Bestillinger[data.Bestillinger.length - 1].oenske, 'Gerne kold');
+t('ønske gemmes kun på varer med ønske-felt', function () {
+  Core.handle(db, A, 'bestil', { vareId: 'cola', oenske: 'Pepsi Max' }, env);
+  eq(data.Bestillinger[data.Bestillinger.length - 1].oenske, 'Pepsi Max');
+  Core.handle(db, A, 'bestil', { vareId: 'mon', oenske: 'ignoreres' }, env);
+  eq(data.Bestillinger[data.Bestillinger.length - 1].oenske, '', 'ingen ønske-felt på Monster');
   Core.handle(db, A, 'bestil', { vareId: 'soda', variant: 'Danskvand', oenske: 'ignoreres' }, env);
   eq(data.Bestillinger[data.Bestillinger.length - 1].oenske, '');
 });

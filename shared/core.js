@@ -15,7 +15,7 @@ var Core = (function () {
   var TABELLER = {
     Config: ['noegle', 'vaerdi'],
     Brugere: ['email', 'initialer', 'navn', 'gruppe', 'aktiv'],
-    Menu: ['id', 'navn', 'ikon', 'billede', 'pris', 'kostpris', 'varianter', 'snart', 'aktiv'],
+    Menu: ['id', 'navn', 'ikon', 'billede', 'pris', 'kostpris', 'varianter', 'oenske', 'snart', 'aktiv'],
     Stemmer: ['id', 'tid', 'maaned', 'fra', 'til', 'begrundelse'],
     Spil: ['id', 'tid', 'initialer', 'status', 'resultat'],
     Hjul: ['id', 'navn', 'ikon', 'type', 'beloeb', 'kostpris', 'vaegt', 'aktiv'],
@@ -159,7 +159,7 @@ var Core = (function () {
 
   function menu(db, alle) {
     return db.all('Menu').filter(function (v) { return alle || sand(v.aktiv); }).map(function (v) {
-      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), billede: str(v.billede), pris: num(v.pris), kostpris: num(v.kostpris), varianter: varianter(v), snart: str(v.snart).toLowerCase() === 'ja', aktiv: sand(v.aktiv) };
+      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), billede: str(v.billede), pris: num(v.pris), kostpris: num(v.kostpris), varianter: varianter(v), oenskeFelt: str(v.oenske).toLowerCase() === 'ja', snart: str(v.snart).toLowerCase() === 'ja', aktiv: sand(v.aktiv) };
     });
   }
 
@@ -275,7 +275,7 @@ var Core = (function () {
     }
     var vareNavn = variant && variant !== str(vare.navn) ? str(vare.navn) + ' · ' + variant : str(vare.navn);
     // Varer uden valg har et frivilligt ønske-felt (fx "Kold, tak" eller "Gerne en med karamel")
-    var oenske = valg.length > 1 ? '' : str(data.oenske).trim().slice(0, 200);
+    var oenske = valg.length <= 1 && str(vare.oenske).toLowerCase() === 'ja' ? str(data.oenske).trim().slice(0, 200) : '';
     // Lukket shop = forudbestilling. Den leveres, når shoppen åbner igen.
     var shop = env.shop ? env.shop() : { aaben: true };
     var forud = !shop.aaben;
@@ -557,7 +557,7 @@ var Core = (function () {
     if (!str(data.navn).trim()) throw err('BAD', 'Navn mangler.');
     var pris = Math.floor(num(data.pris));
     if (!(pris >= 0)) throw err('BAD', 'Ugyldig pris.');
-    var obj = { navn: str(data.navn).trim(), ikon: str(data.ikon).trim(), billede: str(data.billede).trim(), pris: pris, kostpris: Math.max(0, num(data.kostpris)), varianter: str(data.varianter).split(/[,;\n]/).map(function (x) { return x.trim(); }).filter(String).join(', '), snart: data.snart ? 'ja' : '', aktiv: data.aktiv === false ? 'nej' : 'ja' };
+    var obj = { navn: str(data.navn).trim(), ikon: str(data.ikon).trim(), billede: str(data.billede).trim(), pris: pris, kostpris: Math.max(0, num(data.kostpris)), varianter: str(data.varianter).split(/[,;\n]/).map(function (x) { return x.trim(); }).filter(String).join(', '), oenske: data.oenskeFelt ? 'ja' : '', snart: data.snart ? 'ja' : '', aktiv: data.aktiv === false ? 'nej' : 'ja' };
     var row = null;
     if (data.id) db.all('Menu').forEach(function (r) { if (str(r.id) === str(data.id)) row = r; });
     if (row) db.update('Menu', row, obj);
