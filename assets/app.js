@@ -623,7 +623,7 @@
 
   // Små gave-ikoner som visuel tæller (max 8, derefter +n)
   function giftDots(n, cls) {
-    if (!n) return '<span class="faint" style="font-size:12px">Ingen endnu</span>';
+    if (!n) return '';
     var vis = Math.min(n, 8), out = '';
     for (var i = 0; i < vis; i++) out += '<span class="gdot ' + cls + '">' + ico('gift') + '</span>';
     return out + (n > vis ? '<span class="faint" style="font-size:12px">+' + (n - vis) + '</span>' : '');
@@ -645,8 +645,8 @@
       '<small class="plus num">I alt ' + wc(st.optjentTotal) + '</small></div>' +
       '<div class="pstat"><div class="pstat-top"><span class="pico out">' + ico('cart') + '</span><span>Brugt i alt</span></div>' +
       '<b class="num">' + wc(st.brugt) + '</b>' +
-      '<div class="split"><i class="s1" style="width:' + del(st.brugtSelv).toFixed(1) + '%"></i><i class="s2" style="width:' + del(st.givet).toFixed(1) + '%"></i><i class="s3" style="width:' + del(st.indskudt).toFixed(1) + '%"></i></div>' +
-      '<div class="legend num"><span><i class="s1"></i>Selv ' + fmt(st.brugtSelv) + '</span><span><i class="s2"></i>Donationer ' + fmt(st.givet) + '</span><span><i class="s3"></i>Projekter ' + fmt(st.indskudt) + '</span></div></div>' +
+      '<div class="split"><i class="s1" style="width:' + del(st.brugtSelv).toFixed(1) + '%"></i><i class="s2" style="width:' + del(st.givet).toFixed(1) + '%"></i><i class="s3" style="width:' + del(st.indskudt).toFixed(1) + '%"></i><i class="s4" style="width:' + del(st.spins).toFixed(1) + '%"></i></div>' +
+      '<div class="legend num"><span><i class="s1"></i>Selv ' + fmt(st.brugtSelv) + '</span><span><i class="s2"></i>Donationer ' + fmt(st.givet) + '</span><span><i class="s3"></i>Projekter ' + fmt(st.indskudt) + '</span><span><i class="s4"></i>Spins ' + fmt(st.spins) + '</span></div></div>' +
       '<div class="pstat"><div class="pstat-top"><span class="pico gift">' + ico('gift') + '</span><span>Donationer</span></div>' +
       '<b class="num">' + st.givetAntal + ' givet</b>' +
       '<div class="gift-row">' + giftDots(st.givetAntal, 'giv') + '</div>' +
@@ -707,7 +707,8 @@
     }
 
     return head + stats + tabs + '<section class="card plist">' + indhold +
-      '<p class="disclaimer">Tallene kan ændre sig, hvis der bliver rettet fejl.</p></section>';
+      '<p class="disclaimer">Tallene kan ændre sig, hvis der bliver rettet fejl.</p></section>' +
+      '<section class="card fb-card"><b>Har du feedback til Webshoppen?</b><button class="btn" data-act="forslag" data-type="feedback">💬 Giv feedback</button></section>';
   }
 
   function statBox(label, val, sub) {
@@ -1001,10 +1002,10 @@
 
     switch (act) {
       case 'forslag': {
-        var proj = t.dataset.type === 'projekt';
-        openModal('<h2><span class="ico">💡</span>Send forslag</h2>' +
-          '<p class="muted" style="margin:-8px 0 14px">' + (proj ? 'Hvad skal vi samle ind til?' : 'Hvad mangler der i menuen?') + '</p>' +
-          '<input type="hidden" id="f-type" value="' + (proj ? 'projekt' : 'vare') + '">' +
+        var ftype = t.dataset.type || 'vare', proj = ftype === 'projekt', fb = ftype === 'feedback';
+        openModal('<h2><span class="ico">' + (fb ? '💬' : '💡') + '</span>' + (fb ? 'Giv feedback' : 'Send forslag') + '</h2>' +
+          '<p class="muted" style="margin:-8px 0 14px">' + (fb ? 'Hvad kan gøres bedre i Webshoppen?' : proj ? 'Hvad skal vi samle ind til?' : 'Hvad mangler der i menuen?') + '</p>' +
+          '<input type="hidden" id="f-type" value="' + ftype + '">' +
           '<textarea class="input" id="f-tekst" rows="4" maxlength="1000"></textarea>' +
           '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="forslag-ok">Send</button></div>');
         break;
@@ -1012,7 +1013,7 @@
       case 'forslag-ok': {
         var ft = val('f-tekst').trim();
         if (ft.length < 5) { toast('Skriv dit forslag', '', true); break; }
-        submit(t, 'forslag', { type: val('f-type'), tekst: ft }, 'Tak! Dit forslag er sendt');
+        submit(t, 'forslag', { type: val('f-type'), tekst: ft }, val('f-type') === 'feedback' ? 'Tak for din feedback!' : 'Tak! Dit forslag er sendt');
         break;
       }
       case 'yehaw': konfetti(); break;

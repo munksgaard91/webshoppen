@@ -104,7 +104,7 @@ var Core = (function () {
 
   function statsFor(posteringer, initialer, nu) {
     var mk = maanedKey(nu);
-    var st = { saldo: 0, optjentMaaned: 0, optjentTotal: 0, brugt: 0, brugtSelv: 0, givet: 0, givetAntal: 0, indskudt: 0, gaverModtaget: 0, forloeb: [] };
+    var st = { saldo: 0, optjentMaaned: 0, optjentTotal: 0, brugt: 0, brugtSelv: 0, spins: 0, givet: 0, givetAntal: 0, indskudt: 0, gaverModtaget: 0, forloeb: [] };
     var perMaaned = {};
     // Refusion af en gave trækkes fra donationer, ellers fra "til dig selv".
     var gaveRefs = {};
@@ -119,7 +119,8 @@ var Core = (function () {
         perMaaned[m] = (perMaaned[m] || 0) + b;
         if (m === mk) st.optjentMaaned += b;
       }
-      if (p.type === 'koeb' || p.type === 'hjul') { st.brugt -= b; st.brugtSelv -= b; }
+      if (p.type === 'koeb') { st.brugt -= b; st.brugtSelv -= b; }
+      if (p.type === 'hjul') { st.brugt -= b; st.spins -= b; }
       if (p.type === 'gave') { st.brugt -= b; st.givet -= b; st.givetAntal++; }
       if (p.type === 'projekt') { st.brugt -= b; st.indskudt -= b; }
       if (p.type === 'refusion') {
@@ -365,6 +366,10 @@ var Core = (function () {
     kraevBruger(me);
     var tekst = str(data.tekst).trim().slice(0, 1000);
     if (tekst.length < 5) throw err('BAD', 'Skriv dit forslag.');
+    if (str(data.type) === 'feedback') {
+      env.notify({ emne: 'Feedback på Webshoppen fra ' + me.navn, tekst: me.navn + ' (' + me.initialer + ') har feedback til Webshoppen:\n\n' + tekst });
+      return { ok: true };
+    }
     var hvad = str(data.type) === 'projekt' ? 'projekt' : 'menuen';
     env.notify({ emne: 'Forslag til ' + hvad + ' fra ' + me.navn, tekst: me.navn + ' (' + me.initialer + ') foreslår til ' + hvad + ':\n\n' + tekst });
     return { ok: true };

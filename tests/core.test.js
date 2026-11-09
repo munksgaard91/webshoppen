@@ -163,6 +163,8 @@ t('forslag sendes til admin', function () {
   kaster(function () { Core.handle(db, B, 'forslag', { type: 'vare', tekst: 'hej' }, env); }, 'forslag');
   Core.handle(db, B, 'forslag', { type: 'projekt', tekst: 'Bowling for hele teamet' }, env);
   eq(beskeder[0], 'Forslag til projekt fra Bo B');
+  Core.handle(db, B, 'forslag', { type: 'feedback', tekst: 'Mørkt tema er fedt' }, env);
+  eq(beskeder[1], 'Feedback på Webshoppen fra Bo B');
 });
 t('fuldt projekt kan ikke få flere donationer', function () {
   data.Projekter.push({ id: 'p2', navn: 'Lille', maal: 20, aaben: 'ja' });

@@ -20,8 +20,8 @@ Lukket shop (uden for 08:00–15:30 på hverdage, eller når admin har "Ikke til
 
 ### Medarbejder – Min profil (`#/profil`)
 - Blåt topkort: billede, gruppe (ingen initialer), navn, saldo i højre hjørne (uden ordet "Saldo").
-- Tre visuelle nøgletal: **Optjent i <måned>** (sparkline 6 mdr. + i alt), **Brugt i alt** (delt bjælke selv/donationer/projekter + forklaring), **Donationer** (antal givet som hovedtal, gave-ikoner, modtaget som undertekst).
-- Faner: **Aktivitet** (alle posteringer grupperet pr. måned med farvet ikon), **Optjening** (pr. måned fordelt på kilder), **Bestillinger** (med status). Disclaimer: "Tallene kan ændre sig, hvis der bliver rettet fejl."
+- Tre visuelle nøgletal: **Optjent i <måned>** (sparkline 6 mdr. + i alt), **Brugt i alt** (delt bjælke selv/donationer/projekter/**spins** + forklaring), **Donationer** (antal givet som hovedtal, gave-ikoner, modtaget som undertekst – ingen "Ingen endnu").
+- Faner: **Aktivitet** (alle posteringer grupperet pr. måned med farvet ikon), **Optjening** (pr. måned fordelt på kilder), **Bestillinger** (med status). Disclaimer: "Tallene kan ændre sig, hvis der bliver rettet fejl." Nederst: **"Har du feedback til Webshoppen?" + knappen "💬 Giv feedback"** – sendes via backend (`forslag` med type `feedback`) til admins `NOTIFIKATION_MAIL`/Chat.
 
 ### Admin (sidepanel)
 **Rasmus er ren admin:** står i `ADMIN_EMAILS`, men **ikke** i `Brugere`. Han har ingen initialer/gruppe, kan ikke bestille, dreje hjulet, donere eller stemme, bliver ikke vist som kollega og har ingen Min profil. Han lander på Admin → Bestillinger, og "Overblik (visning)" viser siden, som medarbejderne ser den.
@@ -70,7 +70,7 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 7. **Webshoppen → Slå automatisk hentning til**.
 
 Ændringer i `shared/core.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=95`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=97`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test

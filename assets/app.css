@@ -723,3 +723,6 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .top3-list li { grid-template-columns: 24px 150px 110px; }
 .top-don, .top3-list { max-width: 300px; }
 .top10 .pop { width: 320px; }
+.split .s4, .legend i.s4 { background: #8b97ab; }
+.fb-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; padding: 16px 24px; }
+.fb-card b { font-size: 15px; }
