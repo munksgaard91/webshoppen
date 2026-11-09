@@ -373,7 +373,7 @@
         : '<div class="saldo-big"><span style="font-size:40px">Admin</span></div><div class="saldo-sub">Du deltager ikke. Her ser du siden, som medarbejderne gør.</div>') +
       '</section>';
 
-    var team = tb ? '<section class="card tb-card"><span class="tb-deco" aria-hidden="true">' + bMark() + '</span>' +
+    var team = tb ? '<section class="card tb-card">' +
       '<div class="tb-head"><span class="eyebrow">Teambudget</span>' + (tb.saeson ? '<span class="tag">Sæson ' + esc(tb.saeson) + '</span>' : '') + '</div>' +
       '<div class="tb-big num">' + kr(tb.rest) + '</div>' +
       '<div class="tb-sub num">Brugt i sæsonen: <b class="brugt">' + kr(tb.brugt) + '</b></div></section>'
