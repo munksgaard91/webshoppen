@@ -633,3 +633,24 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .chance-info .pop { width: 240px; }
 .lucky-bund { position: relative; z-index: 5; }
 .closed .win-besked { font-size: 13px; color: var(--muted); background: var(--card-2); border-radius: 10px; padding: 8px 12px; margin: 6px 0 18px; }
+
+/* Tombola: lys rulle, så den passer til siden (overskriver den mørke CS-stil) */
+.reel { background: var(--card); box-shadow: inset 0 0 0 1px var(--line-2); }
+.reel::before { background: linear-gradient(90deg, var(--card), rgba(255, 255, 255, 0)); }
+.reel::after { background: linear-gradient(-90deg, var(--card), rgba(255, 255, 255, 0)); }
+:root[data-theme="dark"] .reel::before { background: linear-gradient(90deg, var(--card), rgba(23, 30, 51, 0)); }
+:root[data-theme="dark"] .reel::after { background: linear-gradient(-90deg, var(--card), rgba(23, 30, 51, 0)); }
+.reel-marker { background: var(--brand); box-shadow: none; }
+.reel-marker::before { border-top-color: var(--brand); }
+.reel-marker::after { border-bottom-color: var(--brand); }
+:root[data-theme="dark"] .reel-marker { background: #fff; }
+:root[data-theme="dark"] .reel-marker::before { border-top-color: #fff; }
+:root[data-theme="dark"] .reel-marker::after { border-bottom-color: #fff; }
+.reel-card { box-shadow: 0 1px 3px rgba(16, 35, 61, .12); }
+.reel-card.coins { background: var(--brand); color: #fff; }
+.reel-card.vare { background: var(--card); color: var(--brand); box-shadow: inset 0 0 0 2px var(--brand-2); }
+:root[data-theme="dark"] .reel-card.vare { color: var(--brand-2); }
+.reel-card.nitte { background: var(--card-2); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line-2); }
+.reel.stoppet .reel-card { opacity: .4; }
+.reel.stoppet .reel-card.vinder { box-shadow: 0 0 0 3px var(--brand), 0 10px 26px rgba(16, 35, 61, .3); }
+.reel.stoppet .reel-card.vinder.hoved { box-shadow: 0 0 0 3px var(--brand), 0 0 28px rgba(246, 195, 68, .9); }
