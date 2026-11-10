@@ -23,7 +23,7 @@ var Core = (function () {
     Kilder: ['kilde', 'navn', 'sheet_id', 'fane', 'kol_initialer', 'kol_vaerdi', 'kol_dato', 'start_raekke'],
     Regler: ['gruppe', 'kilde', 'sats', 'tekst', 'navn', 'fra'],
     Afregning: ['maaned', 'sendt', 'tid'],
-    Maal: ['maaned', 'navn', 'tekst', 'retning', 'graense', 'nu', 'enhed'],
+    Maal: ['maaned', 'navn', 'tekst', 'retning', 'graense', 'nu', 'enhed', 'kilde'],
     // Månedens Webkollega pr. måned: præmien (sat af admin) og vinderen (sat, når admin trykker Afslør)
     Webkollega: ['maaned', 'praemie', 'vinder', 'afsloeret']
   };
@@ -223,6 +223,36 @@ var Core = (function () {
       return { navn: str(r.navn), tekst: str(r.tekst), enhed: str(r.enhed).trim(), retning: under ? 'under' : 'over', graense: graense, nu: harTal ? nuTal : null,
         naaet: naaet, pct: Math.max(0, Math.min(100, Math.floor(pct))) };
     });
+  }
+
+  // Status på et fælles mål ud fra en tabel som Fakturering → Web/Tekst: række 1 har månedsnavne, og under hver måned
+  // står kolonnerne Antal | Tid. Resultatet er Tid ÷ Antal for måneden over alle rækker med en af `labels` (fx
+  // Hjemmeside + Redesign). Kun personrækker tæller: initialerne står på rækken (Tekst) eller på personens
+  // "Samlet"-række lige under (Web). Holdtotaler (Gators, Owls …) springes over, så intet tælles dobbelt.
+  function maalTid(tabel, mk, kendte, labels) {
+    var navn = MAANEDER[Number(mk.split('-')[1]) - 1].toLowerCase();
+    var c = -1;
+    (tabel[0] || []).forEach(function (v, j) { if (c < 0 && str(v).trim().toLowerCase() === navn) c = j; });
+    if (c < 0) return null;
+    var hvis = function (v) { return kendte[ini(v)] ? ini(v) : ''; };
+    var antal = 0, tid = 0;
+    for (var r = 1; r < tabel.length; r++) {
+      var row = tabel[r], label = -1, j;
+      for (j = 0; j < Math.min(c, 4); j++) if (labels.indexOf(str(row[j]).trim().toLowerCase()) >= 0) label = j;
+      if (label < 0) continue;
+      var hvem = '';
+      for (j = 0; j < label; j++) hvem = hvem || hvis(row[j]);
+      for (var k = r + 1; !hvem && k < tabel.length && k <= r + 4; k++) {
+        var start = tabel[k].slice(0, 4).map(function (v) { return str(v).trim().toLowerCase(); });
+        if (start.indexOf('samlet') < 0) continue;
+        for (j = 0; j < 4; j++) hvem = hvem || hvis(tabel[k][j]);
+        break;
+      }
+      if (!hvem) continue;
+      antal += num(row[c]);
+      tid += num(row[c + 1]);
+    }
+    return antal > 0 ? Math.round(tid / antal * 100) / 100 : null;
   }
 
   function aktiveBrugere(db) {
@@ -953,6 +983,8 @@ var Core = (function () {
     num: num,
     sand: sand,
     maanedKey: maanedKey,
+    forrigeMaaned: forrigeMaaned,
+    maalTid: maalTid,
     maanedNavn: maanedNavn,
     resolveUser: resolveUser,
     handle: handle,

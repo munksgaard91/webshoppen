@@ -228,11 +228,12 @@ function syncOptjening() {
     var fraV = String(cfg_().OPTJENING_FRA || '').trim();
     var fraDato = dato_(fraV);
     var fraMaaned = fraDato ? Core.maanedKey(fraDato) : fraV;
-    var kilder = {};
+    var kilder = {}, raa = {};
     SheetDB.all('Kilder').forEach(function (k) {
       var id = String(k.kilde).trim();
       if (!id || !k.sheet_id) return;
       var data = kilder[id] = kilder[id] || {};
+      var alle = raa[id] = raa[id] || {};
       try {
         var ss = SpreadsheetApp.openById(String(k.sheet_id).trim());
         var sh = k.fane ? ss.getSheetByName(String(k.fane)) : ss.getSheets()[0];
@@ -242,9 +243,11 @@ function syncOptjening() {
         for (var r = (Number(k.start_raekke) || 2) - 1; r < rows.length; r++) {
           var ini = String(rows[r][cI] || '').trim().toUpperCase();
           var d = dato_(rows[r][cD]);
-          if (!ini || !d || (fraDato && d < fraDato)) continue;
+          if (!ini || !d) continue;
           var v = cV >= 0 ? Core.num(rows[r][cV]) : 1;
           var key = ini + '|' + Core.maanedKey(d);
+          alle[key] = (alle[key] || 0) + v; // fælles mål tæller også før lanceringen
+          if (fraDato && d < fraDato) continue;
           data[key] = (data[key] || 0) + v;
         }
       } catch (e) {
@@ -252,11 +255,56 @@ function syncOptjening() {
       }
     });
     var res = Core.applyEarnings(SheetDB, kilder, env_(), fraMaaned);
+    opdaterMaal_(raa);
     SpreadsheetApp.flush();
     return res;
   } finally {
     lock.releaseLock();
   }
+}
+
+// Fælles mål med `kilde` i fanen Maal får `nu` udfyldt ved hver synk (indeværende og sidste måned):
+//   tid:<fane>:<række>+<række>  → Tid ÷ Antal for måneden i MAAL_ARK_ID (fx tid:Web:Hjemmeside+Redesign)
+//   anmeldelser:<gruppe>        → antal anmeldelser i måneden fra gruppens kolleger (kilden "anmeldelser")
+//   celle:<fane>!<celle>        → tallet i én celle i MAAL_ARK_ID
+function opdaterMaal_(raa) {
+  var conf = cfg_();
+  var mk0 = Core.maanedKey(new Date()), maaneder = [mk0, Core.forrigeMaaned(mk0)];
+  var kendte = {};
+  SheetDB.all('Brugere').forEach(function (u) {
+    if (Core.sand(u.aktiv) && u.initialer) kendte[String(u.initialer).trim().toUpperCase()] = String(u.gruppe).trim();
+  });
+  var ark = null, faner = {};
+  function bog() { return ark || (ark = SpreadsheetApp.openById(String(conf.MAAL_ARK_ID).trim())); }
+  function fane(navn) {
+    if (!faner[navn]) {
+      var sh = bog().getSheetByName(navn);
+      if (!sh) throw new Error('Fanen "' + navn + '" findes ikke');
+      faner[navn] = sh.getDataRange().getValues();
+    }
+    return faner[navn];
+  }
+  SheetDB.all('Maal').forEach(function (m) {
+    var k = String(m.kilde || '').trim(), mk = String(m.maaned).trim();
+    if (!k || maaneder.indexOf(mk) < 0) return;
+    try {
+      var d = k.split(':'), v = null;
+      if (d[0] === 'tid') {
+        v = Core.maalTid(fane(d[1]), mk, kendte, String(d[2] || '').split('+').map(function (x) { return x.trim().toLowerCase(); }));
+      } else if (d[0] === 'anmeldelser') {
+        v = 0;
+        Object.keys(raa.anmeldelser || {}).forEach(function (key) {
+          var p = key.split('|');
+          if (p[1] === mk && kendte[p[0]] === d[1]) v += raa.anmeldelser[key];
+        });
+      } else if (d[0] === 'celle') {
+        v = Core.num(bog().getRange(k.slice(6)).getValue());
+      }
+      if (v !== null && (String(m.nu) === '' || v !== Number(m.nu))) SheetDB.update('Maal', m, { nu: v });
+    } catch (e) {
+      console.error('Mål ' + m.navn + ' fejlede: ' + e);
+    }
+  });
 }
 
 function installerTrigger() {
@@ -392,6 +440,8 @@ function opsaet() {
     { noegle: 'TEAMBUDGET_BUDGET_CELLE', vaerdi: '' },
     { noegle: 'TEAMBUDGET_BRUGT_CELLE', vaerdi: '' },
     { noegle: 'TEAMBUDGET_REST_CELLE', vaerdi: '' },
+    // Ark med tallene til fælles mål (kilde tid:/celle: i fanen Maal) – fx Fakturering 26/27
+    { noegle: 'MAAL_ARK_ID', vaerdi: '' },
     { noegle: 'TEAMBUDGET_SAESON', vaerdi: '' },
     // Profilbilleder: {ini} = initialer med små bogstaver, {INI} = store. Mangler et billede, vises initialer.
     // Udsolgte varer (id'er fra sortiment.js) – sættes fra Admin → Bestillinger
@@ -433,10 +483,10 @@ function opsaet() {
   ]);
   // Fælles mål pr. måned: retning under/over grænsen. nu = resultatet, skrives dagen efter månedens udgang.
   seed('Maal', [
-    { maaned: '2026-11', navn: 'Hjemmeside', tekst: 'Under 6,5 t produktionstid pr. sag', retning: 'under', graense: 6.5, nu: '', enhed: 't' },
+    { maaned: '2026-11', navn: 'Hjemmeside', tekst: 'Under 6,5 t produktionstid pr. sag', retning: 'under', graense: 6.5, nu: '', enhed: 't', kilde: 'tid:Web:Hjemmeside+Redesign' },
     { maaned: '2026-11', navn: 'Afventer online', tekst: 'Under 70 kunder på listen', retning: 'under', graense: 70, nu: '', enhed: 'kunder' },
-    { maaned: '2026-11', navn: 'Redaktører', tekst: 'Under 0,7 t produktionstid pr. tekst', retning: 'under', graense: 0.7, nu: '', enhed: 't' },
-    { maaned: '2026-11', navn: 'Support', tekst: '20 anmeldelser eller flere', retning: 'over', graense: 20, nu: '', enhed: 'anmeldelser' }
+    { maaned: '2026-11', navn: 'Redaktører', tekst: 'Under 0,7 t produktionstid pr. tekst', retning: 'under', graense: 0.7, nu: '', enhed: 't', kilde: 'tid:Tekst:Tekster' },
+    { maaned: '2026-11', navn: 'Support', tekst: '20 anmeldelser eller flere', retning: 'over', graense: 20, nu: '', enhed: 'anmeldelser', kilde: 'anmeldelser:Support' }
   ]);
   var standard = ss.getSheetByName('Ark1') || ss.getSheetByName('Sheet1');
   if (standard && standard.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(standard);

@@ -332,4 +332,41 @@ t('boot: forside + admin-data i ét kald', function () {
   eq(bb.state.stats.saldo, Core.handle(db, B, 'state', {}, env).stats.saldo);
   eq(Core.handle(db, adm, 'boot', {}, env).admin.brugere.length > 0, true, 'admin får admin-data');
 });
+t('fælles mål: Tid ÷ Antal fra Web/Tekst, holdtotaler tæller ikke', function () {
+  var kendte = { SMA: 'Hjemmeside', RHE: 'Hjemmeside', MNO: 'Redaktør' };
+  // Web: initialer på "Samlet"-rækken under blokken; holdblokken (Gators) har ingen initialer på Samlet
+  var web = [
+    ['', '', 'Sæson', '', '', 'Oktober', '', '', 'November', '', ''],
+    ['', '', 'Antal', 'Tid', 'Beløb', 'Antal', 'Tid', 'Beløb', 'Antal', 'Tid', 'Beløb'],
+    ['', 'Hjemmeside', 7, 6.2, 0, 1, 7.3, 0, 2, 12.7, 0],
+    ['', 'Redesign', 11, 5.1, 0, 4, 17.5, 0, 0, 0, 0],
+    ['', 'Sager+', 4, 17.1, 0, 1, 16.5, 0, 0, 0, 0],
+    ['SMA', 'Samlet', 22, 5.1, 0, 6, 24.8, 0, 2, 12.7, 0],
+    ['SMA', 'Support', 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ['', 'Hjemmeside', 14, 5.6, 0, 0, 3.5, 0, 0, 4.3, 0],
+    ['', 'Redesign', 11, 6, 0, 1, 6.5, 0, 1, 1, 0],
+    ['', 'Sager+', 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ['RHE', 'Samlet', 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ['RHE', 'Support', 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ['', 'Hjemmeside', 99, 99, 0, 99, 99, 0, 99, 99, 0],
+    ['', 'Redesign', 99, 99, 0, 99, 99, 0, 99, 99, 0],
+    ['', 'Sager+', 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ['', 'Samlet', 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ['Gators', 'Support', 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  ];
+  eq(Core.maalTid(web, '2026-11', kendte, ['hjemmeside', 'redesign']), Math.round((12.7 + 4.3 + 1) / 3 * 100) / 100);
+  eq(Core.maalTid(web, '2026-10', kendte, ['hjemmeside', 'redesign']), Math.round((7.3 + 17.5 + 3.5 + 6.5) / 6 * 100) / 100);
+  eq(Core.maalTid(web, '2026-12', kendte, ['hjemmeside']), null, 'måned mangler');
+  // Tekst: initialer på samme række; holdrækken (Owls) og ukendte (BLO) tæller ikke
+  var tekst = [
+    ['', '', '', 'Sæson', '', '', 'November', '', ''],
+    ['', '', '', 'Antal', 'Tid', 'Beløb', 'Antal', 'Tid', 'Beløb'],
+    ['', 'MNO', 'Tekster', 326, 0.7, 0, 33, 15, 0],
+    ['', 'MNO', 'Support', 16, 76, 0, 1, 7, 0],
+    ['', 'Owls', 'Tekster', 964, 0.8, 0, 67, 47.7, 0],
+    ['', '', 'Samlet', 0, 0, 0, 0, 0, 0],
+    ['', 'BLO', 'Tekster', 24, 0, 0, 10, 0, 0]
+  ];
+  eq(Core.maalTid(tekst, '2026-11', kendte, ['tekster']), Math.round(15 / 33 * 100) / 100);
+});
 print('OK: ' + ok + '  FEJL: ' + fejl);
