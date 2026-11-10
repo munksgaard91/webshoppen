@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v52';
+  var KEY = 'webshoppen-demo-v53';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -141,7 +141,7 @@ window.Mock = (function () {
     var jst = Core.resolveUser(db, { email: 'demo.jst@best-one.dk' }, ADMINS);
     Core.handle(db, jst, 'bestil', { vareId: 'monster' }, Object.assign({}, e, { notify: function () {} }));
     var dsi = Core.resolveUser(db, { email: 'demo.dsi@best-one.dk' }, ADMINS);
-    Core.handle(db, dsi, 'bestil', { vareId: 'candybar', variant: 'Snickers', til: 'JST' }, Object.assign({}, e, { notify: function () {} }));
+    Core.handle(db, dsi, 'bestil', { vareId: 'candybar', til: 'JST' }, Object.assign({}, e, { notify: function () {} }));
     // Én stemme fra en pladsholder, så admin ser en stilling, mens alle demobrugere selv kan stemme.
     data.Stemmer.push({ id: 's9', tid: new Date().toISOString(), maaned: Core.maanedKey(new Date()), fra: 'ADE', til: 'CBO', begrundelse: 'Gav mig gode råd om en kunde' });
     // Sidste måned: stemmer + præmie, men ikke afsløret – så admin kan prøve "Afslør vinder" (til briefingen)
