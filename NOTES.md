@@ -40,11 +40,11 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 - Kilder (faktureringsark, anmeldelser) og teambudget-arket er ikke koblet på.
 - Subdomæne ikke valgt (`xxx.leksione.dk`); `SIDE_URL` står som `webshoppen.leksione.dk`. Ingen `CNAME`-fil endnu.
 - Events tæller ikke med i Opgørelse (kun bestillinger/gevinster) – donationer er Webcoins, ikke kr.
-- **Åbent spørgsmål:** skal "Kr i alt" i Opgørelse være varernes kostpris (nu) eller Webcoins ÷ 2?
 - **Varer vises med emoji** (🥤 Sodavand, ⚡ Hvid Monster, 🍫 Candybar). Produktbillederne er fjernet igen efter ønske (de var ophavsretligt beskyttede fotos i et offentligt repo). Feltet `billede` i `shared/sortiment.js` og `tools/udskaer.py` virker stadig, hvis der skal bruges egne billeder senere.
 - Rigtigt Google-login er ikke testet (kræver backend + Client ID).
 
 ## Beslutninger
+- **Til RAB = kostpris på varer** (2026-11-10): "Kr i alt" i Opgørelse er kostprisen på alle ikke-annullerede bestillinger – købte varer, gaver og **varer vundet i hjulet** (fx Sodavand 10 kr, Monster 15 kr). Alle varer følger 1 kr = 2 Webcoins (Candybar 10/5 kr, Sodavand 20/10 kr, Hvid Monster 30/15 kr). Webcoins vundet i hjulet lægges kun på saldoen og tæller ikke med. Events køres i virkeligheden – i shoppen holdes kun styr på donationsbeløbene.
 - **Sortiment i koden** (2026-11-09): menu, lykkehjul (præmier, vægte, pris) og events ligger i `shared/sortiment.js` – ikke i arket og ikke i admin. Ret filen, kopiér den ind som `Sortiment.gs` i Apps Script, og deploy. Event-id'er må aldrig skiftes (donationer peger på dem). Fanerne `Menu`, `Hjul`, `Projekter` og Config-nøglen `HJUL_PRIS` bruges ikke længere.
 - **1 kr = 2 Webcoins** (2026-11-09): for at gøre tallene sjovere er alle Webcoins-tal ganget med 2 i forhold til før – menu (Sodavand 20, Candybar 10, Hvid Monster 30), lykkehjul (pris 30; gevinster 10/20/30/40/100 Webcoins, samme vægte), Månedens kollega-præmie 50 Webcoins, donation-hurtigvalg 10 · 20 · 30 · 40 · 50 · 100, demo-events (3.000 / 1.600 / 400) og **optjeningsreglerne** (Hjemmeside 2 Webcoins pr. 1.000 kr nyfak, Support 4 pr. 1.000 kr genfak, 30 pr. anmeldelse, Redaktør 8 pr. leverance, Fotograf 12 pr. optagelse). Kostpriser (kr) og teambudget er uændrede. Demo-saldoen er stadig 67.
 - **Apps Script + Google Sheet som backend** (ikke Cloudflare): datakilderne er Google Sheets, mail/Chat er indbygget, DNS styres via GitHub Pages + Curanet, og der er ingen Node på den private Mac.
@@ -92,10 +92,9 @@ Demo-tricks: `?lukket=fravaer` / `?lukket=tid` viser lukket shop. "Nulstil demod
 5. Månedens kollega-præmie og webcoins-justeringer gives **manuelt**.
 
 ## Næste skridt
-1. Svar på det åbne spørgsmål om "Kr i alt" (kostpris eller Webcoins ÷ 2).
-2. Indhold til Regler (hvad hver ting er værd pr. gruppe).
-3. Evt. baggrundsbilleder.
-4. Vælg subdomæne → `CNAME`-fil + CNAME hos Curanet → `munksgaard91.github.io`.
-5. Sæt backend op (tjekliste ovenfor) og kobl faktureringsark, anmeldelser og teambudget på.
-6. Regn økonomien igennem: optjening pr. gruppe vs. varepriser vs. lykkehjulets forventede værdi.
-7. Test med 2–3 kolleger, før alle får adgang.
+1. Indhold til Regler (hvad hver ting er værd pr. gruppe).
+2. Evt. baggrundsbilleder.
+3. Vælg subdomæne → `CNAME`-fil + CNAME hos Curanet → `munksgaard91.github.io`.
+4. Sæt backend op (tjekliste ovenfor) og kobl faktureringsark, anmeldelser og teambudget på.
+5. Regn økonomien igennem: optjening pr. gruppe vs. varepriser vs. lykkehjulets forventede værdi.
+6. Test med 2–3 kolleger, før alle får adgang.
