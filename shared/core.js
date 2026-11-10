@@ -746,8 +746,8 @@ var Core = (function () {
     var linjer = ['Opgørelse for ' + sNavn + ' (sendes til RAB):'];
     if (o) {
       linjer.push('• ' + o.antal + (o.antal === 1 ? ' bestilling' : ' bestillinger') + ' · ' + o.wc + ' Webcoins brugt');
-      linjer.push('• Kr i alt (kostpris): kr ' + o.kr.toFixed(0));
-      o.varer.forEach(function (v) { linjer.push('   – ' + v.navn + ': ' + v.antal + ' stk. · kr ' + v.kr.toFixed(0)); });
+      linjer.push('• Til RAB: kr ' + o.kr.toFixed(0) + ' (kun varer købt af firmaet – teamkassens varer er betalt på forhånd)');
+      o.varer.forEach(function (v) { if (v.kr > 0) linjer.push('   – ' + v.navn + ': ' + v.antal + ' stk. · kr ' + v.kr.toFixed(0)); });
     } else linjer.push('• Ingen bestillinger.');
     linjer.push('', 'Webcoins i omløb: ' + omloeb + ' Webcoins ≈ kr ' + Math.round(omloeb / 2));
     if (aabne) linjer.push('Bestillinger der ikke er udleveret: ' + aabne);

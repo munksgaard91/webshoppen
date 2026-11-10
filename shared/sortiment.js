@@ -2,7 +2,9 @@
  * Sortiment – menu, lykkehjul og events. Rettes her i koden (ikke i admin eller arket).
  * Bruges af både demoen og Apps Script (kopiér ind som "Sortiment.gs" ved siden af Core.gs).
  *
- * Økonomi: 1 kr = 2 Webcoins. pris/beloeb/maal er i Webcoins, kostpris i kr (det der sendes til RAB).
+ * Økonomi: 1 kr = 2 Webcoins. pris/beloeb/maal er i Webcoins, kostpris i kr = det der sendes til RAB.
+ * Kun varer firmaet har købt (Sodavand, Monster) har kostpris. Varer købt for teamkassen har kostpris 0
+ * (betalt på forhånd – sendes ikke til RAB; indkøbsprisen står i kommentaren).
  *
  * Menu:   id (fast – bruges i bestillinger), navn, ikon (emoji), pris, kostpris,
  *         varianter ("A, B" → valgknapper), oenske: true → "Dit ønske"-felt,
@@ -19,9 +21,10 @@ var SORTIMENT = {
   menu: [
     { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 20, kostpris: 10, oenske: true },
     { id: 'monster', navn: 'Hvid Monster', ikon: '⚡', pris: 30, kostpris: 15 },
-    { id: 'candybar', navn: 'Mini Candybar', ikon: '🍫', pris: 5, kostpris: 2.5 },
-    { id: 'chips', navn: 'Mini Chipspose', ikon: '🥔', pris: 5, kostpris: 5 },
-    { id: 'slik', navn: 'Mini Slikpose', ikon: '🍬', pris: 5, kostpris: 4 },
+    // Teamkassen (kostpris 0 – ikke til RAB). Indkøb ca.: Celebrations 2,50 kr/stk, Lay's mini 5 kr, Haribo mini 4 kr
+    { id: 'candybar', navn: 'Mini Candybar', ikon: '🍫', pris: 5, kostpris: 0 },
+    { id: 'chips', navn: 'Mini Chipspose', ikon: '🥔', pris: 5, kostpris: 0 },
+    { id: 'slik', navn: 'Mini Slikpose', ikon: '🍬', pris: 5, kostpris: 0 },
     { id: 'andet', navn: 'Andet?', ikon: '💡', pris: 0, kostpris: 0, snart: true }
   ],
 
@@ -31,7 +34,7 @@ var SORTIMENT = {
     { id: 'h-10', navn: '10 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 10, vaegt: 80 },
     { id: 'h-sodavand', navn: 'Sodavand', ikon: '🥤', type: 'vare', kostpris: 10, vaegt: 120 },
     { id: 'h-20', navn: '20 Webcoins', ikon: '💫', type: 'webcoins', beloeb: 20, vaegt: 180 },
-    { id: 'h-candybar', navn: 'Mini Candybar', ikon: '🍫', type: 'vare', kostpris: 2.5, vaegt: 80 },
+    { id: 'h-candybar', navn: 'Mini Candybar', ikon: '🍫', type: 'vare', kostpris: 0, vaegt: 80 }, // teamkassen
     { id: 'h-30', navn: '30 Webcoins', ikon: '💎', type: 'webcoins', beloeb: 30, vaegt: 200 },
     { id: 'h-monster', navn: 'Hvid Monster', ikon: '⚡', type: 'vare', kostpris: 15, vaegt: 70 },
     { id: 'h-40', navn: '40 Webcoins', ikon: '💰', type: 'webcoins', beloeb: 40, vaegt: 140 }
