@@ -42,7 +42,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs" +
 | `apps-script/Code.gs` | Sheet-adapter, auth, doPost, synk, notifikationer, kalenderfravær, opsætning af arket |
 | `tools/udskaer.py` | Skærer produktbilleder ud til Bestil-listen (Pillow) – se NOTES.md |
 | `tests/core.test.js` | Logiktest af core.js – køres med macOS' indbyggede `jsc` (se NOTES.md → Test) |
-| `CNAME` | Custom domæne til GitHub Pages (oprettes når subdomænet er valgt) |
+| `CNAME` | Custom domæne til GitHub Pages: `webshoppen.leksione.dk` |
 
 ## Konventioner
 
