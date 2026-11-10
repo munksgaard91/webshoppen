@@ -476,6 +476,7 @@ var Core = (function () {
       });
     }
     env.notify({
+      ikon: gave ? '🎁' : '🛒', side: 'bestillinger',
       emne: (forud ? 'Forudbestilling · ' : '') + (gave ? 'Gave: ' + vareNavn + ' til ' + modtager.navn : 'Bestilling: ' + vareNavn + ' til ' + me.navn),
       tekst: (gave
         ? me.navn + ' (' + me.initialer + ') giver ' + str(vare.ikon) + ' ' + vareNavn + ' til ' + modtager.navn + ' (' + modtager.initialer + ').'
@@ -566,11 +567,11 @@ var Core = (function () {
     // Gemmes i fanen Forslag (Admin → Feedback). Mangler fanen i et ældre ark, sendes beskeden stadig som mail.
     try { db.insert('Forslag', { id: env.uuid(), tid: env.now().toISOString(), initialer: me.initialer, type: type, tekst: tekst }); } catch (e) { /* fanen mangler */ }
     if (type === 'feedback') {
-      env.notify({ emne: 'Feedback på Webshoppen fra ' + me.navn, tekst: me.navn + ' (' + me.initialer + ') har feedback til Webshoppen:\n\n' + tekst });
+      env.notify({ ikon: '💬', side: 'feedback', emne: 'Feedback på Webshoppen fra ' + me.navn, tekst: me.navn + ' (' + me.initialer + ') har feedback til Webshoppen:\n\n' + tekst });
       return { ok: true };
     }
     var hvad = type === 'praemie' ? 'en belønning' : 'menuen';
-    env.notify({ emne: 'Forslag til ' + hvad + ' fra ' + me.navn, tekst: me.navn + ' (' + me.initialer + ') foreslår til ' + hvad + ':\n\n' + tekst });
+    env.notify({ ikon: type === 'praemie' ? '🏆' : '💡', side: 'feedback', emne: 'Forslag til ' + hvad + ' fra ' + me.navn, tekst: me.navn + ' (' + me.initialer + ') foreslår til ' + hvad + ':\n\n' + tekst });
     return { ok: true };
   }
 
@@ -689,15 +690,16 @@ var Core = (function () {
     var besked;
     if (vinder.type === 'webcoins' && vinder.beloeb > 0) {
       db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'gevinst', beloeb: Math.floor(vinder.beloeb), tekst: 'Hjulgevinst: ' + vinder.navn, ref: ref });
-      besked = { emne: 'Hjulgevinst: ' + vinder.navn + ' til ' + me.navn, tekst: hvem + ' har vundet ' + vinder.navn + " via lykkehjulet (Feelin' Lucky?). Beløbet er lagt på saldoen automatisk." };
+      besked = { side: 'posteringer', emne: 'Hjulgevinst: ' + vinder.navn + ' til ' + me.navn, tekst: hvem + ' har vundet ' + vinder.navn + " via lykkehjulet (Feelin' Lucky?). Beløbet er lagt på saldoen automatisk." };
     } else if (vinder.type === 'vare') {
       var shop = env.shop ? env.shop() : { aaben: true };
       db.insert('Bestillinger', { id: env.uuid(), tid: tid, fra: me.initialer, til: me.initialer, vare: 'Hjulgevinst: ' + vinder.navn, pris: 0, kostpris: vinder.kostpris, status: 'ny', forud: shop.aaben ? '' : 'ja' });
       db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'gevinst', beloeb: 0, tekst: 'Hjulgevinst: ' + vinder.navn, ref: ref });
-      besked = { emne: 'Hjulgevinst: ' + vinder.navn + ' til ' + me.navn, tekst: hvem + ' har vundet ' + str(vinder.ikon) + ' ' + vinder.navn + " via lykkehjulet (Feelin' Lucky?). Spørg om de vil have den med det samme." };
+      besked = { side: 'bestillinger', emne: 'Hjulgevinst: ' + vinder.navn + ' til ' + me.navn, tekst: hvem + ' har vundet ' + str(vinder.ikon) + ' ' + vinder.navn + " via lykkehjulet (Feelin' Lucky?). Spørg om de vil have den med det samme." };
     } else {
-      besked = { emne: 'Hjulet: ingen gevinst til ' + me.navn, tekst: hvem + " har drejet lykkehjulet (Feelin' Lucky?) og vandt ingenting denne gang." };
+      besked = { side: '', emne: 'Hjulet: ingen gevinst til ' + me.navn, tekst: hvem + " har drejet lykkehjulet (Feelin' Lucky?) og vandt ingenting denne gang." };
     }
+    besked.ikon = '🎰';
     env.notify(besked);
     return { id: vinder.id, navn: vinder.navn, ikon: vinder.ikon, type: vinder.type, beloeb: vinder.beloeb };
   }
@@ -987,6 +989,19 @@ var Core = (function () {
         db.insert('Posteringer', { id: env.uuid(), tid: env.now().toISOString(), initialer: o.initialer, type: 'optjent', beloeb: o.beloeb, tekst: o.tekst, ref: ref });
         nye++;
       }
+    });
+    // Forældede optjeninger (gruppeskift, fjernet regel): sættes til 0 i stedet for at blive liggende.
+    // Kun for kilder, der faktisk blev hentet denne gang (en kilde med fejl rører intet), måneder fra `fra` og aktive brugere.
+    var aktive = {};
+    aktiveBrugere(db).forEach(function (u) { aktive[ini(u.initialer)] = 1; });
+    Object.keys(eksisterende).forEach(function (ref) {
+      if (oensket[ref]) return;
+      var dele = ref.split(':');
+      if (dele.length !== 4 || dele[0] !== 'optjent') return;
+      var kilde = dele[1].replace(/-klub$/, '');
+      if (!kilder[kilde] || dele[2] < fra || !aktive[dele[3]]) return;
+      var p = eksisterende[ref];
+      if (num(p.beloeb) !== 0) { db.update('Posteringer', p, { beloeb: 0 }); rettede++; }
     });
     return { nye: nye, rettede: rettede };
   }

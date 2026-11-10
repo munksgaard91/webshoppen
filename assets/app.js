@@ -870,7 +870,7 @@
     if (fane === 'optjening') {
       var maaneder = {};
       S.historik.forEach(function (p) {
-        if (p.type !== 'optjent') return;
+        if (p.type !== 'optjent' || !p.beloeb) return;
         var m = maaneder[p.maaned] = maaneder[p.maaned] || { maaned: p.maaned, total: 0, kilder: {} };
         var kilde = String(p.tekst).split(' · ')[0];
         m.total += p.beloeb;
@@ -1596,7 +1596,7 @@
 
   window.addEventListener('demo-notify', function (e) {
     if (ui.spinning || /^Hjul/.test(e.detail.emne)) return; // gevinsten må ikke afsløres før rullen stopper
-    toast('📣 Admin får besked', e.detail.emne);
+    toast('📣 Admin får besked', (e.detail.ikon ? e.detail.ikon + ' ' : '') + e.detail.emne);
   });
 
   // ---------- Start ----------

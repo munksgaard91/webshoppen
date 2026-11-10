@@ -171,18 +171,21 @@ function gemSynkStatus_(fejl) {
   }
 }
 
+// b = { emne, tekst, ikon?, side? } – side er admin-siden linket peger på ('bestillinger', 'feedback' …, '' = Overblik)
 function notify_(b) {
   var conf = cfg_();
-  var url = conf.SIDE_URL ? '\n' + conf.SIDE_URL + '/#/admin/bestillinger' : '';
+  var side = b.side === undefined ? 'bestillinger' : b.side;
+  var url = conf.SIDE_URL ? '\n' + conf.SIDE_URL + '/#/' + (side ? 'admin/' + side : '') : '';
+  var ikon = b.ikon || '🛒';
   try {
     if (conf.CHAT_WEBHOOK) {
       UrlFetchApp.fetch(conf.CHAT_WEBHOOK, {
         method: 'post', contentType: 'application/json; charset=UTF-8', muteHttpExceptions: true,
-        payload: JSON.stringify({ text: '🛒 *' + b.emne + '*\n' + b.tekst + url })
+        payload: JSON.stringify({ text: ikon + ' *' + b.emne + '*\n' + b.tekst + url })
       });
     }
     if (conf.NOTIFIKATION_MAIL) {
-      MailApp.sendEmail(conf.NOTIFIKATION_MAIL, 'Webshoppen · ' + b.emne, b.tekst + url);
+      MailApp.sendEmail(conf.NOTIFIKATION_MAIL, 'Webshoppen · ' + ikon + ' ' + b.emne, b.tekst + url);
     }
   } catch (e) {
     console.error('Notifikation fejlede', e);
@@ -264,7 +267,7 @@ function syncOptjening() {
     var fraV = String(cfg_().OPTJENING_FRA || '').trim();
     var fraDato = dato_(fraV);
     var fraMaaned = fraDato ? Core.maanedKey(fraDato) : fraV;
-    var kilder = {}, raa = {};
+    var kilder = {}, raa = {}, fejlede = {};
     SheetDB.all('Kilder').forEach(function (k) {
       var id = String(k.kilde).trim();
       if (!id || !k.sheet_id) return;
@@ -288,9 +291,12 @@ function syncOptjening() {
         }
       } catch (e) {
         console.error('Kilde ' + id + ' fejlede: ' + e);
+        fejlede[id] = 1;
         fejl.push('Kilde ' + id + (k.fane ? ' (' + k.fane + ')' : '') + ': ' + (e.message || e));
       }
     });
+    // En kilde, der fejlede, tages helt ud – så dens optjeninger hverken rettes eller nulstilles på et halvt datasæt
+    Object.keys(fejlede).forEach(function (id) { delete kilder[id]; });
     res = Core.applyEarnings(SheetDB, kilder, env_(), fraMaaned);
     SpreadsheetApp.flush();
   } catch (e) {

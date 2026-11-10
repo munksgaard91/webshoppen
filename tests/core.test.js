@@ -37,12 +37,12 @@ var db = {
   insert: function (t, o) { db.all(t).push(Object.assign({}, o)); },
   update: function (t, r, p) { Object.assign(r, p); }
 };
-var n = 0, tal = 0, aaben = true, beskeder = [];
+var n = 0, tal = 0, aaben = true, beskeder = [], sidsteBesked = null;
 var env = {
   now: function () { return new Date(2026, 10, 15, 12, 0); },
   uuid: function () { return 'id' + (++n); },
   random: function () { return tal; },
-  notify: function (b) { beskeder.push(b.emne); },
+  notify: function (b) { beskeder.push(b.emne); sidsteBesked = b; },
   shop: function () { return aaben ? { aaben: true } : { aaben: false, tekst: 'Lukket' }; }
 };
 var A = Core.resolveUser(db, { email: 'a@best-one.dk' }, ['a@best-one.dk']);
@@ -110,7 +110,7 @@ t('lykkehjul: vare, webcoins og intet', function () {
   tal = 0.9; Core.handle(db, B, 'spin', {}, env); foer -= 15;
   eq(saldo(B), foer - 45 + 25, 'saldo efter 3 drej');
   eq(data.Bestillinger.filter(function (b) { return b.vare === 'Hjulgevinst: Candybar'; }).length, 1);
-  beskeder = []; Core.handle(db, B, 'koeb_drej', {}, env); tal = 0.9; Core.handle(db, B, 'spin', {}, env); foer -= 15;
+  beskeder = []; Core.handle(db, B, 'koeb_drej', {}, env); tal = 0.9; Core.handle(db, B, 'spin', {}, env); eq(sidsteBesked.ikon, '🎰'); foer -= 15;
   eq(beskeder.length, 1, 'besked ved ingen gevinst');
   eq(data.Spil.filter(function (x) { return x.status === 'drejet'; }).length, 5, 'alle drej registreret');
 });
@@ -169,6 +169,17 @@ t('klub-bonus: kun højeste klub, rykker op når tallet stiger', function () {
   Core.applyEarnings(db, { sager: { 'BBB|2026-11': 12 } }, env); // rettet ned under laveste klub
   eq(bonus()[0].beloeb, 0);
   data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'sager'; });
+});
+t('forældet optjening sættes til 0, men kun for kilder der blev hentet', function () {
+  data.Regler.push({ gruppe: 'Support', kilde: 'gammel', sats: 2, navn: '', fra: 0 });
+  var post = function () { return data.Posteringer.filter(function (p) { return p.ref === 'optjent:gammel:2026-11:BBB'; })[0]; };
+  Core.applyEarnings(db, { gammel: { 'BBB|2026-11': 5 } }, env);
+  eq(post().beloeb, 10);
+  data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'gammel'; }); // regel fjernet
+  Core.applyEarnings(db, {}, env); // kilden ikke hentet (fejl) → rør intet
+  eq(post().beloeb, 10);
+  Core.applyEarnings(db, { gammel: { 'BBB|2026-11': 5 } }, env);
+  eq(post().beloeb, 0);
 });
 t('startbeløb: 5 Webcoins én gang pr. bruger', function () {
   var start = function () { return data.Posteringer.filter(function (p) { return p.ref === 'start:BBB'; }); };
@@ -320,6 +331,8 @@ t('forslag sendes til admin', function () {
   beskeder = [];
   kaster(function () { Core.handle(db, B, 'forslag', { type: 'vare', tekst: 'hej' }, env); }, 'forslag');
   Core.handle(db, B, 'forslag', { type: 'feedback', tekst: 'Mørkt tema er fedt' }, env);
+  eq(sidsteBesked.ikon, '💬');
+  eq(sidsteBesked.side, 'feedback');
   eq(beskeder[beskeder.length - 1], 'Feedback på Webshoppen fra Bo B');
   // Gemmes også, så admin kan se det under Feedback (nyeste først, med navn)
   var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
