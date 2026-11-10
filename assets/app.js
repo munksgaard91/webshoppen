@@ -940,8 +940,8 @@
       '<div class="table-wrap"><table><thead><tr>' + sortTh('navn', 'Navn') + sortTh('initialer', 'Initialer') + sortTh('gruppe', 'Gruppe') + sortTh('saldo', 'Saldo', 'r') + '<th></th></tr></thead><tbody>' +
       sorterBrugere(A.brugere).map(function (u) {
         var q = (u.navn + ' ' + u.initialer + ' ' + u.email + ' ' + u.gruppe).toLowerCase();
-        return '<tr data-q="' + esc(q) + '"' + (u.aktiv ? '' : ' style="opacity:.5"') + '><td><b>' + esc(u.navn) + '</b>' + (u.aktiv ? '' : ' <span class="tag">Inaktiv</span>') + '</td><td>' + esc(u.initialer) + '</td><td>' + (u.gruppe ? esc(u.gruppe) : '<span class="tag ny">Ingen gruppe</span>') + '</td><td class="r num"><b>' + wc(u.saldo) + '</b></td>' +
-          '<td><div class="row-acts"><button class="btn sm" data-act="ret-bruger" data-email="' + esc(u.email) + '">Rediger</button><button class="btn sm" data-act="juster" data-ini="' + esc(u.initialer) + '">Justér</button></div></td></tr>';
+        return '<tr data-q="' + esc(q) + '"' + (u.aktiv ? '' : ' style="opacity:.5"') + '><td><b>' + esc(u.navn) + '</b>' + (u.aktiv ? '' : ' <span class="tag">Inaktiv</span>') + '</td><td>' + esc(u.initialer) + '</td><td>' + (u.gruppe ? esc(u.gruppe) : '<span class="tag ny">Ingen gruppe</span>') + '</td><td class="r num"><label class="saldo-ret" title="Skriv ny saldo og tryk Enter"><input class="input num" type="number" min="0" inputmode="numeric" data-saldo="' + esc(u.initialer) + '" data-org="' + u.saldo + '" value="' + u.saldo + '"><span>' + enhed(u.saldo) + '</span></label></td>' +
+          '<td><div class="row-acts"><button class="btn sm" data-act="ret-bruger" data-email="' + esc(u.email) + '">Rediger</button><button class="btn sm" data-act="gave" data-ini="' + esc(u.initialer) + '">🎁 Gave</button></div></td></tr>';
       }).join('') + '</tbody><tfoot><tr><td colspan="3"><b>Samlet</b> <span class="faint">· ' + A.brugere.length + ' brugere</span></td><td class="r num"><b>' + wc(omloeb) + '</b><small class="faint" style="display:block">≈ ' + kr(omloeb / 2) + '</small></td><td></td></tr></tfoot></table></div></section>';
   }
 
@@ -962,7 +962,7 @@
       '<h2 class="block-title">Månedens Webkollega</h2>' + (afsloerKnap(m) ? '<section class="card" style="margin-bottom:20px">' + afsloerKnap(m) + '</section>' : '') +
       '<section class="card" style="margin-bottom:20px"><div class="card-head"><h2 class="card-title">Præmie</h2></div>' +
       '<div class="vote-form"><input class="input" id="mdk-praemie" value="' + esc(m.praemie) + '" placeholder="fx 50 Webcoins"><button class="btn primary" data-act="mdk-praemie-ok">Gem</button></div>' +
-      '<small class="faint">' + (m.praemie ? 'Gælder ' + mNavn + '.' : 'Ingen præmie for ' + mNavn + ' endnu – medarbejderne ser "Coming soon".') + ' Præmien nulstilles hver måned og gives manuelt (Brugere → Justér).</small></section>' +
+      '<small class="faint">' + (m.praemie ? 'Gælder ' + mNavn + '.' : 'Ingen præmie for ' + mNavn + ' endnu – medarbejderne ser "Coming soon".') + ' Præmien nulstilles hver måned. Webcoins udbetales, når du trykker Afslør.</small></section>' +
       '<div class="adm-stak" style="margin-top:0"><section class="card"><div class="card-head"><h2 class="card-title">Stilling i ' + mNavn + '</h2><span class="tag">' + m.afgivet + ' stemmer</span></div>' +
       (m.stilling.length ? '<div class="table-wrap"><table><thead><tr><th>#</th><th>Kollega</th><th class="r">Stemmer</th><th class="r">Første stemme</th></tr></thead><tbody>' +
         m.stilling.map(function (x, i) {
@@ -1088,14 +1088,25 @@
       '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="bruger-ok">Gem</button></div>');
   }
 
-  function openJuster(ini) {
+  // Gave fra admin: Webcoins eller en vare fra menuen
+  var gaveState = null;
+  function openGave(ini) {
     var u = A.brugere.filter(function (x) { return x.initialer === ini; })[0];
     if (!u) return;
-    openModal('<h2>Justér saldo</h2><p class="muted" style="margin:-8px 0 16px">' + esc(u.navn) + ' · saldo ' + wc(u.saldo) + '</p>' +
-      '<input type="hidden" id="j-ini" value="' + esc(ini) + '">' +
-      '<div class="field"><label for="j-beloeb">Antal Webcoins (minus for at trække fra)</label><input class="input num" id="j-beloeb" type="number" inputmode="numeric" placeholder="fx 50 eller -20"></div>' +
-      '<div class="field"><label for="j-tekst">Tekst</label><input class="input" id="j-tekst" placeholder="fx Bonus for ekstra indsats"></div>' +
-      '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="juster-ok">Gem</button></div>');
+    gaveState = { u: u, vare: false };
+    renderGave();
+  }
+  function renderGave() {
+    var g = gaveState, besked = val('g-besked');
+    var varer = S.menu.filter(function (v) { return !v.snart; });
+    openModal('<h2><span class="ico">🎁</span>Gave til ' + esc(fornavn(g.u.navn)) + '</h2>' +
+      '<div class="seg"><button class="' + (g.vare ? '' : 'on') + '" data-act="gave-mode" data-v="0">Webcoins</button><button class="' + (g.vare ? 'on' : '') + '" data-act="gave-mode" data-v="1">Vare fra menuen</button></div>' +
+      (g.vare
+        ? '<div class="field"><label for="g-vare">Vare</label><select class="input" id="g-vare">' + varer.map(function (v) { return '<option value="' + esc(v.id) + '">' + esc(v.ikon) + ' ' + esc(v.navn) + '</option>'; }).join('') + '</select></div>'
+        : '<div class="field"><label for="g-beloeb">Antal Webcoins</label><input class="input num" id="g-beloeb" type="number" min="1" inputmode="numeric" placeholder="0"></div>' +
+          '<div class="chips beloeb-chips">' + [5, 10, 20, 30, 50, 100].map(function (n) { return '<button class="chip" data-act="gave-forslag" data-n="' + n + '">' + n + '</button>'; }).join('') + '</div>') +
+      '<div class="field"><label for="g-besked">Besked (valgfri)</label><input class="input" id="g-besked" maxlength="200" placeholder="fx Tak for hjælpen" value="' + esc(besked) + '"></div>' +
+      '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="gave-ok">Giv gave</button></div>');
   }
 
   function val(id) { var el = document.getElementById(id); return el ? el.value : ''; }
@@ -1244,10 +1255,18 @@
       case 'bruger-ok':
         submit(t, 'admin_bruger', { origEmail: val('b-orig'), navn: val('b-navn'), initialer: val('b-ini'), gruppe: val('b-gruppe'), email: val('b-email'), aktiv: checked('b-aktiv') }, 'Bruger gemt');
         break;
-      case 'juster': openJuster(t.dataset.ini); break;
-      case 'juster-ok':
-        submit(t, 'admin_justering', { initialer: val('j-ini'), beloeb: val('j-beloeb'), tekst: val('j-tekst') }, 'Saldo justeret');
+      case 'gave': openGave(t.dataset.ini); break;
+      case 'gave-mode': gaveState.vare = t.dataset.v === '1'; renderGave(); break;
+      case 'gave-forslag':
+        document.getElementById('g-beloeb').value = t.dataset.n;
+        document.querySelectorAll('.beloeb-chips .chip').forEach(function (c) { c.classList.toggle('on', c === t); });
         break;
+      case 'gave-ok': {
+        var gd = { initialer: gaveState.u.initialer, besked: val('g-besked') };
+        if (gaveState.vare) gd.vareId = val('g-vare'); else gd.beloeb = val('g-beloeb');
+        submit(t, 'admin_gave', gd, 'Gave givet 🎁', gaveState.vare ? 'Den står under Bestillinger.' : fornavn(gaveState.u.navn) + ' har fået ' + wc(gd.beloeb) + '.');
+        break;
+      }
       case 'stem': {
         var til = val('mdk-til');
         var hvorfor = val('mdk-hvorfor').trim();
@@ -1318,7 +1337,28 @@
     }
   });
 
+  // Ret saldo direkte i Brugere-tabellen: Enter (eller forlad feltet) gemmer, Escape fortryder
+  function gemSaldo(t) {
+    if (t.dataset.gemmer || t.value === t.dataset.org) return;
+    if (t.value === '' || Number(t.value) < 0) { t.value = t.dataset.org; return toast('Det gik ikke', 'Saldoen skal være 0 eller mere.', true); }
+    t.dataset.gemmer = '1';
+    var ini = t.dataset.saldo, fra = Number(t.dataset.org), til = Number(t.value);
+    api('admin_saldo', { initialer: ini, saldo: til }).then(function () {
+      toast('Saldo rettet', ini + ': ' + wc(fra) + ' → ' + wc(til));
+      return refresh();
+    }).catch(function (e) {
+      t.value = t.dataset.org; delete t.dataset.gemmer;
+      if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true);
+    });
+  }
+  document.addEventListener('focusout', function (ev) { if (ev.target.dataset && ev.target.dataset.saldo) gemSaldo(ev.target); });
+
   document.addEventListener('keydown', function (ev) {
+    if (ev.target.dataset && ev.target.dataset.saldo) {
+      if (ev.key === 'Enter') { ev.preventDefault(); ev.target.blur(); }
+      if (ev.key === 'Escape') { ev.target.value = ev.target.dataset.org; ev.target.blur(); }
+      return;
+    }
     if (ev.key === 'Escape') {
       if (modalRoot.innerHTML) closeModal();
       document.querySelectorAll('.info.open, .me-menu.open').forEach(function (el) { el.classList.remove('open'); });

@@ -669,6 +669,48 @@ var Core = (function () {
   }
 
 
+  function findBruger(db, i) {
+    var u = null;
+    db.all('Brugere').forEach(function (r) { if (ini(r.initialer) === i) u = r; });
+    if (!u) throw err('BAD', 'Ukendte initialer.');
+    return u;
+  }
+
+  // Ret saldoen direkte: admin skriver den nye saldo, forskellen gemmes som en justering (historikken bevares)
+  function adminSaldo(db, me, data, env) {
+    kraevAdmin(me);
+    var i = ini(data.initialer);
+    findBruger(db, i);
+    var ny = Math.round(num(data.saldo));
+    if (str(data.saldo).trim() === '' || ny < 0) throw err('BAD', 'Saldoen skal være 0 eller mere.');
+    var diff = ny - saldoFor(db.all('Posteringer'), i);
+    if (diff !== 0) db.insert('Posteringer', { id: env.uuid(), tid: env.now().toISOString(), initialer: i, type: 'justering', beloeb: diff, tekst: 'Saldo rettet af admin', ref: '' });
+    return { ok: true, diff: diff };
+  }
+
+  // Gave fra admin: Webcoins på saldoen, eller en vare fra menuen (bliver en bestilling, kostprisen tæller til RAB)
+  function adminGave(db, me, data, env) {
+    kraevAdmin(me);
+    var i = ini(data.initialer);
+    var u = findBruger(db, i);
+    var besked = str(data.besked).trim().slice(0, 200);
+    var tid = env.now().toISOString();
+    if (data.vareId) {
+      var vare = null;
+      sortiment().menu.forEach(function (v) { if (str(v.id) === str(data.vareId) && til(v.aktiv) && !ja(v.snart)) vare = v; });
+      if (!vare) throw err('BAD', 'Vælg en vare.');
+      var shop = env.shop ? env.shop() : { aaben: true };
+      var id = env.uuid();
+      db.insert('Bestillinger', { id: id, tid: tid, fra: i, til: i, vare: 'Gave fra admin: ' + str(vare.navn), pris: 0, kostpris: num(vare.kostpris), status: 'ny', forud: shop.aaben ? '' : 'ja', oenske: besked });
+      db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: i, type: 'gave_modtaget', beloeb: 0, tekst: str(vare.navn) + ' fra admin' + (besked ? ' · ' + besked : ''), ref: id });
+      return { ok: true, navn: str(u.navn), vare: str(vare.navn) };
+    }
+    var beloeb = Math.floor(num(data.beloeb));
+    if (!(beloeb > 0)) throw err('BAD', 'Angiv et beløb.');
+    db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: i, type: 'justering', beloeb: beloeb, tekst: '🎁 Gave fra admin' + (besked ? ' · ' + besked : ''), ref: '' });
+    return { ok: true, navn: str(u.navn), beloeb: beloeb };
+  }
+
   // Startbeløb: hver bruger får SORTIMENT.startWebcoins én gang (ref start:<INI>). Kaldes ved oprettelse og ved hver synk,
   // så brugere, der er skrevet direkte ind i arket, også får dem.
   function giveStart(db, env) {
@@ -773,9 +815,11 @@ var Core = (function () {
     admin_bestilling: adminBestilling,
     admin_bruger: adminBruger,
     admin_justering: adminJustering,
+    admin_saldo: adminSaldo,
+    admin_gave: adminGave,
     admin_sync: function (db, me, data, env) { kraevAdmin(me); return env.sync(); }
   };
-  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_sync: 1 };
+  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_gave: 1, admin_sync: 1 };
 
   function handle(db, me, action, data, env) {
     var fn = HANDLINGER[action];

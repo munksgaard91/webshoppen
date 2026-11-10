@@ -175,6 +175,21 @@ t('startbeløb: 5 Webcoins én gang pr. bruger', function () {
   eq(start().length, 1);
   eq(start()[0].beloeb, 5);
 });
+t('admin: ret saldo direkte og giv gave (Webcoins eller vare)', function () {
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var saldo = function () { return data.Posteringer.filter(function (p) { return p.initialer === 'BBB'; }).reduce(function (s, p) { return s + Number(p.beloeb); }, 0); };
+  Core.handle(db, adm, 'admin_saldo', { initialer: 'BBB', saldo: 80 }, env);
+  eq(saldo(), 80);
+  kaster(function () { Core.handle(db, adm, 'admin_saldo', { initialer: 'BBB', saldo: -1 }, env); }, '0 eller mere');
+  Core.handle(db, adm, 'admin_gave', { initialer: 'BBB', beloeb: 20, besked: 'Godt gået' }, env);
+  eq(saldo(), 100);
+  var foer = data.Bestillinger.length;
+  Core.handle(db, adm, 'admin_gave', { initialer: 'BBB', vareId: data.Menu[0].id }, env);
+  eq(data.Bestillinger.length, foer + 1);
+  eq(data.Bestillinger[data.Bestillinger.length - 1].pris, 0);
+  eq(saldo(), 100);
+  kaster(function () { Core.handle(db, B, 'admin_gave', { initialer: 'BBB', beloeb: 20 }, env); }, 'admin');
+});
 t('tie-breaker: første stemme vinder', function () {
   data.Stemmer.push({ id: 's1', tid: '2026-10-05T09:00:00.000Z', maaned: '2026-10', fra: 'CCC', til: 'BBB', begrundelse: 'x' });
   data.Stemmer.push({ id: 's2', tid: '2026-10-04T09:00:00.000Z', maaned: '2026-10', fra: 'BBB', til: 'AAA', begrundelse: 'y' });
