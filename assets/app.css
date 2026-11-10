@@ -92,7 +92,7 @@ a { color: inherit; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .center-screen { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px;
-  background: radial-gradient(600px 400px at 80% 0%, var(--brand-soft), transparent 70%), radial-gradient(700px 500px at 0% 100%, var(--brand-soft), transparent 70%); }
+  background: radial-gradient(600px 400px at 80% 0%, var(--brand-soft), transparent 70%), radial-gradient(700px 500px at 0% 100%, var(--brand-soft), transparent 70%), var(--bg); }
 .login-card { width: 100%; max-width: 420px; background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 40px 32px; box-shadow: var(--shadow-lg); text-align: center; }
 .login-card h1 { font-size: 34px; font-weight: 900; letter-spacing: -0.02em; margin: 4px 0 6px; }
 .login-card p { color: var(--muted); margin: 0 0 26px; }
@@ -857,14 +857,3 @@ tr.afregnet td { color: var(--muted); }
 .ikon-valg:hover, .ikon-valg:focus-visible { background: var(--brand-soft); outline: 2px solid var(--brand-2); }
 .mp-ikon .coin { width: 26px; height: 26px; }
 .maal-form #maal-praemie { flex: 1 1 200px; min-width: 180px; }
-
-/* Stemningsbillede (kontoret) bag hele siden med tykt overlay i sidens baggrundsfarve.
-   Body-baggrunden løftes op på lærredet, så de animerede farveskyer (body::before/after) stadig ligger ovenpå. */
-body {
-  background:
-    linear-gradient(var(--bg-overlay), var(--bg-overlay)),
-    url('img/kontor.webp') center 30% / cover no-repeat fixed,
-    var(--bg);
-}
-:root { --bg-overlay: rgba(242, 244, 249, 0.82); }
-:root[data-theme="dark"] { --bg-overlay: rgba(15, 20, 36, 0.9); }
