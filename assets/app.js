@@ -966,6 +966,22 @@
       '</section>';
   }
 
+  // Den timelige hentning af tal: rødt banner ved fejl, eller hvis den ikke har kørt i over 3 timer; "Hentet kl." i toppen
+  function synkTag() {
+    var st = A && A.synk;
+    if (!st || !st.tid) return '';
+    return '<span class="tag" title="Tal fra fakturering, anmeldelser og fælles mål hentes automatisk hver time">Hentet ' + esc(dato(st.tid)) + '</span>';
+  }
+  function synkBanner() {
+    var st = A && A.synk;
+    if (!st || !st.tid) return '';
+    var gammel = Date.now() - new Date(st.tid).getTime() > 3 * 36e5;
+    if (!(st.fejl || []).length && !gammel) return '';
+    return '<div class="synk-fejl" role="alert"><b>⚠️ ' + ((st.fejl || []).length ? 'Hentning af tal fejlede ' + esc(dato(st.tid)) : 'Tallene er ikke hentet siden ' + esc(dato(st.tid))) + '</b>' +
+      ((st.fejl || []).length ? '<ul>' + st.fejl.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' : '<span>Tjek at den automatiske hentning er slået til i arket.</span>') +
+      '<small>Optjening og fælles mål opdateres ikke, før det er rettet. Du har også fået en mail.</small></div>';
+  }
+
   // Admin-overblik: det vigtigste samlet ét sted (bestillinger, økonomi, events, månedens kollega, aktivitet)
   function pageAdminOverblik() {
     var nuKey = Core.maanedKey(new Date(S.nu)); // lokal tid, ikke UTC
@@ -1032,7 +1048,7 @@
       '</section>';
 
     // Rækkefølge: det der skal klares (nye bestillinger) øverst, så økonomi, derefter resten
-    return adminHead('Overblik', S.vedligehold ? '' : '<button class="btn" data-act="vedl-spoerg">🛠️ Luk shoppen</button>') + '<div class="adm-first">' + best + '</div>' + stats +
+    return adminHead('Overblik', synkTag() + (S.vedligehold ? '' : '<button class="btn" data-act="vedl-spoerg">🛠️ Luk shoppen</button>')) + synkBanner() + '<div class="adm-first">' + best + '</div>' + stats +
       '<div class="grid-2 top0 lige">' + ev + kollega + '</div>' +
       '<div class="adm-stak">' + opg + akt + '</div>';
   }

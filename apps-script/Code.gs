@@ -132,8 +132,43 @@ function env_() {
     notify: notify_,
     teambudget: teambudget_,
     shop: shopStatus_,
-    sync: syncOptjening
+    sync: syncOptjening,
+    synkStatus: synkStatus_
   };
+}
+
+// ---------- Status for den timelige hentning ----------
+// Gemmes i Script Properties (ikke i arket): hvornår den sidst kørte og hvilke fejl der var.
+function synkStatus_() {
+  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty('SYNK_STATUS') || 'null'); } catch (e) { return null; }
+}
+// Mail til admin ved fejl – højst én gang i døgnet for de samme fejl – og én gang, når det virker igen.
+function gemSynkStatus_(fejl) {
+  var props = PropertiesService.getScriptProperties();
+  var nu = new Date();
+  props.setProperty('SYNK_STATUS', JSON.stringify({ tid: nu.toISOString(), fejl: fejl }));
+  var sidst = {};
+  try { sidst = JSON.parse(props.getProperty('SYNK_MAIL') || '{}'); } catch (e) { sidst = {}; }
+  var conf = cfg_();
+  var til = conf.NOTIFIKATION_MAIL || liste_(conf.ADMIN_EMAILS)[0];
+  if (!til) return;
+  var url = conf.SIDE_URL ? '\n\n' + conf.SIDE_URL : '';
+  var noegle = fejl.join('|');
+  try {
+    if (fejl.length) {
+      if (sidst.noegle === noegle && nu - new Date(sidst.tid) < 24 * 36e5) return;
+      MailApp.sendEmail(til, 'Webshoppen · Hentning af tal fejlede',
+        'Den automatiske hentning af tal fejlede kl. ' + Utilities.formatDate(nu, 'Europe/Copenhagen', 'HH:mm') + ':\n\n' +
+        fejl.map(function (f) { return '• ' + f; }).join('\n') +
+        '\n\nOptjening eller fælles mål bliver ikke opdateret, før det er rettet. Du får ikke flere mails om de samme fejl i dag.' + url);
+      props.setProperty('SYNK_MAIL', JSON.stringify({ noegle: noegle, tid: nu.toISOString() }));
+    } else if (sidst.noegle) {
+      MailApp.sendEmail(til, 'Webshoppen · Hentning virker igen', 'Den automatiske hentning af tal virker igen.' + url);
+      props.deleteProperty('SYNK_MAIL');
+    }
+  } catch (e) {
+    console.error('Mail om hentning fejlede', e);
+  }
 }
 
 function notify_(b) {
@@ -220,6 +255,7 @@ function fravaer_(conf) {
 // ---------- Optjening ----------
 
 function syncOptjening() {
+  var fejl = [], res;
   var lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
@@ -252,21 +288,27 @@ function syncOptjening() {
         }
       } catch (e) {
         console.error('Kilde ' + id + ' fejlede: ' + e);
+        fejl.push('Kilde ' + id + (k.fane ? ' (' + k.fane + ')' : '') + ': ' + (e.message || e));
       }
     });
-    var res = Core.applyEarnings(SheetDB, kilder, env_(), fraMaaned);
+    res = Core.applyEarnings(SheetDB, kilder, env_(), fraMaaned);
     SpreadsheetApp.flush();
+  } catch (e) {
+    fejl.push('Optjening: ' + (e.message || e));
+    console.error('Optjening fejlede', e);
   } finally {
     lock.releaseLock();
   }
   // Fælles mål efter låsen: ClickUp og målarket kan tage tid, og kun synken skriver i fanen Maal,
   // så bestillinger skal ikke vente på dem. En fejl her stopper ikke optjeningen.
   try {
-    opdaterMaal_(raa);
+    opdaterMaal_(raa || {}, fejl);
     SpreadsheetApp.flush();
   } catch (e) {
     console.error('Fælles mål kunne ikke opdateres: ' + e);
+    fejl.push('Fælles mål: ' + (e.message || e));
   }
+  gemSynkStatus_(fejl);
   return res;
 }
 
@@ -276,7 +318,7 @@ function syncOptjening() {
 //   celle:<fane>!<celle>        → tallet i én celle i MAAL_ARK_ID
 //   clickup:<liste-id>:<status> → antal opgaver med den status på listen lige nu (kræver CLICKUP_TOKEN)
 // celle og clickup er øjebliksbilleder, så de opdaterer kun indeværende måned – sidste måned beholder sit sluttal.
-function opdaterMaal_(raa) {
+function opdaterMaal_(raa, fejl) {
   var conf = cfg_();
   var mk0 = Core.maanedKey(new Date()), maaneder = [mk0, Core.forrigeMaaned(mk0)];
   var kendte = {};
@@ -315,6 +357,7 @@ function opdaterMaal_(raa) {
       if (v !== null && (String(m.nu) === '' || v !== Number(m.nu))) SheetDB.update('Maal', m, { nu: v });
     } catch (e) {
       console.error('Mål ' + m.navn + ' fejlede: ' + e);
+      if (fejl) fejl.push('Fælles mål "' + m.navn + '": ' + (e.message || e));
     }
   });
 }

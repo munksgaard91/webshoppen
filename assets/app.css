@@ -876,3 +876,10 @@ tr.afregnet td { color: var(--muted); }
 /* Popup: annullerede bestillinger */
 .ann-titel { font-size: 15px; margin: 18px 0 8px; color: var(--muted); text-align: left; }
 .ann-ikon { width: 36px; height: 36px; display: grid; place-items: center; font-size: 20px; border-radius: 50%; background: var(--card-2); flex: none; }
+
+/* Admin: fejl i den timelige hentning */
+.synk-fejl { display: grid; gap: 4px; background: rgba(207, 60, 74, .1); color: var(--text); border: 1px solid rgba(207, 60, 74, .35); border-radius: 14px; padding: 12px 16px; margin-bottom: 18px; font-size: 14px; }
+.synk-fejl b { color: var(--minus); }
+.synk-fejl ul { margin: 2px 0; padding-left: 18px; }
+.synk-fejl small { color: var(--muted); }
+.page-head .chips { align-items: center; }

@@ -783,6 +783,8 @@ var Core = (function () {
         return { id: str(b.id), tid: str(b.tid), fra: str(b.fra), fraNavn: navne[b.fra] || b.fra, til: str(b.til), tilNavn: navne[b.til] || b.til, vare: str(b.vare), pris: num(b.pris), kostpris: num(b.kostpris), status: str(b.status), forud: str(b.forud) === 'ja', oenske: str(b.oenske) };
       }),
       opgoerelse: opgoerelse(db),
+      // Den timelige hentning: { tid, fejl: [...] } (Script Properties i Apps Script; null før første kørsel)
+      synk: env.synkStatus ? env.synkStatus() : null,
       forslag: (function () {
         var rows = [];
         try { rows = db.all('Forslag'); } catch (e) { rows = []; }

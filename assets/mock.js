@@ -114,7 +114,13 @@ window.Mock = (function () {
         if (m === 'tid') return Core.aabningstider(new Date(new Date().setHours(17, 0)), '08:00', '15:30', '1-5');
         return { aaben: true };
       },
-      sync: function () { return Core.applyEarnings(db, falskeKilder(new Date()), env()); }
+      sync: function () { return Core.applyEarnings(db, falskeKilder(new Date()), env()); },
+      // Demo: ?synkfejl viser banneret for en fejlet hentning
+      synkStatus: function () {
+        return /[?&]synkfejl\b/.test(location.search)
+          ? { tid: new Date(Date.now() - 20 * 6e4).toISOString(), fejl: ['Kilde nyfak (Nyfak): Fanen "Nyfak" findes ikke'] }
+          : { tid: new Date(Date.now() - 12 * 6e4).toISOString(), fejl: [] };
+      }
     };
   }
 
