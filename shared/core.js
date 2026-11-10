@@ -140,7 +140,7 @@ var Core = (function () {
   // Sortimentet (menu, hjul, events) ligger i koden: shared/sortiment.js (global SORTIMENT), ikke i arket.
   function sortiment() {
     var s = typeof SORTIMENT !== 'undefined' ? SORTIMENT : {};
-    return { menu: s.menu || [], hjul: s.hjul || [], events: s.events || [], hjulPris: s.hjulPris === undefined ? 30 : s.hjulPris };
+    return { menu: s.menu || [], hjul: s.hjul || [], events: s.events || [], hjulPris: s.hjulPris === undefined ? 30 : s.hjulPris, startWebcoins: num(s.startWebcoins) };
   }
   // Mangler feltet, er varen/eventet med (aktiv/aaben er standard)
   function til(v) { return v === undefined || v === '' || sand(v); }
@@ -615,9 +615,28 @@ var Core = (function () {
     });
     var obj = { email: email, initialer: i, navn: str(data.navn).trim(), gruppe: str(data.gruppe), aktiv: data.aktiv === false ? 'nej' : 'ja' };
     if (row) db.update('Brugere', row, obj); else db.insert('Brugere', obj);
+    giveStart(db, env);
     return { ok: true };
   }
 
+
+  // Startbeløb: hver bruger får SORTIMENT.startWebcoins én gang (ref start:<INI>). Kaldes ved oprettelse og ved hver synk,
+  // så brugere, der er skrevet direkte ind i arket, også får dem.
+  function giveStart(db, env) {
+    var beloeb = Math.floor(sortiment().startWebcoins);
+    if (!(beloeb > 0)) return 0;
+    var har = {};
+    db.all('Posteringer').forEach(function (p) { if (/^start:/.test(str(p.ref))) har[str(p.ref)] = 1; });
+    var nye = 0;
+    aktiveBrugere(db).forEach(function (u) {
+      var ref = 'start:' + ini(u.initialer);
+      if (har[ref]) return;
+      db.insert('Posteringer', { id: env.uuid(), tid: env.now().toISOString(), initialer: ini(u.initialer), type: 'justering', beloeb: beloeb, tekst: 'Velkommen til Webshoppen', ref: ref });
+      har[ref] = 1;
+      nye++;
+    });
+    return nye;
+  }
 
   function adminJustering(db, me, data, env) {
     kraevAdmin(me);
@@ -638,6 +657,7 @@ var Core = (function () {
    * Laver/opdaterer én postering pr. regel-kilde, måned og person. Idempotent.
    */
   function applyEarnings(db, kilder, env, fraMaaned) {
+    giveStart(db, env);
     var fra = fraMaaned || '0000-00';
     var navne = {};
     db.all('Kilder').forEach(function (k) { navne[str(k.kilde)] = str(k.navn) || str(k.kilde); });

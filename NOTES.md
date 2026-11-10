@@ -44,6 +44,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 - Rigtigt Google-login er ikke testet (kræver backend + Client ID).
 
 ## Beslutninger
+- **Startbeløb 5 Webcoins** (2026-11-10): alle brugere får `SORTIMENT.startWebcoins` (5) én gang – postering type `justering`, tekst "Velkommen til Webshoppen", ref `start:<INI>`. Gives, når admin opretter en bruger, og ved hver synk (så brugere skrevet direkte i arket også får dem). Tæller ikke som "optjent" på Min profil.
 - **Login i 30 dage** (2026-11-10): ved login sender browseren Google-beviset (1 t) med handlingen `login`; backend tjekker det én gang og returnerer en egen nøgle `ws1.<data>.<HMAC>` (gælder 30 dage), som bruges ved alle forespørgsler. Signeret med `SESSION_SECRET` i Apps Script → Projektindstillinger → **Script Properties** (oprettes automatisk ved første login, aldrig i repoet). Brugeren slås stadig op i `Brugere` hver gang, så deaktiverede er ude med det samme. **Nødbremse:** slet `SESSION_SECRET` → alle logges ud.
 - **Klub-bonusser** (2026-11-10): faste månedsbonusser, når man når en grænse (kolonne `fra` i `Regler`). Hjemmeside: Klub 15/20/25 sager = 15/20/25 Webcoins · Redaktør: Klub 150/200/250 tekster = 15/20/25 · Fotograf: Klub 25/30 sessioner = 15/20. **Kun den højeste klub tæller** (ikke lagt sammen); den ligger på én ref `optjent:<kilde>-klub:<YYYY-MM>:<ini>`, så den rykker op, hvis tallet stiger i løbet af måneden.
 - **Fælles mål** (2026-11-10): fanen `Maal` (maaned, navn, tekst, retning `under`/`over`, graense, nu, enhed). Vises nederst på Overblik med en **progressbar pr. mål**: `nu` er status og opdateres løbende i arket (tom = "Ingen status endnu"). Ved `over` = nu ÷ grænse ("14 af 20 anmeldelser"), ved `under` = grænse ÷ nu ("6,8 t · mål under 6,5 t"); baren bliver grøn, når status er på målet. Overskrift: måned + "Afgøres 1. <næste måned>". Målene **afgøres dagen efter månedens udgang**, når tallene er opgjort: skriv det endelige tal i `nu` – under **Resultat for <sidste måned>** står så Nået ✓ / Ikke nået. November 2026: Hjemmeside under 6,5 t produktionstid pr. sag · Afventer online under 70 kunder på listen · Redaktører under 0,7 t produktionstid pr. tekst · Support 20 anmeldelser eller flere.
@@ -78,7 +79,7 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 7. **Webshoppen → Slå automatisk hentning til**.
 
 Ændringer i `shared/core.js`, `shared/sortiment.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=163`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=164`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test

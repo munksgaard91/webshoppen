@@ -13,6 +13,8 @@
  */
 var SORTIMENT = {
   hjulPris: 30,
+  // Alle brugere starter med dette antal Webcoins (gives én gang, når de er oprettet i Brugere)
+  startWebcoins: 5,
 
   menu: [
     { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 20, kostpris: 10, oenske: true },

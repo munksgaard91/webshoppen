@@ -31,7 +31,7 @@ var data = {
   Bestillinger: [], Stemmer: [], Kilder: [], Regler: []
 };
 // Sortimentet ligger i koden (shared/sortiment.js); testen bruger sit eget
-var SORTIMENT = { menu: data.Menu, hjul: data.Hjul, events: data.Projekter, hjulPris: 15 };
+var SORTIMENT = { menu: data.Menu, hjul: data.Hjul, events: data.Projekter, hjulPris: 15, startWebcoins: 5 };
 var db = {
   all: function (t) { return data[t] || (data[t] = []); },
   insert: function (t, o) { db.all(t).push(Object.assign({}, o)); },
@@ -167,6 +167,13 @@ t('klub-bonus: kun højeste klub, rykker op når tallet stiger', function () {
   eq(bonus()[0].beloeb, 20);
   eq(bonus()[0].tekst, 'Klub 20 · november 2026');
   data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'sager'; });
+});
+t('startbeløb: 5 Webcoins én gang pr. bruger', function () {
+  var start = function () { return data.Posteringer.filter(function (p) { return p.ref === 'start:BBB'; }); };
+  Core.applyEarnings(db, {}, env);
+  Core.applyEarnings(db, {}, env);
+  eq(start().length, 1);
+  eq(start()[0].beloeb, 5);
 });
 t('tie-breaker: første stemme vinder', function () {
   data.Stemmer.push({ id: 's1', tid: '2026-10-05T09:00:00.000Z', maaned: '2026-10', fra: 'CCC', til: 'BBB', begrundelse: 'x' });
