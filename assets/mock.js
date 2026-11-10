@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v39';
+  var KEY = 'webshoppen-demo-v40';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -118,9 +118,8 @@ window.Mock = (function () {
     Core.handle(db, dsi, 'bestil', { vareId: 'candybar', variant: 'Snickers', til: 'JST' }, Object.assign({}, e, { notify: function () {} }));
     Core.handle(db, dsi, 'indskyd', { projektId: 'frokost', beloeb: 240 }, Object.assign({}, e, { notify: function () {} }));
     var stille = Object.assign({}, e, { notify: function () {} });
-    var HV = ["Hjalp mig med en svær Bricks-opsætning", "Altid god stemning på kontoret", "Tog en ekstra supportvagt for mig", "Skaffede kage til hele afdelingen", "Gav mig gode råd om en kunde"];
-    var nu0 = new Date(), sidst = new Date(nu0.getFullYear(), nu0.getMonth() - 1, 12, 10);
-    data.Stemmer.push({ id: 's9', tid: new Date().toISOString(), maaned: Core.maanedKey(nu0), fra: 'JST', til: 'CBO', begrundelse: HV[4] });
+    // Én stemme fra en pladsholder, så admin ser en stilling, mens alle demobrugere selv kan stemme.
+    data.Stemmer.push({ id: 's9', tid: new Date().toISOString(), maaned: Core.maanedKey(new Date()), fra: 'ADE', til: 'CBO', begrundelse: 'Gav mig gode råd om en kunde' });
     [['demo.jst@best-one.dk', 'frokost', 160], ['demo.cbo@best-one.dk', 'frokost', 90], ['demo.jfr@best-one.dk', 'biograf', 120], ['demo.cbo@best-one.dk', 'biograf', 50], ['demo.jst@best-one.dk', 'kage', 160], ['demo.dsi@best-one.dk', 'kage', 140], ['demo.jfr@best-one.dk', 'kage', 100]].forEach(function (x) {
       Core.handle(db, Core.resolveUser(db, { email: x[0] }, ADMINS), 'indskyd', { projektId: x[1], beloeb: x[2] }, stille);
     });
