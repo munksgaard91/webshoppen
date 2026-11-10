@@ -215,12 +215,14 @@ a { color: inherit; }
 .rule b { text-align: right; }
 .maal-liste { padding-top: 6px; padding-bottom: 6px; }
 .maal-sub { font-size: 15px; font-weight: 800; margin: 22px 0 10px; color: var(--muted); }
-.maal-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-top: 1px solid var(--line); }
+.maal-row { display: grid; grid-template-columns: 260px minmax(0, 1fr); align-items: center; gap: 20px; padding: 14px 0; border-top: 1px solid var(--line); }
+.maal-row.slut { grid-template-columns: 260px minmax(0, 1fr) 100px; }
+.maal-status { justify-content: flex-end; }
+@media (max-width: 700px) { .maal-row, .maal-row.slut { grid-template-columns: 1fr; gap: 8px; } .maal-status { justify-content: flex-start; } }
 .maal-row:first-child { border-top: 0; }
 .maal-txt { display: grid; gap: 2px; min-width: 0; }
 .maal-txt small { color: var(--muted); font-size: 13px; }
 .maal-status { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-.maal-nu { font-size: 18px; font-weight: 800; }
 .rule-link { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--brand); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
 .tb-card { display: flex; flex-direction: column; justify-content: center; }

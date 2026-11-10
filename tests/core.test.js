@@ -150,6 +150,9 @@ t('fælles mål: denne måned + sidste måneds resultat (under/over)', function 
   eq(f.sidste.maal[0].naaet, false);
   eq(f.sidste.maal[1].naaet, true);
   eq(f.sidste.maal[2].nu, null);
+  eq(f.sidste.maal[0].pct, 95); // 6,5 ÷ 6,8
+  eq(f.sidste.maal[1].pct, 100);
+  eq(f.sidste.maal[2].pct, 0);
 });
 t('tie-breaker: første stemme vinder', function () {
   data.Stemmer.push({ id: 's1', tid: '2026-10-05T09:00:00.000Z', maaned: '2026-10', fra: 'CCC', til: 'BBB', begrundelse: 'x' });

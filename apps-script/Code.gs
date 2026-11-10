@@ -362,10 +362,10 @@ function opsaet() {
   ]);
   // Fælles mål pr. måned: retning under/over grænsen. nu = resultatet, skrives dagen efter månedens udgang.
   seed('Maal', [
-    { maaned: '2026-11', navn: 'Hjemmeside', tekst: 'Under 6,5 t produktionstid pr. sag', retning: 'under', graense: 6.5, nu: '' },
-    { maaned: '2026-11', navn: 'Afventer online', tekst: 'Under 70 kunder på listen', retning: 'under', graense: 70, nu: '' },
-    { maaned: '2026-11', navn: 'Redaktører', tekst: 'Under 0,7 t produktionstid pr. tekst', retning: 'under', graense: 0.7, nu: '' },
-    { maaned: '2026-11', navn: 'Support', tekst: '20 anmeldelser eller flere', retning: 'over', graense: 20, nu: '' }
+    { maaned: '2026-11', navn: 'Hjemmeside', tekst: 'Under 6,5 t produktionstid pr. sag', retning: 'under', graense: 6.5, nu: '', enhed: 't' },
+    { maaned: '2026-11', navn: 'Afventer online', tekst: 'Under 70 kunder på listen', retning: 'under', graense: 70, nu: '', enhed: 'kunder' },
+    { maaned: '2026-11', navn: 'Redaktører', tekst: 'Under 0,7 t produktionstid pr. tekst', retning: 'under', graense: 0.7, nu: '', enhed: 't' },
+    { maaned: '2026-11', navn: 'Support', tekst: '20 anmeldelser eller flere', retning: 'over', graense: 20, nu: '', enhed: 'anmeldelser' }
   ]);
   var standard = ss.getSheetByName('Ark1') || ss.getSheetByName('Sheet1');
   if (standard && standard.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(standard);

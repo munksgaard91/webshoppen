@@ -22,7 +22,7 @@ var Core = (function () {
     Kilder: ['kilde', 'navn', 'sheet_id', 'fane', 'kol_initialer', 'kol_vaerdi', 'kol_dato', 'start_raekke'],
     Regler: ['gruppe', 'kilde', 'sats', 'tekst', 'navn'],
     Afregning: ['maaned', 'sendt', 'tid'],
-    Maal: ['maaned', 'navn', 'tekst', 'retning', 'graense', 'nu']
+    Maal: ['maaned', 'navn', 'tekst', 'retning', 'graense', 'nu', 'enhed']
   };
 
   function err(code, msg) {
@@ -191,7 +191,8 @@ var Core = (function () {
   }
 
   // Fælles mål for måneden (fanen Maal). retning 'under' = skal være under grænsen, 'over' = grænsen eller mere.
-  // nu = det opgjorte resultat, skrives i arket dagen efter månedens udgang (tomt = ikke opgjort endnu).
+  // nu = status (opdateres løbende i arket; efter månedens udgang = det opgjorte resultat). Tomt = ingen tal endnu.
+  // pct = hvor tæt vi er på målet (0–100) til progressbaren. Ved 'under' = grænse ÷ nu, ved 'over' = nu ÷ grænse.
   function faellesMaal(db, mk) {
     var rows = [];
     try { rows = db.all('Maal'); } catch (e) { rows = []; }
@@ -199,8 +200,10 @@ var Core = (function () {
       var harTal = str(r.nu).trim() !== '';
       var nuTal = num(r.nu), graense = num(r.graense);
       var under = str(r.retning).trim().toLowerCase() === 'under';
-      return { navn: str(r.navn), tekst: str(r.tekst), retning: under ? 'under' : 'over', graense: graense, nu: harTal ? nuTal : null,
-        naaet: harTal ? (under ? nuTal < graense : nuTal >= graense) : false };
+      var naaet = harTal ? (under ? nuTal < graense : nuTal >= graense) : false;
+      var pct = !harTal ? 0 : naaet ? 100 : under ? (nuTal > 0 ? graense / nuTal * 100 : 100) : (graense > 0 ? nuTal / graense * 100 : 100);
+      return { navn: str(r.navn), tekst: str(r.tekst), enhed: str(r.enhed).trim(), retning: under ? 'under' : 'over', graense: graense, nu: harTal ? nuTal : null,
+        naaet: naaet, pct: Math.max(0, Math.min(100, Math.floor(pct))) };
     });
   }
 

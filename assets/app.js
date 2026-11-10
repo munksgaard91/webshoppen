@@ -436,18 +436,23 @@
   // Fælles mål (fanen Maal) – "Fælles mål | Se status" i regel-boksen scroller hertil.
   // Månedens mål afgøres dagen efter månedens udgang; sidste måneds resultat vises, når tallene er skrevet ind.
   function decimal(n) { return Number(n).toLocaleString('da-DK', { maximumFractionDigits: 2 }); }
-  function maalRaekke(m, status) {
-    return '<div class="maal-row"><div class="maal-txt"><b>' + esc(m.navn) + '</b><small>' + esc(m.tekst) + '</small></div><div class="maal-status">' + status + '</div></div>';
+  // Progressbar: grøn, når status er på målet. Under/over: "6,8 t · mål under 6,5 t" / "14 af 20 anmeldelser".
+  function maalRaekke(m, slut) {
+    var e = m.enhed ? ' ' + esc(m.enhed) : '';
+    var label = m.nu === null ? 'Ingen status endnu' : m.retning === 'under'
+      ? '<span><b>' + decimal(m.nu) + e + '</b> · mål under ' + decimal(m.graense) + e + '</span>'
+      : '<span><b>' + decimal(m.nu) + '</b> af ' + decimal(m.graense) + e + '</span>';
+    var tag = !slut ? '' : m.nu === null ? '<span class="tag">Opgøres</span>' : '<span class="tag ' + (m.naaet ? 'ok' : 'annulleret') + '">' + (m.naaet ? 'Nået ✓' : 'Ikke nået') + '</span>';
+    return '<div class="maal-row' + (slut ? ' slut' : '') + '"><div class="maal-txt"><b>' + esc(m.navn) + '</b><small>' + esc(m.tekst) + '</small></div>' +
+      '<div class="bar bar-big' + (m.naaet ? ' fuld' : '') + '"><i style="width:' + m.pct + '%"></i><span class="bar-label num">' + label + (m.nu === null ? '' : '<b>' + m.pct + ' %</b>') + '</span></div>' +
+      (slut ? '<div class="maal-status">' + tag + '</div>' : '') + '</div>';
   }
   function faellesMaal() {
     var f = S.faellesMaal || { maal: [], sidste: { maal: [] } };
     var nu = new Date(S.nu);
     var mNavn = MAANEDER[nu.getMonth()], naeste = MAANEDER[(nu.getMonth() + 1) % 12];
-    var denne = f.maal.map(function (m) { return maalRaekke(m, ''); }).join('');
-    var sidste = f.sidste.maal.map(function (m) {
-      return maalRaekke(m, m.nu === null ? '<span class="tag">Opgøres</span>' :
-        '<span class="maal-nu num">' + decimal(m.nu) + '</span><span class="tag ' + (m.naaet ? 'ok' : 'annulleret') + '">' + (m.naaet ? 'Nået ✓' : 'Ikke nået') + '</span>');
-    }).join('');
+    var denne = f.maal.map(function (m) { return maalRaekke(m, false); }).join('');
+    var sidste = f.sidste.maal.map(function (m) { return maalRaekke(m, true); }).join('');
     return '<section class="block" id="faelles-maal"><div class="block-head"><h2 class="block-title">Fælles mål</h2><span class="tag">' + cap(mNavn) + '</span><span class="note">Afgøres 1. ' + naeste + '</span></div>' +
       '<div class="card maal-liste">' + (denne || '<p class="faint" style="margin:0">Ingen mål for ' + mNavn + ' endnu.</p>') + '</div>' +
       (sidste ? '<h3 class="maal-sub">Resultat for ' + MAANEDER[(nu.getMonth() + 11) % 12] + '</h3><div class="card maal-liste">' + sidste + '</div>' : '') + '</section>';
