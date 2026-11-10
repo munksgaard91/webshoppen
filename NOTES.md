@@ -61,7 +61,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 - **Repoet er offentligt** (gratis GitHub Pages) – kun frontend, ingen hemmeligheder.
 
 ## Faner i "Webshoppen DB"
-`Config` · `Brugere` · `Posteringer` · `Bestillinger` (… status, forud, oenske) · `Stemmer` (id, tid, maaned, fra, til, begrundelse) · `Spil` (id, tid, initialer, status, resultat) · `Kilder` · `Regler` · `Afregning` (maaned, sendt ja/nej, tid – hvilke måneder er sendt til RAB).
+`Config` · `Brugere` · `Posteringer` · `Bestillinger` (… status, forud, oenske) · `Stemmer` (id, tid, maaned, fra, til, begrundelse) · `Spil` (id, tid, initialer, status, resultat) · `Kilder` · `Regler` (gruppe, kilde, sats, tekst, navn – `navn` er teksten i regel-boksen, fx "Per sag"; tom = kildens navn) · `Afregning` (maaned, sendt ja/nej, tid – hvilke måneder er sendt til RAB).
 
 Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHAT_WEBHOOK`, `NOTIFIKATION_MAIL`, `AABNER`, `LUKKER`, `AABNE_DAGE`, `LUK_VED_FRAVAER`, `KALENDER_ID`, `OPTJENING_FRA`, `TEAMBUDGET_ARK_ID`, `TEAMBUDGET_BUDGET_CELLE`, `TEAMBUDGET_BRUGT_CELLE`, `TEAMBUDGET_SAESON`, `MDK_PRAEMIE`, `MDK_PRAEMIE_MAANED` (YYYY-MM, sættes af admin ved Gem).
 
@@ -75,7 +75,7 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 7. **Webshoppen → Slå automatisk hentning til**.
 
 Ændringer i `shared/core.js`, `shared/sortiment.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=148`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=149`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test

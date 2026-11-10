@@ -20,7 +20,7 @@ var Core = (function () {
     Posteringer: ['id', 'tid', 'initialer', 'type', 'beloeb', 'tekst', 'ref'],
     Bestillinger: ['id', 'tid', 'fra', 'til', 'vare', 'pris', 'kostpris', 'status', 'forud', 'oenske'],
     Kilder: ['kilde', 'navn', 'sheet_id', 'fane', 'kol_initialer', 'kol_vaerdi', 'kol_dato', 'start_raekke'],
-    Regler: ['gruppe', 'kilde', 'sats', 'tekst'],
+    Regler: ['gruppe', 'kilde', 'sats', 'tekst', 'navn'],
     Afregning: ['maaned', 'sendt', 'tid']
   };
 
@@ -197,7 +197,8 @@ var Core = (function () {
     var kilder = {};
     db.all('Kilder').forEach(function (k) { kilder[str(k.kilde)] = str(k.navn) || str(k.kilde); });
     return db.all('Regler').map(function (r) {
-      return { gruppe: str(r.gruppe), kilde: str(r.kilde), kildeNavn: kilder[str(r.kilde)] || str(r.kilde), sats: num(r.sats), tekst: str(r.tekst) };
+      // navn = teksten i regel-boksen (fx "Per sag"); tom = kildens navn
+      return { gruppe: str(r.gruppe), kilde: str(r.kilde), navn: str(r.navn) || kilder[str(r.kilde)] || str(r.kilde), sats: num(r.sats), tekst: str(r.tekst) };
     });
   }
 

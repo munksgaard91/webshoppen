@@ -326,7 +326,7 @@
     var r = S.regler.filter(function (x) { return x.gruppe === S.me.gruppe; }).concat(S.regler.filter(function (x) { return x.gruppe === 'Alle'; }));
     // Månedens Webkollega står øverst hos alle med denne måneds præmie
     return '<div class="rule"><span>Månedens Webkollega</span><b>' + mdkVaerdi() + '</b></div>' +
-      r.map(function (x) { return '<div class="rule"><span>' + esc(x.kildeNavn) + '</span><b>' + regelVaerdi(x) + '</b></div>'; }).join('');
+      r.map(function (x) { return '<div class="rule"><span>' + esc(x.navn) + '</span><b>' + regelVaerdi(x) + '</b></div>'; }).join('');
   }
   // Regelens værdi med mønten til sidst, fx "20 Webcoins 🪙"
   function mdkVaerdi() {
@@ -788,7 +788,7 @@
         var r = S.regler.filter(function (x) { return x.gruppe === g; });
         return '<h2 class="card-title">' + esc(g === 'Alle' ? 'Alle grupper' : g) + '</h2>' +
           (g === 'Alle' ? '<ul><li><span>Månedens Webkollega</span><b>' + mdkVaerdi() + '</b></li></ul>' : '') +
-          (r.length ? '<ul>' + r.map(function (x) { return '<li><span>' + esc(x.kildeNavn) + '</span><b>' + regelVaerdi(x) + '</b></li>'; }).join('') + '</ul>' : '<p class="faint">Kommer senere.</p>');
+          (r.length ? '<ul>' + r.map(function (x) { return '<li><span>' + esc(x.navn) + '</span><b>' + regelVaerdi(x) + '</b></li>'; }).join('') + '</ul>' : '<p class="faint">Kommer senere.</p>');
       }).join('') + '</section>';
   }
 

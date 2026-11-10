@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v42';
+  var KEY = 'webshoppen-demo-v43';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -39,11 +39,11 @@ window.Mock = (function () {
         { kilde: 'faelles_maal', navn: 'Fælles mål' }
       ],
       Regler: [
-        { gruppe: 'Hjemmeside', kilde: 'sager', sats: 1, tekst: '1 Webcoin' },
+        { gruppe: 'Hjemmeside', kilde: 'sager', sats: 1, tekst: '1 Webcoin', navn: 'Per sag' },
         { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
-        { gruppe: 'Redaktør', kilde: 'tekster', sats: 0.1, tekst: '1 Webcoin pr. 10' },
+        { gruppe: 'Redaktør', kilde: 'tekster', sats: 0.1, tekst: '1 Webcoin', navn: 'Per 10. tekst' },
         { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
-        { gruppe: 'Fotograf', kilde: 'sessioner', sats: 1, tekst: '1 Webcoin' },
+        { gruppe: 'Fotograf', kilde: 'sessioner', sats: 1, tekst: '1 Webcoin', navn: 'Per session' },
         { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
         { gruppe: 'Support', kilde: 'anmeldelser', sats: 25, tekst: '25 Webcoins' },
         { gruppe: 'Alle', kilde: 'faelles_maal', sats: 0, tekst: 'Se status' },

@@ -350,11 +350,11 @@ function opsaet() {
   ]);
   // Bevidst stramt (2026-11-10) – hellere løsne senere. Gruppe 'Alle' vises hos alle grupper.
   seed('Regler', [
-    { gruppe: 'Hjemmeside', kilde: 'sager', sats: 1, tekst: '1 Webcoin' },
+    { gruppe: 'Hjemmeside', kilde: 'sager', sats: 1, tekst: '1 Webcoin', navn: 'Per sag' },
     { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
-    { gruppe: 'Redaktør', kilde: 'tekster', sats: 0.1, tekst: '1 Webcoin pr. 10' },
+    { gruppe: 'Redaktør', kilde: 'tekster', sats: 0.1, tekst: '1 Webcoin', navn: 'Per 10. tekst' },
     { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
-    { gruppe: 'Fotograf', kilde: 'sessioner', sats: 1, tekst: '1 Webcoin' },
+    { gruppe: 'Fotograf', kilde: 'sessioner', sats: 1, tekst: '1 Webcoin', navn: 'Per session' },
     { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
     { gruppe: 'Support', kilde: 'anmeldelser', sats: 25, tekst: '25 Webcoins' },
     { gruppe: 'Alle', kilde: 'faelles_maal', sats: 0, tekst: 'Se status' },
