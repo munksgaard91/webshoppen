@@ -934,9 +934,8 @@
       '<section class="card fb-card"><b>Har du feedback til Webshoppen?</b><button class="btn" data-act="forslag" data-type="feedback">💬 Giv feedback</button></section>';
   }
 
-  function statBox(label, val, sub, sub2) {
-    return '<div class="card stat"><div class="eyebrow">' + label + '</div><div class="val num">' + val + '</div>' + (sub ? '<div class="sub">' + esc(sub) + '</div>' : '') +
-      (sub2 ? '<div class="sub sub2">' + esc(sub2) + '</div>' : '') + '</div>';
+  function statBox(label, val, sub) {
+    return '<div class="card stat"><div class="eyebrow">' + label + '</div><div class="val num">' + val + '</div>' + (sub ? '<div class="sub">' + esc(sub) + '</div>' : '') + '</div>';
   }
 
   // ---------- Admin-sider ----------
@@ -1014,8 +1013,7 @@
     // Brugt siden start: alle ikke-annullerede bestillinger (Webcoins), omregnet til kr (1 kr = 2 Webcoins)
     var start = rows.reduce(function (sum, o) { return sum + o.wc; }, 0);
     var stats = '<div class="stat-grid tre">' +
-      statBox('Brugt i ' + mNavn, wcSmall(denne ? denne.wc : 0) + coin(), denne ? denne.antal + ' bestillinger' : 'Ingen bestillinger',
-        'Siden start: ' + wc(start) + ' ≈ ' + kr(start / 2)) +
+      statBox('Brugt i ' + mNavn, wcSmall(denne ? denne.wc : 0) + coin(), denne ? denne.antal + ' bestillinger' : 'Ingen bestillinger') +
       (tb ? statBox('Teambudget tilbage', kr(tb.rest), 'Brugt i sæsonen: ' + kr(tb.brugt)) : '') +
       statBox('Webcoins i omløb', wcSmall(omloeb) + coin(), '≈ ' + kr(omloeb / 2) + ' på saldierne') +
       '</div>';
@@ -1067,7 +1065,8 @@
       '</section>';
 
     // Rækkefølge: det der skal klares (nye bestillinger) øverst, så økonomi, derefter resten
-    return adminHead('Overblik', synkTag() + (S.vedligehold ? '' : '<button class="btn" data-act="vedl-spoerg">🛠️ Luk shoppen</button>')) + synkBanner() + '<div class="adm-first">' + best + '</div>' + stats +
+    var startTag = '<span class="tag start-tag" title="Alle bestillinger siden start (ikke annullerede) · 1 kr = 2 Webcoins">Brugt siden start: <b>' + wc(start) + '</b> ≈ ' + kr(start / 2) + '</span>';
+    return adminHead('Overblik', startTag + synkTag() + (S.vedligehold ? '' : '<button class="btn" data-act="vedl-spoerg">🛠️ Luk shoppen</button>')) + synkBanner() + '<div class="adm-first">' + best + '</div>' + stats +
       '<div class="grid-2 top0 lige">' + ev + kollega + '</div>' +
       '<div class="adm-stak">' + opg + akt + '</div>';
   }
