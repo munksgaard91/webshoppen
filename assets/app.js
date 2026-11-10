@@ -1278,7 +1278,9 @@
         api('admin_mdk_afsloer', {}).then(function (r) {
           openModal('<div class="afsloer-res"><span class="mdk-eyebrow">Månedens Webkollega · ' + MAANEDER[Number(r.maaned.slice(5)) - 1] + '</span>' +
             '<div class="afsloer-crown">🏆</div><h2>' + esc(r.navn) + '</h2>' +
-            '<p class="muted">' + r.stemmer + (r.stemmer === 1 ? ' stemme' : ' stemmer') + (r.udbetalt ? ' · ' + wc(r.udbetalt) + ' ' + coin() + ' er lagt på saldoen' : r.praemie ? ' · Husk at give præmien: ' + esc(r.praemie) : '') + '</p>' +
+            '<p class="muted">' + r.stemmer + (r.stemmer === 1 ? ' stemme' : ' stemmer') + '</p>' +
+            (r.udbetalt ? '<div class="afsloer-praemie">' + coin() + '<span><b>' + wc(r.udbetalt) + '</b> er lagt på saldoen</span></div>'
+              : r.praemie ? '<div class="afsloer-praemie">🎁<span>Husk at give præmien: <b>' + esc(r.praemie) + '</b></span></div>' : '') +
             '<div class="modal-acts"><button class="btn primary grow" data-act="close">Tillykke! 🎉</button></div></div>');
           konfetti(true);
           return refresh();
