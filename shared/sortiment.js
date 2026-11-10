@@ -23,7 +23,7 @@ var SORTIMENT = {
 
   hjul: [
     { id: 'h-100', navn: '100 Webcoins', ikon: '🏆', type: 'webcoins', beloeb: 100, vaegt: 30 },
-    { id: 'h-nitte', navn: 'Nitte', ikon: '🙈', type: 'intet', vaegt: 100 },
+    { id: 'h-nitte', navn: 'Nitte', ikon: '❌', type: 'intet', vaegt: 100 },
     { id: 'h-10', navn: '10 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 10, vaegt: 80 },
     { id: 'h-sodavand', navn: 'Sodavand', ikon: '🥤', type: 'vare', kostpris: 10, vaegt: 120 },
     { id: 'h-20', navn: '20 Webcoins', ikon: '💫', type: 'webcoins', beloeb: 20, vaegt: 180 },
