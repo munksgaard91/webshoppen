@@ -784,6 +784,7 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .pstat small.pstat-ialt { color: var(--text); font-weight: 400; white-space: nowrap; }
 
 /* Admin-overblik */
+.stat .sub2 { margin-top: 2px; color: var(--muted); font-size: 12px; white-space: nowrap; }
 .tag.ok { color: #1f7a4f; background: rgba(47, 163, 111, .12); }
 :root[data-theme="dark"] .tag.ok { color: #6fd4a4; }
 .adm-list { display: flex; flex-direction: column; }
