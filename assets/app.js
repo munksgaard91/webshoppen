@@ -235,7 +235,7 @@
     'profil': { titel: 'Min profil', fn: pageProfil },
     'admin/bestillinger': { titel: 'Bestillinger', fn: pageAdminBestillinger, admin: true },
     'admin/brugere': { titel: 'Brugere', fn: pageAdminBrugere, admin: true },
-    'admin/kollega': { titel: 'Månedens kollega', fn: pageAdminKollega, admin: true },
+    'admin/kollega': { titel: 'Månedens Webkollega', fn: pageAdminKollega, admin: true },
     'admin/regler': { titel: 'Regler', fn: pageRegler, admin: true },
     'admin/posteringer': { titel: 'Posteringer', fn: pageAdminPosteringer, admin: true }
   };
@@ -292,7 +292,7 @@
       '<nav class="nav">' + navLink('', 'home', 'Overblik') +
       navLink('admin/bestillinger', 'cart', 'Bestillinger', nyeBest ? '<span class="badge">' + nyeBest + '</span>' : '') +
       navLink('admin/brugere', 'users', 'Brugere') +
-      navLink('admin/kollega', 'star', 'Månedens kollega') +
+      navLink('admin/kollega', 'star', 'Månedens Webkollega') +
       navLink('admin/regler', 'book', 'Regler') +
       navLink('admin/posteringer', 'list', 'Posteringer') + '</nav>' +
       '<div class="side-foot">' +
@@ -324,10 +324,15 @@
   function mineRegler() {
     // Gruppens egne regler først, derefter dem for alle (Konkurrencer, Fælles mål)
     var r = S.regler.filter(function (x) { return x.gruppe === S.me.gruppe; }).concat(S.regler.filter(function (x) { return x.gruppe === 'Alle'; }));
-    if (!r.length) return '<div class="faint">Ingen regler for din gruppe endnu.</div>';
-    return r.map(function (x) { return '<div class="rule"><span>' + esc(x.kildeNavn) + '</span><b>' + regelVaerdi(x) + '</b></div>'; }).join('');
+    // Månedens Webkollega står øverst hos alle med denne måneds præmie
+    return '<div class="rule"><span>Månedens Webkollega</span><b>' + mdkVaerdi() + '</b></div>' +
+      r.map(function (x) { return '<div class="rule"><span>' + esc(x.kildeNavn) + '</span><b>' + regelVaerdi(x) + '</b></div>'; }).join('');
   }
   // Regelens værdi med mønten til sidst, fx "20 Webcoins 🪙"
+  function mdkVaerdi() {
+    var p = S.mdk && S.mdk.praemie;
+    return p ? esc(p) + (/webcoin/i.test(p) ? ' ' + coin() : '') : 'Coming soon';
+  }
   function regelVaerdi(x) {
     if (x.kilde === 'faelles_maal') return '<button class="rule-link" data-act="faelles-maal">' + esc(x.tekst || 'Se status') + '</button>';
     return esc(x.tekst || x.sats) + ' ' + coin();
@@ -457,7 +462,7 @@
     setTimeout(function () { boks.remove(); }, 4500);
   }
 
-  // ---------- Månedens kollega ----------
+  // ---------- Månedens Webkollega ----------
 
   function kollega(kanKoebe) {
     var m = S.mdk;
@@ -499,10 +504,10 @@
         '<textarea class="input vote-why" id="mdk-hvorfor" rows="2" maxlength="500" placeholder="Hvorfor?"></textarea>' +
         '<div class="mdk-send"><button class="btn primary" data-act="stem">Stem</button><span class="mdk-fine">Én stemme i ' + mNavn + ' · stemmerne er hemmelige</span></div>';
     } else {
-      hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3>' + fakta + '<p class="mdk-why">Medarbejderne stemmer her. Du kan se stillingen under Admin → Månedens kollega.</p>';
+      hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3>' + fakta + '<p class="mdk-why">Medarbejderne stemmer her. Du kan se stillingen under Admin → Månedens Webkollega.</p>';
     }
 
-    return '<section class="block"><h2 class="block-title">Månedens kollega</h2><div class="card mdk2">' + spot + '<div class="mdk-vote">' + hoejre + '</div></div></section>';
+    return '<section class="block"><h2 class="block-title">Månedens Webkollega</h2><div class="card mdk2">' + spot + '<div class="mdk-vote">' + hoejre + '</div></div></section>';
   }
 
 
@@ -782,6 +787,7 @@
       '<section class="card regel-liste">' + S.grupper.concat('Alle').map(function (g) {
         var r = S.regler.filter(function (x) { return x.gruppe === g; });
         return '<h2 class="card-title">' + esc(g === 'Alle' ? 'Alle grupper' : g) + '</h2>' +
+          (g === 'Alle' ? '<ul><li><span>Månedens Webkollega</span><b>' + mdkVaerdi() + '</b></li></ul>' : '') +
           (r.length ? '<ul>' + r.map(function (x) { return '<li><span>' + esc(x.kildeNavn) + '</span><b>' + regelVaerdi(x) + '</b></li>'; }).join('') + '</ul>' : '<p class="faint">Kommer senere.</p>');
       }).join('') + '</section>';
   }
@@ -831,7 +837,7 @@
       '</section>';
 
     var top = m.stilling.slice(0, 3);
-    var kollega = '<section class="card"><div class="card-head"><h2 class="card-title">Månedens kollega</h2><a class="link" href="#/admin/kollega">Åbn</a></div>' +
+    var kollega = '<section class="card"><div class="card-head"><h2 class="card-title">Månedens Webkollega</h2><a class="link" href="#/admin/kollega">Åbn</a></div>' +
       '<div class="rule"><span>Præmie i ' + mNavn + '</span>' + (m.praemie ? '<b>' + esc(m.praemie) + '</b>' : '<a class="link" href="#/admin/kollega">Coming soon – vælg præmie</a>') + '</div>' +
       '<div class="rule"><span>Stemmer</span><b class="num">' + m.afgivet + '</b></div>' +
       (top.length ? top.map(function (x, i) { return '<div class="rule"><span>' + ['🥇', '🥈', '🥉'][i] + ' ' + esc(x.navn) + '</span><b class="num">' + x.stemmer + '</b></div>'; }).join('') : '') +
@@ -900,7 +906,7 @@
   function pageAdminKollega() {
     var m = A.mdk;
     var mNavn = MAANEDER[Number(m.maaned.slice(5)) - 1];
-    return adminHead('Månedens kollega') +
+    return adminHead('Månedens Webkollega') +
       '<section class="card" style="margin-bottom:20px"><div class="card-head"><h2 class="card-title">Præmie</h2></div>' +
       '<div class="vote-form"><input class="input" id="mdk-praemie" value="' + esc(m.praemie) + '" placeholder="fx 50 Webcoins"><button class="btn primary" data-act="mdk-praemie-ok">Gem</button></div>' +
       '<small class="faint">' + (m.praemie ? 'Gælder ' + mNavn + '.' : 'Ingen præmie for ' + mNavn + ' endnu – medarbejderne ser "Coming soon".') + ' Præmien nulstilles hver måned og gives manuelt (Brugere → Justér).</small></section>' +
