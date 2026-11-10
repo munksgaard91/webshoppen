@@ -511,13 +511,27 @@
 
   // Fælles mål (fanen Maal) – "Fælles mål | Se status" i regel-boksen scroller hertil.
   // Månedens mål afgøres dagen efter månedens udgang; sidste måneds resultat vises, når tallene er skrevet ind.
+  // Ikon foran en præmie/belønning: valgt i admin ('coin' = Webcoin-mønten, ellers en emoji); uden valg mønt ved Webcoins, ellers 🎁
+  function praemieIkon(ikon, praemie) {
+    if (ikon === 'coin') return coin();
+    if (ikon) return esc(ikon);
+    return /webcoin/i.test(praemie || '') ? coin() : '🎁';
+  }
+  // Emoji-vælger til præmier i admin: knap med det valgte ikon + skjult felt
+  var IKON_VALG = ['coin', '🎁', '🍕', '🍔', '🌮', '🍣', '🥐', '🍰', '🧁', '🍩', '🍪', '🍫', '🍦', '🍿', '🥤', '☕', '🍺', '🍷', '🥂', '🍾',
+    '🎉', '🏆', '🥇', '⭐', '🎬', '🎮', '🎳', '🎯', '🎤', '🎟️', '🏖️', '✈️', '💆', '🛍️', '🎧', '📚', '💎', '💰', '🔥', '⚡'];
+  function ikonFelt(id, ikon) {
+    return '<input type="hidden" id="' + id + '" value="' + esc(ikon || '') + '">' +
+      '<button type="button" class="btn ikon-knap" data-act="ikon-vaelg" data-felt="' + id + '" title="Vælg ikon" aria-label="Vælg ikon">' + (ikon ? praemieIkon(ikon) : '🎁') + '</button>';
+  }
+
   function decimal(n) { return Number(n).toLocaleString('da-DK', { maximumFractionDigits: 2 }); }
   // Progressbar: fyldet går fra rødt (under 50 %) over orange mod grønt, og er helt grønt, når målet er nået.
   // Under/over: "6,8 t · mål under 6,5 t" / "14 af 20 anmeldelser". Til højre ✓ / ✕ (– uden status).
   // Fyldets farve følger status: lyseblå ved 0 % → Best One-blå ved 99 % (--p, CSS color-mix). Nået = .fuld (dyb grøn).
   function maalFarve(pct) { return Math.max(0, Math.min(99, Math.round(pct))); }
-  // Tekst på mørkt fyld: venstre tal bliver hvidt ved ≥ 60 %; procenten yderst til højre får en lys pille ved ≥ 85 %
-  function maalTekst(m) { return m.naaet ? '' : (m.pct >= 60 ? ' lys-v' : '') + (m.pct >= 85 ? ' lys-h' : ''); }
+  // Tekst på mørkt fyld: tallet i baren bliver hvidt ved ≥ 60 % (procenten står uden for baren)
+  function maalTekst(m) { return m.naaet ? '' : (m.pct >= 60 ? ' lys-v' : ''); }
   function maalRaekke(m, slut) {
     var e = m.enhed ? ' ' + esc(m.enhed) : '';
     var label = m.nu === null ? (slut ? 'Opgøres' : 'Ingen status endnu') : m.retning === 'under'
@@ -527,19 +541,19 @@
       : m.naaet ? '<span class="maal-ikon ok" title="' + (slut ? 'Nået' : 'På mål lige nu') + '">✓</span>'
       : '<span class="maal-ikon nej" title="' + (slut ? 'Ikke nået' : 'Ikke på mål lige nu') + '">✕</span>';
     return '<div class="maal-row"><div class="maal-txt"><b>' + esc(m.navn) + '</b><small>' + esc(m.tekst) + '</small></div>' +
-      '<div class="bar bar-big' + (m.naaet ? ' fuld' : '') + maalTekst(m) + '"><i style="width:' + m.pct + '%;--p:' + maalFarve(m.pct) + '"></i><span class="bar-label num">' + label + (m.nu === null ? '' : '<b>' + m.pct + ' %</b>') + '</span></div>' +
-      ikon + '</div>';
+      '<div class="bar bar-big' + (m.naaet ? ' fuld' : '') + maalTekst(m) + '"><i style="width:' + m.pct + '%;--p:' + maalFarve(m.pct) + '"></i><span class="bar-label num">' + label + '</span></div>' +
+      '<b class="maal-pct num">' + (m.nu === null ? '' : m.pct + ' %') + '</b>' + ikon + '</div>';
   }
-  // Belønningen for månedens fælles mål: "Når vi 3 af 4 mål: Teamfrokost" + hvor mange der er nået lige nu.
+  // Belønningen for månedens fælles mål: "Hvis vi når 3 ud af 4 mål i november: Teamfrokost" + hvor mange der er nået lige nu.
   // Ved sidste måned (slut) står resultatet i stedet.
-  function maalPraemie(p, slut) {
+  function maalPraemie(p, slut, mNavn) {
     if (!p || !p.ialt) return '';
     var hvad = p.praemie ? esc(p.praemie) : 'Coming soon';
     var status = slut
       ? '<span class="tag ' + (p.opnaaet ? 'ok' : 'annulleret') + '">' + (p.opnaaet ? 'Nået 🎉' : 'Ikke nået') + '</span>'
       : '<span class="tag' + (p.opnaaet ? ' ok' : '') + '">' + p.naaet + ' af ' + p.ialt + ' på mål lige nu</span>';
-    return '<div class="maal-praemie' + (p.opnaaet ? ' opnaaet' : '') + '"><span class="mp-ikon" aria-hidden="true">🎁</span>' +
-      '<div class="mp-txt"><small>' + (slut ? p.naaet + ' af ' + p.ialt + ' mål nået · krav ' + p.antal : 'Når vi ' + p.antal + ' af ' + p.ialt + ' mål') + '</small>' +
+    return '<div class="maal-praemie' + (p.opnaaet ? ' opnaaet' : '') + '"><span class="mp-ikon" aria-hidden="true">' + praemieIkon(p.ikon, p.praemie) + '</span>' +
+      '<div class="mp-txt"><small>' + (slut ? p.naaet + ' af ' + p.ialt + ' mål nået · krav ' + p.antal : 'Hvis vi når ' + p.antal + ' ud af ' + p.ialt + ' mål i ' + mNavn) + '</small>' +
       '<b>' + hvad + '</b></div>' + status + '</div>';
   }
   function faellesMaal() {
@@ -549,7 +563,7 @@
     var denne = f.maal.map(function (m) { return maalRaekke(m, false); }).join('');
     var sidste = f.sidste.maal.map(function (m) { return maalRaekke(m, true); }).join('');
     return '<section class="block" id="faelles-maal"><div class="block-head"><h2 class="block-title">Fælles mål</h2><span class="note">Afgøres 1. ' + naeste + '</span></div>' +
-      '<div class="card maal-liste">' + (denne ? maalPraemie(f.praemie, false) + denne : '<p class="faint" style="margin:0">Ingen mål for ' + mNavn + ' endnu.</p>') + '</div>' +
+      '<div class="card maal-liste">' + (denne ? maalPraemie(f.praemie, false, mNavn) + denne : '<p class="faint" style="margin:0">Ingen mål for ' + mNavn + ' endnu.</p>') + '</div>' +
       (sidste ? '<h3 class="maal-sub">Resultat for ' + MAANEDER[(nu.getMonth() + 11) % 12] + '</h3><div class="card maal-liste">' + maalPraemie(f.sidste.praemie, true) + sidste + '</div>' : '') + '</section>';
   }
 
@@ -600,13 +614,13 @@
         ? '<span class="mdk-eyebrow">Vinder i ' + forrigeNavn + '</span>' +
           '<div class="mdk-winner"><span class="mdk-crown">🥁</span><span class="mdk-avatar empty">?</span></div>' +
           '<b class="mdk-name">Afsløres snart</b><span class="mdk-tease">Vinderen afsløres til briefingen</span>'
-        : '<span class="mdk-eyebrow">Vinder i ' + forrigeNavn + '</span>' +
+        : '<span class="mdk-eyebrow">Vinderen i ' + mNavn + '</span>' +
           '<div class="mdk-winner"><span class="mdk-crown faded">🏆</span><span class="mdk-avatar empty">?</span></div>' +
           '<b class="mdk-name">Det kunne være dig!</b><span class="mdk-tease">Den første vinder kåres 1. ' + naesteNavn + '</span>') +
       '</div>';
 
     // Højre: denne måneds afstemning med præmie og deadline øverst
-    var fakta = '<div class="mdk-meta"><span class="mdk-pill">' + (/webcoin/i.test(m.praemie) ? coin() : '🎁') + '<small>Præmie</small><b>' + (m.praemie ? esc(m.praemie) : 'Coming soon') + '</b></span>' +
+    var fakta = '<div class="mdk-meta"><span class="mdk-pill">' + praemieIkon(m.praemieIkon, m.praemie) + '<small>Præmie</small><b>' + (m.praemie ? esc(m.praemie) : 'Coming soon') + '</b></span>' +
       '<span class="mdk-pill">⏳<small>Slutter om</small><b>' + (dageTilbage === 0 ? 'i dag' : dageTilbage + (dageTilbage === 1 ? ' dag' : ' dage')) + '</b></span></div>';
     var hoejre;
     if (m.minStemme) {
@@ -1054,15 +1068,15 @@
     var maalKort = '<h2 class="block-title">Fælles mål</h2>' +
       '<section class="card" style="margin-bottom:28px"><div class="card-head"><h2 class="card-title">Belønning i ' + mNavn + '</h2><span class="tag' + (fp.opnaaet ? ' ok' : '') + '">' + (fp.naaet || 0) + ' af ' + (fp.ialt || 0) + ' på mål lige nu</span></div>' +
       (fm.maal.length
-        ? '<div class="vote-form maal-form"><input class="input" id="maal-praemie" value="' + esc(fp.praemie) + '" placeholder="fx Teamfrokost">' +
-          '<label class="maal-antal">Når vi <input class="input num" type="number" id="maal-antal" min="1" max="' + fp.ialt + '" value="' + fp.antal + '"> af ' + fp.ialt + ' mål</label>' +
+        ? '<div class="vote-form maal-form">' + ikonFelt('maal-ikon', fp.ikon) + '<input class="input" id="maal-praemie" value="' + esc(fp.praemie) + '" placeholder="fx Teamfrokost">' +
+          '<label class="maal-antal">Hvis vi når <input class="input num" type="number" id="maal-antal" min="1" max="' + fp.ialt + '" value="' + fp.antal + '"> ud af ' + fp.ialt + ' mål i ' + mNavn + '</label>' +
           '<button class="btn primary" data-act="maal-praemie-ok">Gem</button></div>' +
           '<small class="faint">' + (fp.praemie ? 'Gælder ' + mNavn + '.' : 'Ingen belønning for ' + mNavn + ' endnu – medarbejderne ser "Coming soon".') + ' Målene og deres status ligger i fanen Maal.</small>'
         : '<div class="empty">Læg månedens mål ind i fanen Maal først.</div>') + '</section>';
     return adminHead('Konkurrencer') + maalKort +
       '<h2 class="block-title">Månedens Webkollega</h2>' + (afsloerKnap(m) ? '<section class="card" style="margin-bottom:20px">' + afsloerKnap(m) + '</section>' : '') +
       '<section class="card" style="margin-bottom:20px"><div class="card-head"><h2 class="card-title">Præmie</h2></div>' +
-      '<div class="vote-form"><input class="input" id="mdk-praemie" value="' + esc(m.praemie) + '" placeholder="fx 50 Webcoins"><button class="btn primary" data-act="mdk-praemie-ok">Gem</button></div>' +
+      '<div class="vote-form">' + ikonFelt('mdk-ikon', m.praemieIkon) + '<input class="input" id="mdk-praemie" value="' + esc(m.praemie) + '" placeholder="fx 50 Webcoins"><button class="btn primary" data-act="mdk-praemie-ok">Gem</button></div>' +
       '<small class="faint">' + (m.praemie ? 'Gælder ' + mNavn + '.' : 'Ingen præmie for ' + mNavn + ' endnu – medarbejderne ser "Coming soon".') + ' Præmien nulstilles hver måned. Webcoins udbetales, når du trykker Afslør.</small></section>' +
       '<div class="adm-stak" style="margin-top:0"><section class="card"><div class="card-head"><h2 class="card-title">Stilling i ' + mNavn + '</h2><span class="tag">' + m.afgivet + ' stemmer</span></div>' +
       (m.stilling.length ? '<div class="table-wrap"><table><thead><tr><th>#</th><th>Kollega</th><th class="r">Stemmer</th><th class="r">Første stemme</th></tr></thead><tbody>' +
@@ -1426,11 +1440,30 @@
           if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true);
         });
         break;
+      case 'ikon-vaelg':
+        ui.ikonFelt = t.dataset.felt;
+        openModal('<h2>Vælg ikon</h2><div class="ikon-grid">' + IKON_VALG.map(function (k) {
+          return '<button type="button" class="ikon-valg" data-act="ikon-sat" data-v="' + esc(k) + '" title="' + (k === 'coin' ? 'Webcoin' : esc(k)) + '">' + praemieIkon(k) + '</button>';
+        }).join('') + '</div>' +
+          '<div class="vote-form" style="margin-top:14px"><input class="input" id="ikon-egen" maxlength="16" placeholder="Eller indsæt en emoji"><button class="btn" data-act="ikon-sat" data-egen="1">Brug</button></div>' +
+          '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button></div>');
+        break;
+      case 'ikon-sat': {
+        var v = t.dataset.egen ? val('ikon-egen').trim() : t.dataset.v;
+        var felt = document.getElementById(ui.ikonFelt);
+        if (felt && v) {
+          felt.value = v;
+          var knap = document.querySelector('[data-act="ikon-vaelg"][data-felt="' + ui.ikonFelt + '"]');
+          if (knap) knap.innerHTML = praemieIkon(v);
+        }
+        closeModal();
+        break;
+      }
       case 'maal-praemie-ok':
-        submit(t, 'admin_maal_praemie', { praemie: val('maal-praemie'), antal: val('maal-antal') }, 'Belønning gemt');
+        submit(t, 'admin_maal_praemie', { praemie: val('maal-praemie'), antal: val('maal-antal'), ikon: val('maal-ikon') }, 'Belønning gemt');
         break;
       case 'mdk-praemie-ok':
-        submit(t, 'admin_mdk_praemie', { praemie: val('mdk-praemie') }, 'Præmie gemt');
+        submit(t, 'admin_mdk_praemie', { praemie: val('mdk-praemie'), ikon: val('mdk-ikon') }, 'Præmie gemt');
         break;
       case 'sync':
         busy(t, true);

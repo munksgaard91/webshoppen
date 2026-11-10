@@ -24,9 +24,9 @@ var Core = (function () {
     Regler: ['gruppe', 'kilde', 'sats', 'tekst', 'navn', 'fra'],
     Afregning: ['maaned', 'sendt', 'tid'],
     Maal: ['maaned', 'navn', 'tekst', 'retning', 'graense', 'nu', 'enhed', 'kilde'],
-    MaalPraemie: ['maaned', 'antal', 'praemie'],
+    MaalPraemie: ['maaned', 'antal', 'praemie', 'ikon'],
     // Månedens Webkollega pr. måned: præmien (sat af admin) og vinderen (sat, når admin trykker Afslør)
-    Webkollega: ['maaned', 'praemie', 'vinder', 'afsloeret']
+    Webkollega: ['maaned', 'praemie', 'vinder', 'afsloeret', 'ikon']
   };
 
   function err(code, msg) {
@@ -226,7 +226,7 @@ var Core = (function () {
     var r = maalPraemieRaekke(db, mk);
     var ialt = maal.length, naaet = maal.filter(function (m) { return m.naaet; }).length;
     var antal = Math.min(ialt, r && num(r.antal) > 0 ? num(r.antal) : Math.max(1, ialt - 1));
-    return { praemie: r ? str(r.praemie).trim() : '', antal: antal, ialt: ialt, naaet: naaet, opnaaet: ialt > 0 && naaet >= antal };
+    return { praemie: r ? str(r.praemie).trim() : '', ikon: r ? rensIkon(r.ikon) : '', antal: antal, ialt: ialt, naaet: naaet, opnaaet: ialt > 0 && naaet >= antal };
   }
   function faellesMaalState(db, mk) {
     var maal = faellesMaal(db, mk);
@@ -347,7 +347,7 @@ var Core = (function () {
         var afsloeret = row && str(row.afsloeret).trim() && ini(row.vinder);
         var vinder = afsloeret ? { initialer: ini(row.vinder), navn: navne[ini(row.vinder)] || ini(row.vinder) } : null;
         var afventer = !afsloeret && db.all('Stemmer').some(function (v) { return str(v.maaned) === sidst; });
-        return { maaned: mk, minStemme: min ? { initialer: min, navn: navne[min] || min, begrundelse: minHvorfor } : null, praemie: mdkPraemie(db, mk),
+        return { maaned: mk, minStemme: min ? { initialer: min, navn: navne[min] || min, begrundelse: minHvorfor } : null, praemie: mdkPraemie(db, mk), praemieIkon: mdkPraemieIkon(db, mk),
           sidste: vinder ? { maaned: sidst, initialer: vinder.initialer, navn: vinder.navn } : null, afventer: afventer ? sidst : '' };
       })(),
       hjul: { pris: Math.floor(num(sortiment().hjulPris)), klar: me.initialer ? ubrugteDrej(db, me.initialer) : 0, felter: (function () {
@@ -484,6 +484,17 @@ var Core = (function () {
     try { db.all('Webkollega').forEach(function (r) { if (str(r.maaned).trim() === mk) row = r; }); } catch (e) { row = null; }
     return row;
   }
+  // Ikon til en præmie/belønning: 'coin' (Webcoin-mønten) eller en kort emoji. Alt andet ignoreres.
+  function rensIkon(v) {
+    var t = str(v).trim();
+    if (t === 'coin') return t;
+    return t && t.length <= 16 && !/[<>&"'\\a-z0-9\s]/i.test(t) ? t : '';
+  }
+  function mdkPraemieIkon(db, mk) {
+    var row = mdkRaekke(db, mk);
+    if (row && str(row.praemie).trim()) return rensIkon(row.ikon);
+    return str(cfgVal(db, 'MDK_PRAEMIE_MAANED', '')).trim() === mk ? rensIkon(cfgVal(db, 'MDK_PRAEMIE_IKON', '')) : '';
+  }
   function mdkPraemie(db, mk) {
     var row = mdkRaekke(db, mk);
     if (row && str(row.praemie).trim()) return str(row.praemie).trim();
@@ -548,10 +559,12 @@ var Core = (function () {
     var mk = maanedKey(env.now());
     saetCfg(db, 'MDK_PRAEMIE', tekst);
     saetCfg(db, 'MDK_PRAEMIE_MAANED', mk);
+    var ikon = rensIkon(data.ikon);
+    saetCfg(db, 'MDK_PRAEMIE_IKON', ikon);
     // Præmien gemmes også pr. måned, så sidste måneds præmie huskes, selv om en ny er sat før afsløringen
     var row = mdkRaekke(db, mk);
     try {
-      if (row) db.update('Webkollega', row, { praemie: tekst }); else db.insert('Webkollega', { maaned: mk, praemie: tekst, vinder: '', afsloeret: '' });
+      if (row) db.update('Webkollega', row, { praemie: tekst, ikon: ikon }); else db.insert('Webkollega', { maaned: mk, praemie: tekst, vinder: '', afsloeret: '', ikon: ikon });
     } catch (e) { /* fanen mangler i et ældre ark – Config-præmien gælder stadig */ }
     return { ok: true };
   }
@@ -565,7 +578,8 @@ var Core = (function () {
     var ialt = faellesMaal(db, mk).length;
     if (antal < 1 || (ialt && antal > ialt)) throw err('BAD', 'Antal mål skal være mellem 1 og ' + (ialt || 1) + '.');
     var row = maalPraemieRaekke(db, mk);
-    if (row) db.update('MaalPraemie', row, { antal: antal, praemie: tekst }); else db.insert('MaalPraemie', { maaned: mk, antal: antal, praemie: tekst });
+    var ikon = rensIkon(data.ikon);
+    if (row) db.update('MaalPraemie', row, { antal: antal, praemie: tekst, ikon: ikon }); else db.insert('MaalPraemie', { maaned: mk, antal: antal, praemie: tekst, ikon: ikon });
     return { ok: true };
   }
 
@@ -751,7 +765,7 @@ var Core = (function () {
         var sidst = uafsloeretMaaned(db, mk) || forrigeMaaned(mk), sVinder = mdkStilling(db, sidst)[0] || null;
         var afsloer = { maaned: sidst, praemie: mdkPraemie(db, sidst), vinder: sVinder ? { initialer: sVinder.initialer, navn: sVinder.navn, stemmer: sVinder.stemmer } : null,
           afsloeret: erAfsloeret(db, sidst) };
-        return { maaned: mk, stilling: mdkStilling(db, mk), afgivet: afgivet, praemie: mdkPraemie(db, mk), historik: hist, afsloer: afsloer };
+        return { maaned: mk, stilling: mdkStilling(db, mk), afgivet: afgivet, praemie: mdkPraemie(db, mk), praemieIkon: mdkPraemieIkon(db, mk), historik: hist, afsloer: afsloer };
       })(),
       regler: regler(db),
       grupper: GRUPPER

@@ -274,14 +274,15 @@ a { color: inherit; }
 .saldo-ret input:focus { border-color: var(--brand); background: var(--card); }
 .maal-liste { padding-top: 6px; padding-bottom: 6px; }
 .maal-sub { font-size: 15px; font-weight: 800; margin: 22px 0 10px; color: var(--muted); }
-.maal-row { display: grid; grid-template-columns: 260px minmax(0, 1fr) 30px; align-items: center; gap: 20px; padding: 14px 0; border-top: 1px solid var(--line); }
-@media (max-width: 700px) { .maal-row { grid-template-columns: minmax(0, 1fr) 30px; gap: 8px 12px; } .maal-row .maal-txt { grid-column: 1 / -1; } }
+.maal-row { display: grid; grid-template-columns: 260px minmax(0, 1fr) 52px 30px; align-items: center; gap: 20px; padding: 14px 0; border-top: 1px solid var(--line); }
+@media (max-width: 700px) { .maal-row { grid-template-columns: minmax(0, 1fr) 44px 30px; gap: 8px 12px; } .maal-row .maal-txt { grid-column: 1 / -1; } }
 /* Fyld efter status: --p (0–99) blander lyseblå → Best One-blå, sat pr. bar i app.js. Nået = .fuld (dyb grøn). */
 .maal-row .bar-big:not(.fuld) > i, .adm-ev .bar:not(.fuld) > i { background: color-mix(in srgb, #225581 calc(var(--p, 0) * 1%), #c3dbf3); }
 :root[data-theme="dark"] .maal-row .bar-big:not(.fuld) > i, :root[data-theme="dark"] .adm-ev .bar:not(.fuld) > i { background: color-mix(in srgb, #225581 calc(var(--p, 0) * 1%), #7fa9d6); }
 .maal-row .bar-big.lys-v .bar-label > span, .maal-row .bar-big.lys-v .bar-label > span b { color: #fff; }
-.maal-row .bar-big.lys-h .bar-label > b { background: var(--card); color: var(--brand); padding: 1px 7px; border-radius: 7px; }
-:root[data-theme="dark"] .maal-row .bar-big.lys-h .bar-label > b { color: var(--text); }
+/* Procenten står til højre for baren (skifter aldrig farve) */
+.maal-pct { font-size: 14px; font-weight: 800; text-align: right; white-space: nowrap; }
+.maal-row .bar-big { max-width: 520px; width: 100%; justify-self: end; }
 /* Nået: dyb grøn (samme som ✓) */
 :root .maal-row .bar-big.fuld > i, :root .adm-ev .bar.fuld > i, :root[data-theme="dark"] .maal-row .bar-big.fuld > i, :root[data-theme="dark"] .adm-ev .bar.fuld > i { background: #1f8a55; }
 .maal-ikon { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; font-weight: 800; color: var(--faint); background: var(--card-2); box-shadow: inset 0 0 0 1px var(--line); }
@@ -847,3 +848,12 @@ tr.afregnet td { color: var(--muted); }
 .vedl-card p { color: var(--muted); margin: 0; font-size: 17px; }
 .vedl-ico { font-size: 44px; line-height: 1; }
 .vedl-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: var(--brand-soft); color: var(--text); border-radius: 14px; padding: 10px 14px; margin-bottom: 18px; font-size: 14px; }
+
+/* Emoji-vælger til præmier (admin) */
+.ikon-knap { width: 44px; height: 44px; padding: 0; font-size: 22px; flex: none; justify-content: center; }
+.ikon-knap .coin, .ikon-valg .coin { width: 24px; height: 24px; }
+.ikon-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+.ikon-valg { all: unset; cursor: pointer; display: grid; place-items: center; height: 42px; border-radius: 10px; font-size: 24px; background: var(--card-2); }
+.ikon-valg:hover, .ikon-valg:focus-visible { background: var(--brand-soft); outline: 2px solid var(--brand-2); }
+.mp-ikon .coin { width: 26px; height: 26px; }
+.maal-form #maal-praemie { flex: 1 1 200px; min-width: 180px; }

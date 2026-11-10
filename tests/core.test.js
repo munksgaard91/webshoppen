@@ -393,4 +393,15 @@ t('fælles mål: belønning (3 af 4) sættes af admin og tælles op', function (
   eq(Core.handle(db, B, 'state', {}, env).faellesMaal.praemie.opnaaet, true);
   eq(data.MaalPraemie.length, 1, 'samme måned opdateres');
 });
+t('ikon til præmier: emoji eller Webcoin-mønt, alt andet afvises', function () {
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  Core.handle(db, adm, 'admin_maal_praemie', { praemie: 'Pizza', antal: 3, ikon: '🍕' }, env);
+  eq(Core.handle(db, B, 'state', {}, env).faellesMaal.praemie.ikon, '🍕');
+  Core.handle(db, adm, 'admin_maal_praemie', { praemie: 'Pizza', antal: 3, ikon: '<img src=x>' }, env);
+  eq(Core.handle(db, B, 'state', {}, env).faellesMaal.praemie.ikon, '', 'HTML afvises');
+  Core.handle(db, adm, 'admin_mdk_praemie', { praemie: '50 Webcoins', ikon: 'coin' }, env);
+  eq(Core.handle(db, B, 'state', {}, env).mdk.praemieIkon, 'coin');
+  Core.handle(db, adm, 'admin_mdk_praemie', { praemie: 'Biografbilletter', ikon: '🎬' }, env);
+  eq(Core.handle(db, B, 'state', {}, env).mdk.praemieIkon, '🎬');
+});
 print('OK: ' + ok + '  FEJL: ' + fejl);
