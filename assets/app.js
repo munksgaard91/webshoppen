@@ -236,18 +236,28 @@
   }
 
   // Gaver modtaget siden sidst (fra admin eller en kollega) vises som popup ved login, indtil man trykker Tak
+  // Popup ved login: nye gaver (med konfetti) og/eller bestillinger, admin har annulleret (pengene er sat tilbage)
   function visGaver() {
-    var g = S.gaver || [];
-    if (!g.length || S.vedligehold) return; // gaverne vises, når shoppen er åben igen
-    openModal('<div class="gave-pop"><div class="gave-ikon">🎁</div><h2>' + (g.length === 1 ? 'Du har fået en gave!' : 'Du har fået ' + g.length + ' gaver!') + '</h2>' +
-      '<div class="gave-liste">' + g.map(function (x) {
+    var g = S.gaver || [], an = S.annulleret || [];
+    if ((!g.length && !an.length) || S.vedligehold) return; // vises, når shoppen er åben igen
+    var gaveDel = g.length ? '<div class="gave-liste">' + g.map(function (x) {
         var hvad = x.beloeb ? '<b class="num">' + wc(x.beloeb) + '</b> ' + coin() : '<b>' + esc(x.hvad) + '</b>';
         return '<div class="gave-item">' + pAvatar(x.fra, x.fra || 'A', 'mini-av md') + '<div><div>' + hvad + ' <span class="muted">fra ' + esc(x.fraNavn) + '</span></div>' +
           (x.besked ? '<q>' + esc(x.besked) + '</q>' : '') + '</div></div>';
-      }).join('') + '</div>' +
-      '<div class="modal-acts"><button class="btn primary grow" data-act="gaver-ok">Tak! 🎉</button></div></div>');
-    konfetti();
+      }).join('') + '</div>' : '';
+    var annDel = an.length ? (g.length ? '<h3 class="ann-titel">' + (an.length === 1 ? 'Annulleret bestilling' : 'Annullerede bestillinger') + '</h3>' : '') +
+      '<div class="gave-liste">' + an.map(function (x) {
+        return '<div class="gave-item ann-item"><span class="ann-ikon" aria-hidden="true">↩️</span><div><div><b>' + esc(x.hvad) + '</b>' +
+          (x.til ? ' <span class="muted">til ' + esc(x.til) + '</span>' : '') + '</div>' +
+          '<small class="muted"><span class="num">' + wc(x.beloeb) + '</span> er sat tilbage på din saldo</small></div></div>';
+      }).join('') + '</div>' : '';
+    var titel = g.length ? (g.length === 1 ? 'Du har fået en gave!' : 'Du har fået ' + g.length + ' gaver!')
+      : (an.length === 1 ? 'Din bestilling blev annulleret' : an.length + ' bestillinger blev annulleret');
+    openModal('<div class="gave-pop"><div class="gave-ikon">' + (g.length ? '🎁' : '↩️') + '</div><h2>' + titel + '</h2>' + gaveDel + annDel +
+      '<div class="modal-acts"><button class="btn primary grow" data-act="gaver-ok">' + (g.length ? 'Tak! 🎉' : 'OK') + '</button></div></div>');
+    if (g.length) konfetti();
   }
+
 
   function renderLogin(besked) {
     var demo = '';
@@ -1403,7 +1413,13 @@
       case 'bruger-ok':
         submit(t, 'admin_bruger', { origEmail: val('b-orig'), navn: val('b-navn'), initialer: val('b-ini'), gruppe: val('b-gruppe'), email: val('b-email'), aktiv: checked('b-aktiv') }, 'Bruger gemt');
         break;
-      case 'gaver-ok': closeModal(); api('gaver_set', { seneste: (S.gaver[S.gaver.length - 1] || {}).tid }).then(function () { S.gaver = []; }).catch(function () {}); break;
+      case 'gaver-ok': {
+        closeModal();
+        // Gem tidspunktet for det nyeste, der blev vist (gave eller annullering)
+        var sete = (S.gaver || []).concat(S.annulleret || []).map(function (x) { return x.tid; }).sort();
+        api('gaver_set', { seneste: sete[sete.length - 1] }).then(function () { S.gaver = []; S.annulleret = []; }).catch(function () {});
+        break;
+      }
       case 'vedl-spoerg':
         openModal('<h2><span class="ico">🛠️</span>Luk shoppen?</h2>' +
           '<p class="muted" style="margin:-8px 0 16px">Medarbejderne ser "Shoppen opdateres" og kan ikke bestille, før du åbner igen.</p>' +

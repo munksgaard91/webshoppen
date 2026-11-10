@@ -873,3 +873,6 @@ tr.afregnet td { color: var(--muted); }
 .fb-arkiv summary { cursor: pointer; font-weight: 800; color: var(--muted); margin-bottom: 10px; }
 /* Fælles mål: opfordring til idé til belønning */
 .maal-ide { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--line); padding: 14px 0 4px; font-size: 14px; color: var(--muted); }
+/* Popup: annullerede bestillinger */
+.ann-titel { font-size: 15px; margin: 18px 0 8px; color: var(--muted); text-align: left; }
+.ann-ikon { width: 36px; height: 36px; display: grid; place-items: center; font-size: 20px; border-radius: 50%; background: var(--card-2); flex: none; }

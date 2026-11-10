@@ -345,6 +345,7 @@ var Core = (function () {
       teambudget: env.teambudget ? env.teambudget() : null,
       // Månedens mål + sidste måneds resultat (afgøres dagen efter månedens udgang, når tallene er opgjort)
       gaver: nyeGaver(db, me),
+      annulleret: nyeAnnulleringer(db, me),
       // Mønster til profilbilleder, fx https://leksione.dk/avatar/{ini}.png (Config BILLEDE_URL). Tom = initialer.
       billedeUrl: str(cfgVal(db, 'BILLEDE_URL', '')).trim(),
       faellesMaal: Object.assign(faellesMaalState(db, maanedKey(nu)), { sidste: faellesMaalState(db, forrigeMaaned(maanedKey(nu))) }),
@@ -395,6 +396,24 @@ var Core = (function () {
       } else if (str(p.ref) === 'admingave') {
         ud.push({ id: str(p.id), tid: str(p.tid), fra: '', fraNavn: 'Admin', hvad: '', beloeb: num(p.beloeb), besked: besked });
       }
+    });
+    return ud.sort(function (a, b) { return a.tid.localeCompare(b.tid); });
+  }
+
+  // Bestillinger, admin har annulleret siden sidst (refusionen er lagt på saldoen) – vises i samme popup som gaver.
+  // Bruger samme tidsstempel (gaver_set), så de kun vises én gang.
+  function nyeAnnulleringer(db, me) {
+    if (!me.initialer) return [];
+    var row = null, navne = {}, best = {};
+    db.all('Brugere').forEach(function (u) { navne[ini(u.initialer)] = str(u.navn); if (ini(u.initialer) === me.initialer) row = u; });
+    var sidst = row ? str(row.gaver_set) : '';
+    db.all('Bestillinger').forEach(function (b) { best[str(b.id)] = b; });
+    var ud = [];
+    db.all('Posteringer').forEach(function (p) {
+      if (p.initialer !== me.initialer || p.type !== 'refusion' || str(p.tid) <= sidst) return;
+      var b = best[str(p.ref)];
+      if (!b) return;
+      ud.push({ id: str(p.id), tid: str(p.tid), hvad: str(b.vare), beloeb: num(p.beloeb), til: ini(b.til) !== ini(b.fra) ? (navne[ini(b.til)] || ini(b.til)) : '' });
     });
     return ud.sort(function (a, b) { return a.tid.localeCompare(b.tid); });
   }

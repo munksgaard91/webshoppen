@@ -206,6 +206,21 @@ t('gave-popup: nye gaver vises, til de er set', function () {
   Core.handle(db, B, 'gaver_set', {}, { now: function () { return new Date(2026, 10, 15, 14, 0); }, uuid: env.uuid });
   eq(Core.handle(db, B, 'state', {}, senere).gaver.length, 0);
 });
+t('annulleret bestilling vises i popuppen, til den er set', function () {
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var kl = function (t, m) { return { now: function () { return new Date(2026, 10, 15, t, m); }, uuid: env.uuid, notify: env.notify, shop: env.shop }; };
+  Core.handle(db, B, 'gaver_set', {}, kl(15, 0));
+  Core.handle(db, B, 'bestil', { vareId: 'mon' }, kl(15, 10));
+  var b = data.Bestillinger[data.Bestillinger.length - 1];
+  eq(Core.handle(db, B, 'state', {}, kl(15, 20)).annulleret.length, 0, 'ingen før annullering');
+  Core.handle(db, adm, 'admin_bestilling', { id: b.id, status: 'annulleret' }, kl(15, 30));
+  var a = Core.handle(db, B, 'state', {}, kl(15, 40)).annulleret;
+  eq(a.length, 1);
+  eq(a[0].beloeb, 20);
+  eq(/Monster/.test(a[0].hvad), true);
+  Core.handle(db, B, 'gaver_set', { seneste: a[0].tid }, kl(15, 45));
+  eq(Core.handle(db, B, 'state', {}, kl(15, 50)).annulleret.length, 0, 'vises kun én gang');
+});
 t('udsolgt: kan ikke bestilles, før den er på lager igen', function () {
   var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
   var id = data.Menu[0].id;
