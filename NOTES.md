@@ -24,7 +24,7 @@ Lukket shop (uden for 08:00–15:30 på hverdage, eller når admin har "Ikke til
 
 ### Medarbejder – Min profil (`#/profil`)
 - Blåt topkort: billede, gruppe (ingen initialer), navn, saldo i højre hjørne (uden ordet "Saldo").
-- Tre visuelle nøgletal: **Optjent i <måned>** (sparkline 6 mdr. + "I alt" i sort, ikke fed), **Brugt i alt** (delt bjælke selv/donationer/**spins** + forklaring på 2 linjer), **Donationer** (antal givet som hovedtal, gave-ikoner, modtaget som undertekst – ingen "Ingen endnu").
+- Tre visuelle nøgletal: **Optjent i <måned>** (sparkline 6 mdr. + "I alt" i sort, ikke fed), **Brugt i alt** (delt bjælke selv/donationer/**spins** + forklaring på 1 linje), **Donationer** (antal givet som hovedtal, gave-ikoner, modtaget som undertekst – ingen "Ingen endnu").
 - Faner: **Aktivitet** (alle posteringer grupperet pr. måned med farvet ikon), **Optjening** (pr. måned fordelt på kilder), **Bestillinger** (med status). Disclaimer: "Tallene kan ændre sig, hvis der bliver rettet fejl." Nederst: **"Har du feedback til Webshoppen?" + knappen "💬 Giv feedback"** – sendes via backend (`forslag` med type `feedback`): gemmes i fanen `Forslag` (Admin → Feedback) + mail/Chat til admin.
 
 ### Admin (sidepanel)

@@ -778,8 +778,8 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .mdk-select::after { content: ''; position: absolute; right: 16px; top: 50%; width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
 .mdk-select select { appearance: none; -webkit-appearance: none; padding: 13px 40px 13px 14px; font-weight: 600; cursor: pointer; }
 
-/* Min profil: forklaringen under "Brugt" står i to kolonner (2 linjer) */
-.legend { display: grid; grid-template-columns: repeat(2, max-content); gap: 4px 16px; }
+/* Min profil: forklaringen under "Brugt" (Selv · Donationer · Spins) står på én linje */
+.legend { display: flex; flex-wrap: nowrap; gap: 4px 12px; white-space: nowrap; }
 /* Min profil: "I alt" under Optjent i sort, ikke fed */
 .pstat small.pstat-ialt { color: var(--text); font-weight: 400; white-space: nowrap; }
 
