@@ -21,7 +21,8 @@ var Core = (function () {
     Bestillinger: ['id', 'tid', 'fra', 'til', 'vare', 'pris', 'kostpris', 'status', 'forud', 'oenske'],
     Kilder: ['kilde', 'navn', 'sheet_id', 'fane', 'kol_initialer', 'kol_vaerdi', 'kol_dato', 'start_raekke'],
     Regler: ['gruppe', 'kilde', 'sats', 'tekst', 'navn'],
-    Afregning: ['maaned', 'sendt', 'tid']
+    Afregning: ['maaned', 'sendt', 'tid'],
+    Maal: ['maaned', 'navn', 'tekst', 'retning', 'graense', 'nu']
   };
 
   function err(code, msg) {
@@ -189,6 +190,20 @@ var Core = (function () {
     });
   }
 
+  // Fælles mål for måneden (fanen Maal). retning 'under' = skal være under grænsen, 'over' = grænsen eller mere.
+  // nu = det opgjorte resultat, skrives i arket dagen efter månedens udgang (tomt = ikke opgjort endnu).
+  function faellesMaal(db, mk) {
+    var rows = [];
+    try { rows = db.all('Maal'); } catch (e) { rows = []; }
+    return rows.filter(function (r) { return str(r.maaned).trim() === mk && str(r.navn).trim(); }).map(function (r) {
+      var harTal = str(r.nu).trim() !== '';
+      var nuTal = num(r.nu), graense = num(r.graense);
+      var under = str(r.retning).trim().toLowerCase() === 'under';
+      return { navn: str(r.navn), tekst: str(r.tekst), retning: under ? 'under' : 'over', graense: graense, nu: harTal ? nuTal : null,
+        naaet: harTal ? (under ? nuTal < graense : nuTal >= graense) : false };
+    });
+  }
+
   function aktiveBrugere(db) {
     return db.all('Brugere').filter(function (u) { return sand(u.aktiv) && ini(u.initialer); });
   }
@@ -258,6 +273,8 @@ var Core = (function () {
       regler: regler(db),
       grupper: GRUPPER,
       teambudget: env.teambudget ? env.teambudget() : null,
+      // Månedens mål + sidste måneds resultat (afgøres dagen efter månedens udgang, når tallene er opgjort)
+      faellesMaal: { maaned: maanedKey(nu), maal: faellesMaal(db, maanedKey(nu)), sidste: { maaned: forrigeMaaned(maanedKey(nu)), maal: faellesMaal(db, forrigeMaaned(maanedKey(nu))) } },
       shop: env.shop ? env.shop() : { aaben: true },
       mdk: (function () {
         var mk = maanedKey(nu), sidst = forrigeMaaned(mk);

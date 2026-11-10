@@ -136,6 +136,21 @@ t('admin ser hvem der har stemt på hvem', function () {
   eq(st[0].fra[0].initialer, 'AAA');
   eq(st[0].fra[0].begrundelse, 'test');
 });
+t('fælles mål: denne måned + sidste måneds resultat (under/over)', function () {
+  data.Maal = [
+    { maaned: '2026-11', navn: 'Hjemmeside', tekst: 'Under 6,5 t', retning: 'under', graense: 6.5, nu: '' },
+    { maaned: '2026-10', navn: 'Hjemmeside', tekst: 'Under 6,5 t', retning: 'under', graense: 6.5, nu: '6,8' },
+    { maaned: '2026-10', navn: 'Support', tekst: '20 eller flere', retning: 'over', graense: 20, nu: 20 },
+    { maaned: '2026-10', navn: 'Afventer', tekst: 'Under 70', retning: 'under', graense: 70, nu: '' }
+  ];
+  var f = Core.handle(db, B, 'state', {}, env).faellesMaal;
+  eq(f.maal.length, 1);
+  eq(f.maal[0].nu, null);
+  eq(f.sidste.maaned, '2026-10');
+  eq(f.sidste.maal[0].naaet, false);
+  eq(f.sidste.maal[1].naaet, true);
+  eq(f.sidste.maal[2].nu, null);
+});
 t('tie-breaker: første stemme vinder', function () {
   data.Stemmer.push({ id: 's1', tid: '2026-10-05T09:00:00.000Z', maaned: '2026-10', fra: 'CCC', til: 'BBB', begrundelse: 'x' });
   data.Stemmer.push({ id: 's2', tid: '2026-10-04T09:00:00.000Z', maaned: '2026-10', fra: 'BBB', til: 'AAA', begrundelse: 'y' });

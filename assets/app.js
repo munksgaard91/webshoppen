@@ -433,9 +433,24 @@
     return banner + top + menu + lucky(kanKoebe) + projekter + kollega(kanKoebe) + faellesMaal();
   }
 
-  // Fælles mål for hele holdet – "Fælles mål | Se status" i regel-boksen linker hertil. Indholdet kommer senere.
+  // Fælles mål (fanen Maal) – "Fælles mål | Se status" i regel-boksen scroller hertil.
+  // Månedens mål afgøres dagen efter månedens udgang; sidste måneds resultat vises, når tallene er skrevet ind.
+  function decimal(n) { return Number(n).toLocaleString('da-DK', { maximumFractionDigits: 2 }); }
+  function maalRaekke(m, status) {
+    return '<div class="maal-row"><div class="maal-txt"><b>' + esc(m.navn) + '</b><small>' + esc(m.tekst) + '</small></div><div class="maal-status">' + status + '</div></div>';
+  }
   function faellesMaal() {
-    return '<section class="block" id="faelles-maal"><h2 class="block-title">Fælles mål</h2><div class="card"><p class="faint" style="margin:0">Kommer snart.</p></div></section>';
+    var f = S.faellesMaal || { maal: [], sidste: { maal: [] } };
+    var nu = new Date(S.nu);
+    var mNavn = MAANEDER[nu.getMonth()], naeste = MAANEDER[(nu.getMonth() + 1) % 12];
+    var denne = f.maal.map(function (m) { return maalRaekke(m, ''); }).join('');
+    var sidste = f.sidste.maal.map(function (m) {
+      return maalRaekke(m, m.nu === null ? '<span class="tag">Opgøres</span>' :
+        '<span class="maal-nu num">' + decimal(m.nu) + '</span><span class="tag ' + (m.naaet ? 'ok' : 'annulleret') + '">' + (m.naaet ? 'Nået ✓' : 'Ikke nået') + '</span>');
+    }).join('');
+    return '<section class="block" id="faelles-maal"><div class="block-head"><h2 class="block-title">Fælles mål</h2><span class="tag">' + cap(mNavn) + '</span><span class="note">Afgøres 1. ' + naeste + '</span></div>' +
+      '<div class="card maal-liste">' + (denne || '<p class="faint" style="margin:0">Ingen mål for ' + mNavn + ' endnu.</p>') + '</div>' +
+      (sidste ? '<h3 class="maal-sub">Resultat for ' + MAANEDER[(nu.getMonth() + 11) % 12] + '</h3><div class="card maal-liste">' + sidste + '</div>' : '') + '</section>';
   }
 
   // "Andet?"-række med én hvid knap, der sender et forslag direkte til admin

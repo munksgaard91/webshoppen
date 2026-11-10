@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v43';
+  var KEY = 'webshoppen-demo-v44';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -37,6 +37,12 @@ window.Mock = (function () {
         { kilde: 'anmeldelser', navn: 'Anmeldelse' },
         { kilde: 'konkurrencer', navn: 'Konkurrencer' },
         { kilde: 'faelles_maal', navn: 'Fælles mål' }
+      ],
+      Maal: [
+        { maaned: Core.maanedKey(new Date()), navn: 'Hjemmeside', tekst: 'Under 6,5 t produktionstid pr. sag', retning: 'under', graense: 6.5, nu: '' },
+        { maaned: Core.maanedKey(new Date()), navn: 'Afventer online', tekst: 'Under 70 kunder på listen', retning: 'under', graense: 70, nu: '' },
+        { maaned: Core.maanedKey(new Date()), navn: 'Redaktører', tekst: 'Under 0,7 t produktionstid pr. tekst', retning: 'under', graense: 0.7, nu: '' },
+        { maaned: Core.maanedKey(new Date()), navn: 'Support', tekst: '20 anmeldelser eller flere', retning: 'over', graense: 20, nu: '' }
       ],
       Regler: [
         { gruppe: 'Hjemmeside', kilde: 'sager', sats: 1, tekst: '1 Webcoin', navn: 'Per sag' },
