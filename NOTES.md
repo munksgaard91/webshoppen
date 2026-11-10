@@ -44,6 +44,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 - Rigtigt Google-login er ikke testet (kræver backend + Client ID).
 
 ## Beslutninger
+- **Profilbilleder** (2026-11-10): Config `BILLEDE_URL` = `https://leksione.dk/avatar/{ini}.png` (`{ini}` små, `{INI}` store bogstaver). Bruges overalt: eget badge (admin bruger mailens første del, `rmu`), Min profil, Månedens Webkollega (vinder + din stemme), top contributors, Admin → Brugere og Konkurrencer. Billedet ligger over initialerne og fjernes ved fejl, så initialerne vises. **Ikke i demoen** – demoen er offentlig og bruger rigtige initialer på "Demo"-brugere, så URL'en står kun i arkets Config (sat automatisk af Opsæt faner).
 - **Afslør Månedens Webkollega** (2026-11-10): vinderen regnes ud automatisk, men vises og udbetales **først når admin trykker "🏆 Afslør vinder"** (admin-overblik og Konkurrencer) – det sker til briefingen. Indtil da ser medarbejderne "🥁 Afsløres snart", og vinderen står ikke i admins historik. Afslør: bekræftelse → stort resultat med konfetti; præmie i Webcoins ("50 Webcoins") lægges på saldoen (type `gevinst`, ref `mdk:<YYYY-MM>`), andre præmier gives manuelt. Ny fane `Webkollega` (maaned, praemie, vinder, afsloeret) husker præmien pr. måned, så sidste måneds præmie gælder, selv om en ny er sat før afsløringen. Demoen har stemmer fra sidste måned, så Afslør kan prøves.
 - **Startbeløb 5 Webcoins** (2026-11-10): alle brugere får `SORTIMENT.startWebcoins` (5) én gang – postering type `justering`, tekst "Velkommen til Webshoppen", ref `start:<INI>`. Gives, når admin opretter en bruger, og ved hver synk (så brugere skrevet direkte i arket også får dem). Tæller ikke som "optjent" på Min profil.
 - **Login i 30 dage** (2026-11-10): ved login sender browseren Google-beviset (1 t) med handlingen `login`; backend tjekker det én gang og returnerer en egen nøgle `ws1.<data>.<HMAC>` (gælder 30 dage), som bruges ved alle forespørgsler. Signeret med `SESSION_SECRET` i Apps Script → Projektindstillinger → **Script Properties** (oprettes automatisk ved første login, aldrig i repoet). Brugeren slås stadig op i `Brugere` hver gang, så deaktiverede er ude med det samme. **Nødbremse:** slet `SESSION_SECRET` → alle logges ud.
@@ -68,7 +69,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 ## Faner i "Webshoppen DB"
 `Config` · `Brugere` · `Posteringer` · `Bestillinger` (… status, forud, oenske) · `Stemmer` (id, tid, maaned, fra, til, begrundelse) · `Spil` (id, tid, initialer, status, resultat) · `Kilder` · `Regler` (gruppe, kilde, sats, tekst, navn, fra – `navn` er teksten i regel-boksen, fx "Per sag"; tom = kildens navn. `fra` > 0 = klub-bonus: fast `sats`, når månedens tal ≥ `fra`) · `Afregning` (maaned, sendt ja/nej, tid – hvilke måneder er sendt til RAB) · `Maal` (fælles mål pr. måned – se Beslutninger).
 
-Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHAT_WEBHOOK`, `NOTIFIKATION_MAIL`, `AABNER`, `LUKKER`, `AABNE_DAGE`, `LUK_VED_FRAVAER`, `KALENDER_ID`, `OPTJENING_FRA`, `TEAMBUDGET_ARK_ID`, `TEAMBUDGET_BUDGET_CELLE`, `TEAMBUDGET_BRUGT_CELLE`, `TEAMBUDGET_SAESON`, `MDK_PRAEMIE`, `MDK_PRAEMIE_MAANED` (YYYY-MM, sættes af admin ved Gem).
+Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHAT_WEBHOOK`, `NOTIFIKATION_MAIL`, `AABNER`, `LUKKER`, `AABNE_DAGE`, `LUK_VED_FRAVAER`, `KALENDER_ID`, `OPTJENING_FRA`, `TEAMBUDGET_ARK_ID`, `TEAMBUDGET_BUDGET_CELLE`, `TEAMBUDGET_BRUGT_CELLE`, `TEAMBUDGET_SAESON`, `MDK_PRAEMIE`, `MDK_PRAEMIE_MAANED` (YYYY-MM, sættes af admin ved Gem), `BILLEDE_URL` (profilbilleder, `{ini}`).
 
 ## Sådan sættes backend op
 1. Opret et nyt Google Sheet "Webshoppen DB" på din best-one.dk-konto.
@@ -80,7 +81,7 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 7. **Webshoppen → Slå automatisk hentning til**.
 
 Ændringer i `shared/core.js`, `shared/sortiment.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=168`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=169`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test

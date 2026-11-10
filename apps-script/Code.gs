@@ -364,6 +364,8 @@ function opsaet() {
     { noegle: 'TEAMBUDGET_BUDGET_CELLE', vaerdi: '' },
     { noegle: 'TEAMBUDGET_BRUGT_CELLE', vaerdi: '' },
     { noegle: 'TEAMBUDGET_SAESON', vaerdi: '' },
+    // Profilbilleder: {ini} = initialer med små bogstaver, {INI} = store. Mangler et billede, vises initialer.
+    { noegle: 'BILLEDE_URL', vaerdi: 'https://leksione.dk/avatar/{ini}.png' },
     { noegle: 'MDK_PRAEMIE', vaerdi: '50 Webcoins' },
     { noegle: 'MDK_PRAEMIE_MAANED', vaerdi: Core.maanedKey(new Date()) }
   ]);

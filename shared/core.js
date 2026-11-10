@@ -279,6 +279,8 @@ var Core = (function () {
       grupper: GRUPPER,
       teambudget: env.teambudget ? env.teambudget() : null,
       // Månedens mål + sidste måneds resultat (afgøres dagen efter månedens udgang, når tallene er opgjort)
+      // Mønster til profilbilleder, fx https://leksione.dk/avatar/{ini}.png (Config BILLEDE_URL). Tom = initialer.
+      billedeUrl: str(cfgVal(db, 'BILLEDE_URL', '')).trim(),
       faellesMaal: { maaned: maanedKey(nu), maal: faellesMaal(db, maanedKey(nu)), sidste: { maaned: forrigeMaaned(maanedKey(nu)), maal: faellesMaal(db, forrigeMaaned(maanedKey(nu))) } },
       shop: env.shop ? env.shop() : { aaben: true },
       mdk: (function () {

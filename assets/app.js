@@ -63,8 +63,23 @@
     var cls = b > 0 ? 'plus' : b < 0 ? 'minus' : 'zero';
     return '<span class="' + cls + ' num">' + (b > 0 ? '+' : '') + wc(b) + '</span>';
   }
+  // Profilbillede ud fra initialer (Config BILLEDE_URL). Billedet lægger sig over initialerne;
+  // findes det ikke (onerror), fjernes det, og initialerne står tilbage.
+  function fotoUrl(ini) {
+    var p = S && S.billedeUrl;
+    if (!p || !ini) return '';
+    return p.replace(/\{ini\}/g, String(ini).toLowerCase()).replace(/\{INI\}/g, String(ini).toUpperCase());
+  }
+  function pAvatar(ini, tekst, cls) {
+    var url = fotoUrl(ini);
+    return '<span class="' + cls + (url ? ' has-img' : '') + '">' + esc(tekst) +
+      (url ? '<img src="' + esc(url) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">' : '') + '</span>';
+  }
   function avatar(me, lg) {
     var c = 'avatar' + (lg ? ' lg' : '');
+    // Admin har ingen initialer i Brugere – brug mailens første del (rmu@ → rmu)
+    var ini = me.initialer || (me.admin ? String(me.email || '').split('@')[0] : '');
+    if (fotoUrl(ini)) return pAvatar(ini, me.initialer || initialerAf(me.navn), c);
     if (me.billede) return '<span class="' + c + '"><img src="' + esc(me.billede) + '" alt="" referrerpolicy="no-referrer"></span>';
     return '<span class="' + c + '">' + esc(me.initialer || initialerAf(me.navn)) + '</span>';
   }
@@ -352,7 +367,7 @@
   // Projekter: kun nr. 1 vises ("Top contributor"); resten (top 10) ses ved hover på "Se resten"
   function topRaekke(t, i, me) {
     var med = ['🥇', '🥈', '🥉'][i] || (i + 1) + '.';
-    return '<li class="' + (t.initialer === me.initialer ? 'mig' : '') + '"><span class="t3-med">' + med + '</span><span class="t3-navn">' + esc(t.navn) + '</span>' +
+    return '<li class="' + (t.initialer === me.initialer ? 'mig' : '') + '"><span class="t3-med">' + med + '</span><span class="t3-navn">' + pAvatar(t.initialer, t.initialer, 'mini-av') + esc(t.navn) + '</span>' +
       '<span class="t3-beloeb num"><b>' + fmt(t.beloeb) + '</b> ' + enhed(t.beloeb) + '</span></li>';
   }
   function topDonator(p, me) {
@@ -511,7 +526,7 @@
     var spot = '<div class="mdk-spot"><span class="saldo-deco" aria-hidden="true">' + bMark() + '</span>' +
       (m.sidste
         ? '<span class="mdk-eyebrow">Vinder i ' + MAANEDER[Number(m.sidste.maaned.slice(5)) - 1] + '</span>' +
-          '<div class="mdk-winner"><span class="mdk-crown">🏆</span><span class="mdk-avatar">' + esc(m.sidste.initialer || forkort(m.sidste.navn)) + '</span></div>' +
+          '<div class="mdk-winner"><span class="mdk-crown">🏆</span>' + pAvatar(m.sidste.initialer, m.sidste.initialer || forkort(m.sidste.navn), 'mdk-avatar') + '</div>' +
           '<b class="mdk-name">' + esc(m.sidste.navn) + '</b>'
         : m.afventer
         ? '<span class="mdk-eyebrow">Vinder i ' + forrigeNavn + '</span>' +
@@ -528,7 +543,7 @@
     var hoejre;
     if (m.minStemme) {
       hoejre = '<h3 class="mdk-q">Tak for din stemme</h3>' + fakta +
-        '<div class="mdk-voted"><span class="mdk-avatar sm">' + esc(m.minStemme.initialer || forkort(m.minStemme.navn)) + '</span><div><b>' + esc(m.minStemme.navn) + '</b>' +
+        '<div class="mdk-voted">' + pAvatar(m.minStemme.initialer, m.minStemme.initialer || forkort(m.minStemme.navn), 'mdk-avatar sm') + '<div><b>' + esc(m.minStemme.navn) + '</b>' +
         (m.minStemme.begrundelse ? '<q>' + esc(m.minStemme.begrundelse) + '</q>' : '') + '</div></div>' +
         '<p class="mdk-fine">Vinderen findes, når ' + mNavn + ' er slut. Kun admin kan se stemmerne.</p>';
     } else if (kanKoebe) {
@@ -940,7 +955,7 @@
       '<div class="table-wrap"><table><thead><tr>' + sortTh('navn', 'Navn') + sortTh('initialer', 'Initialer') + sortTh('gruppe', 'Gruppe') + sortTh('saldo', 'Saldo', 'r') + '<th></th></tr></thead><tbody>' +
       sorterBrugere(A.brugere).map(function (u) {
         var q = (u.navn + ' ' + u.initialer + ' ' + u.email + ' ' + u.gruppe).toLowerCase();
-        return '<tr data-q="' + esc(q) + '"' + (u.aktiv ? '' : ' style="opacity:.5"') + '><td><b>' + esc(u.navn) + '</b>' + (u.aktiv ? '' : ' <span class="tag">Inaktiv</span>') + '</td><td>' + esc(u.initialer) + '</td><td>' + (u.gruppe ? esc(u.gruppe) : '<span class="tag ny">Ingen gruppe</span>') + '</td><td class="r num"><label class="saldo-ret" title="Skriv ny saldo og tryk Enter"><input class="input num" type="number" min="0" inputmode="numeric" data-saldo="' + esc(u.initialer) + '" data-org="' + u.saldo + '" value="' + u.saldo + '"><span>' + enhed(u.saldo) + '</span></label></td>' +
+        return '<tr data-q="' + esc(q) + '"' + (u.aktiv ? '' : ' style="opacity:.5"') + '><td>' + pAvatar(u.initialer, u.initialer, 'mini-av') + '<b>' + esc(u.navn) + '</b>' + (u.aktiv ? '' : ' <span class="tag">Inaktiv</span>') + '</td><td>' + esc(u.initialer) + '</td><td>' + (u.gruppe ? esc(u.gruppe) : '<span class="tag ny">Ingen gruppe</span>') + '</td><td class="r num"><label class="saldo-ret" title="Skriv ny saldo og tryk Enter"><input class="input num" type="number" min="0" inputmode="numeric" data-saldo="' + esc(u.initialer) + '" data-org="' + u.saldo + '" value="' + u.saldo + '"><span>' + enhed(u.saldo) + '</span></label></td>' +
           '<td><div class="row-acts"><button class="btn sm" data-act="ret-bruger" data-email="' + esc(u.email) + '">Rediger</button><button class="btn sm" data-act="gave" data-ini="' + esc(u.initialer) + '">🎁 Gave</button></div></td></tr>';
       }).join('') + '</tbody><tfoot><tr><td colspan="3"><b>Samlet</b> <span class="faint">· ' + A.brugere.length + ' brugere</span></td><td class="r num"><b>' + wc(omloeb) + '</b><small class="faint" style="display:block">≈ ' + kr(omloeb / 2) + '</small></td><td></td></tr></tfoot></table></div></section>';
   }
@@ -966,7 +981,7 @@
       '<div class="adm-stak" style="margin-top:0"><section class="card"><div class="card-head"><h2 class="card-title">Stilling i ' + mNavn + '</h2><span class="tag">' + m.afgivet + ' stemmer</span></div>' +
       (m.stilling.length ? '<div class="table-wrap"><table><thead><tr><th>#</th><th>Kollega</th><th class="r">Stemmer</th><th class="r">Første stemme</th></tr></thead><tbody>' +
         m.stilling.map(function (x, i) {
-          return '<tr><td>' + (i === 0 ? '🏆' : i + 1) + '</td><td><b>' + esc(x.navn) + '</b>' +
+          return '<tr><td>' + (i === 0 ? '🏆' : i + 1) + '</td><td>' + pAvatar(x.initialer, x.initialer, 'mini-av') + '<b>' + esc(x.navn) + '</b>' +
             '<ul class="why-list">' + x.fra.map(function (f) { return '<li><b>' + esc(f.navn) + '</b>' + (f.begrundelse ? ': ' + esc(f.begrundelse) : '') + '</li>'; }).join('') + '</ul>' +
             '</td><td class="r num" style="vertical-align:top">' + x.stemmer + '</td><td class="r faint" style="vertical-align:top">' + dato(x.foerste) + '</td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty">Ingen stemmer endnu.</div>') +
