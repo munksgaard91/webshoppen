@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v37';
+  var KEY = 'webshoppen-demo-v39';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -31,20 +31,21 @@ window.Mock = (function () {
       Posteringer: [],
       Bestillinger: [],
       Kilder: [
-        { kilde: 'nyfak', navn: 'Nyfak' },
-        { kilde: 'genfak', navn: 'Genfak' },
+        { kilde: 'sager', navn: 'Sag' },
+        { kilde: 'tekster', navn: 'Tekster' },
+        { kilde: 'sessioner', navn: 'Session' },
         { kilde: 'anmeldelser', navn: 'Anmeldelse' },
-        { kilde: 'leverancer', navn: 'Leverancer' }
+        { kilde: 'genfak', navn: 'Genfak' }
       ],
       Regler: [
-        { gruppe: 'Hjemmeside', kilde: 'nyfak', sats: 0.002, tekst: '2 Webcoins pr. 1.000 kr' },
+        { gruppe: 'Hjemmeside', kilde: 'sager', sats: 1, tekst: '1 Webcoin' },
         { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
-        { gruppe: 'Redaktør', kilde: 'leverancer', sats: 8, tekst: '8 Webcoins pr. leverance' },
+        { gruppe: 'Redaktør', kilde: 'tekster', sats: 0.1, tekst: '1 Webcoin pr. 10' },
         { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
-        { gruppe: 'Fotograf', kilde: 'leverancer', sats: 12, tekst: '12 Webcoins pr. optagelse' },
+        { gruppe: 'Fotograf', kilde: 'sessioner', sats: 1, tekst: '1 Webcoin' },
         { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
         { gruppe: 'Support', kilde: 'genfak', sats: 0.004, tekst: '4 Webcoins pr. 1.000 kr' },
-        { gruppe: 'Support', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' }
+        { gruppe: 'Support', kilde: 'anmeldelser', sats: 25, tekst: '25 Webcoins' }
       ]
     };
   }
@@ -60,17 +61,18 @@ window.Mock = (function () {
 
   // Falske kildetal for de seneste 4 måneder, så der er noget at se på.
   function falskeKilder(nu) {
-    var k = { nyfak: {}, genfak: {}, anmeldelser: {}, leverancer: {} };
+    var k = { sager: {}, tekster: {}, sessioner: {}, anmeldelser: {}, genfak: {} };
     var tilfaeldig = (function (s) { return function () { s = (s * 9301 + 49297) % 233280; return s / 233280; }; })(42);
     data.Brugere.forEach(function (u) {
       for (var i = 3; i >= 0; i--) {
         var mk = Core.maanedKey(new Date(nu.getFullYear(), nu.getMonth() - i, 1));
         var key = u.initialer + '|' + mk;
         var del = i === 0 ? 0.3 : 1;
-        k.nyfak[key] = Math.round((80000 + tilfaeldig() * 160000) * del);
-        k.genfak[key] = Math.round((60000 + tilfaeldig() * 120000) * del);
+        k.sager[key] = Math.round((2 + tilfaeldig() * 17) * del);
+        k.tekster[key] = Math.round((100 + tilfaeldig() * 100) * del);
+        k.sessioner[key] = Math.round((10 + tilfaeldig() * 15) * del);
         k.anmeldelser[key] = Math.round(tilfaeldig() * 4 * del);
-        k.leverancer[key] = Math.round((10 + tilfaeldig() * 30) * del);
+        k.genfak[key] = Math.round((60000 + tilfaeldig() * 120000) * del);
       }
     });
     return k;
@@ -103,6 +105,12 @@ window.Mock = (function () {
   if (!data) {
     data = seed();
     Core.applyEarnings(db, falskeKilder(new Date()), env());
+    // Startbeløb, så demoens bestillinger og donationer kan betales. Rettes til sidst, så saldoen ender på 67.
+    var start = {};
+    BRUGERE.forEach(function (u) {
+      start[u.initialer] = { id: 'demo-' + u.initialer, tid: new Date().toISOString(), initialer: u.initialer, type: 'justering', beloeb: 1000, tekst: 'Demo-saldo', ref: '' };
+      data.Posteringer.push(start[u.initialer]);
+    });
     var e = env();
     var jst = Core.resolveUser(db, { email: 'demo.jst@best-one.dk' }, ADMINS);
     Core.handle(db, jst, 'bestil', { vareId: 'monster' }, Object.assign({}, e, { notify: function () {} }));
@@ -119,7 +127,7 @@ window.Mock = (function () {
     // Demo: alle testbrugere starter med en saldo på 67 Webcoins (resten af historikken bevares).
     BRUGERE.forEach(function (u) {
       var saldo = data.Posteringer.filter(function (p) { return p.initialer === u.initialer; }).reduce(function (sum, p) { return sum + Number(p.beloeb || 0); }, 0);
-      if (saldo !== 67) data.Posteringer.push({ id: 'demo-' + u.initialer, tid: new Date().toISOString(), initialer: u.initialer, type: 'justering', beloeb: 67 - saldo, tekst: 'Demo-saldo', ref: '' });
+      start[u.initialer].beloeb += 67 - saldo;
     });
     gem();
   }

@@ -338,22 +338,24 @@ function opsaet() {
     { noegle: 'MDK_PRAEMIE_MAANED', vaerdi: Core.maanedKey(new Date()) }
   ]);
   // Feelin' Lucky? – vægt = relativ chance. type: vare (admin leverer), webcoins (lægges på saldo), intet.
+  // Tom kol_vaerdi = hver række tæller som 1 (én sag, én tekst, én session, én 5-stjernet anmeldelse).
   seed('Kilder', [
-    { kilde: 'nyfak', navn: 'Nyfak', sheet_id: '', fane: '', kol_initialer: '', kol_vaerdi: '', kol_dato: '', start_raekke: 2 },
-    { kilde: 'genfak', navn: 'Genfak', sheet_id: '', fane: '', kol_initialer: '', kol_vaerdi: '', kol_dato: '', start_raekke: 2 },
+    { kilde: 'sager', navn: 'Sag', sheet_id: '', fane: '', kol_initialer: '', kol_vaerdi: '', kol_dato: '', start_raekke: 2 },
+    { kilde: 'tekster', navn: 'Tekster', sheet_id: '', fane: '', kol_initialer: '', kol_vaerdi: '', kol_dato: '', start_raekke: 2 },
+    { kilde: 'sessioner', navn: 'Session', sheet_id: '', fane: '', kol_initialer: '', kol_vaerdi: '', kol_dato: '', start_raekke: 2 },
     { kilde: 'anmeldelser', navn: 'Anmeldelse', sheet_id: '', fane: '', kol_initialer: '', kol_vaerdi: '', kol_dato: '', start_raekke: 2 },
-    { kilde: 'leverancer', navn: 'Leverancer', sheet_id: '', fane: '', kol_initialer: '', kol_vaerdi: '', kol_dato: '', start_raekke: 2 }
+    { kilde: 'genfak', navn: 'Genfak', sheet_id: '', fane: '', kol_initialer: '', kol_vaerdi: '', kol_dato: '', start_raekke: 2 }
   ]);
-  // Pladsholder-regler – skal regnes igennem før lancering.
+  // Bevidst stramt (2026-11-10) – hellere løsne senere. Support (genfak) er stadig en pladsholder.
   seed('Regler', [
-    { gruppe: 'Hjemmeside', kilde: 'nyfak', sats: 0.002, tekst: '2 Webcoins pr. 1.000 kr' },
+    { gruppe: 'Hjemmeside', kilde: 'sager', sats: 1, tekst: '1 Webcoin' },
     { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
-    { gruppe: 'Redaktør', kilde: 'leverancer', sats: 8, tekst: '8 Webcoins pr. leverance' },
+    { gruppe: 'Redaktør', kilde: 'tekster', sats: 0.1, tekst: '1 Webcoin pr. 10' },
     { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
-    { gruppe: 'Fotograf', kilde: 'leverancer', sats: 12, tekst: '12 Webcoins pr. optagelse' },
+    { gruppe: 'Fotograf', kilde: 'sessioner', sats: 1, tekst: '1 Webcoin' },
     { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
     { gruppe: 'Support', kilde: 'genfak', sats: 0.004, tekst: '4 Webcoins pr. 1.000 kr' },
-    { gruppe: 'Support', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' }
+    { gruppe: 'Support', kilde: 'anmeldelser', sats: 25, tekst: '25 Webcoins' }
   ]);
   var standard = ss.getSheetByName('Ark1') || ss.getSheetByName('Sheet1');
   if (standard && standard.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(standard);
