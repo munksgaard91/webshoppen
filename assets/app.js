@@ -1164,7 +1164,9 @@
 
 
   function pageAdminPosteringer() {
-    var typer = ['alle'].concat(Object.keys(TYPER));
+    // Event (projekt) er fjernet fra shoppen – filteret vises kun, hvis der findes gamle event-posteringer
+    var harEvent = A.posteringer.some(function (p) { return p.type === 'projekt'; });
+    var typer = ['alle'].concat(Object.keys(TYPER).filter(function (t) { return t !== 'projekt' || harEvent; }));
     var rows = A.posteringer.filter(function (p) {
       return (ui.postType === 'alle' || p.type === ui.postType) && (!ui.postPerson || p.initialer === ui.postPerson);
     });
