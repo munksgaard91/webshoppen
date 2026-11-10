@@ -267,6 +267,8 @@ function syncOptjening() {
 //   tid:<fane>:<række>+<række>  → Tid ÷ Antal for måneden i MAAL_ARK_ID (fx tid:Web:Hjemmeside+Redesign)
 //   anmeldelser:<gruppe>        → antal anmeldelser i måneden fra gruppens kolleger (kilden "anmeldelser")
 //   celle:<fane>!<celle>        → tallet i én celle i MAAL_ARK_ID
+//   clickup:<liste-id>:<status> → antal opgaver med den status på listen lige nu (kræver CLICKUP_TOKEN)
+// celle og clickup er øjebliksbilleder, så de opdaterer kun indeværende måned – sidste måned beholder sit sluttal.
 function opdaterMaal_(raa) {
   var conf = cfg_();
   var mk0 = Core.maanedKey(new Date()), maaneder = [mk0, Core.forrigeMaaned(mk0)];
@@ -289,6 +291,7 @@ function opdaterMaal_(raa) {
     if (!k || maaneder.indexOf(mk) < 0) return;
     try {
       var d = k.split(':'), v = null;
+      if ((d[0] === 'celle' || d[0] === 'clickup') && mk !== mk0) return;
       if (d[0] === 'tid') {
         v = Core.maalTid(fane(d[1]), mk, kendte, String(d[2] || '').split('+').map(function (x) { return x.trim().toLowerCase(); }));
       } else if (d[0] === 'anmeldelser') {
@@ -299,12 +302,29 @@ function opdaterMaal_(raa) {
         });
       } else if (d[0] === 'celle') {
         v = Core.num(bog().getRange(k.slice(6)).getValue());
+      } else if (d[0] === 'clickup') {
+        v = clickupAntal_(conf, d[1], d.slice(2).join(':'));
       }
       if (v !== null && (String(m.nu) === '' || v !== Number(m.nu))) SheetDB.update('Maal', m, { nu: v });
     } catch (e) {
       console.error('Mål ' + m.navn + ' fejlede: ' + e);
     }
   });
+}
+
+// Antal opgaver (uden underopgaver) med en bestemt status på en ClickUp-liste. 100 pr. side.
+function clickupAntal_(conf, liste, status) {
+  if (!conf.CLICKUP_TOKEN) throw new Error('CLICKUP_TOKEN mangler i Config');
+  var antal = 0;
+  for (var side = 0; side < 50; side++) {
+    var url = 'https://api.clickup.com/api/v2/list/' + encodeURIComponent(liste) + '/task?subtasks=false&page=' + side +
+      '&statuses%5B%5D=' + encodeURIComponent(status);
+    var svar = JSON.parse(UrlFetchApp.fetch(url, { headers: { Authorization: conf.CLICKUP_TOKEN } }).getContentText());
+    var opg = svar.tasks || [];
+    antal += opg.length;
+    if (svar.last_page !== false || !opg.length) break;
+  }
+  return antal;
 }
 
 function installerTrigger() {
@@ -442,6 +462,8 @@ function opsaet() {
     { noegle: 'TEAMBUDGET_REST_CELLE', vaerdi: '' },
     // Ark med tallene til fælles mål (kilde tid:/celle: i fanen Maal) – fx Fakturering 26/27
     { noegle: 'MAAL_ARK_ID', vaerdi: '' },
+    // Personlig ClickUp-nøgle (pk_…) til fælles mål med kilde clickup: – hemmelig, kun i arket
+    { noegle: 'CLICKUP_TOKEN', vaerdi: '' },
     { noegle: 'TEAMBUDGET_SAESON', vaerdi: '' },
     // Profilbilleder: {ini} = initialer med små bogstaver, {INI} = store. Mangler et billede, vises initialer.
     // Udsolgte varer (id'er fra sortiment.js) – sættes fra Admin → Bestillinger
@@ -484,7 +506,7 @@ function opsaet() {
   // Fælles mål pr. måned: retning under/over grænsen. nu = resultatet, skrives dagen efter månedens udgang.
   seed('Maal', [
     { maaned: '2026-11', navn: 'Hjemmeside', tekst: 'Under 6,5 t produktionstid pr. sag', retning: 'under', graense: 6.5, nu: '', enhed: 't', kilde: 'tid:Web:Hjemmeside+Redesign' },
-    { maaned: '2026-11', navn: 'Afventer online', tekst: 'Under 70 kunder på listen', retning: 'under', graense: 70, nu: '', enhed: 'kunder' },
+    { maaned: '2026-11', navn: 'Afventer online', tekst: 'Under 70 kunder på listen', retning: 'under', graense: 70, nu: '', enhed: 'kunder', kilde: 'clickup:900800029466:afventer online' },
     { maaned: '2026-11', navn: 'Redaktører', tekst: 'Under 0,7 t produktionstid pr. tekst', retning: 'under', graense: 0.7, nu: '', enhed: 't', kilde: 'tid:Tekst:Tekster' },
     { maaned: '2026-11', navn: 'Support', tekst: '20 anmeldelser eller flere', retning: 'over', graense: 20, nu: '', enhed: 'anmeldelser', kilde: 'anmeldelser:Support' }
   ]);
