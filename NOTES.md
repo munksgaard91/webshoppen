@@ -116,7 +116,8 @@ Demo-tricks: `?lukket=fravaer` / `?lukket=tid` viser lukket shop, `?synkfejl` vi
 
 ## Næste skridt
 0. ~~Lanceringsdato~~ – besluttet 2026-11-10: **`OPTJENING_FRA` = `2026-11-01`** (optjening tæller fra 1. november 2026, så november er med fra start).
-1. **Vælg belønning for november** under Admin → Konkurrencer (3 af 4 mål).
+1. ~~Belønning og Månedens Webkollega-præmie for november~~ – sat af Rasmus 2026-11-10.
+1b. **2026-11-11:** test med 2–3 kolleger + bestil varer hos Nemlig (Celebrations, Lay's mini, Haribo mini – links i mail til rmu).
 2. Test med 2–3 kolleger, før alle får adgang (login, bestil, hjul, gave, notifikationer). Giv dem evt. Webcoins via Brugere → Gave.
 3. Den 1. december: tjek at novembers mål-tal er endelige (synken opdaterer `nu` – Afventer online er øjebliksbillede og står fast), og læg decembers mål + `kilde` ind i fanen `Maal`.
 4. ~~Google Chat~~ – sat op 2026-11-10 (rummet "Webshoppen", `CHAT_WEBHOOK` i Config). Ikke testet endnu – ses ved første bestilling.
