@@ -44,6 +44,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 - Rigtigt Google-login er ikke testet (kræver backend + Client ID).
 
 ## Beslutninger
+- **Gave-popup ved login** (2026-11-10): gaver modtaget siden sidst – vare fra en kollega, vare fra admin eller Webcoins fra admin (ref `admingave`) – vises som popup med konfetti, når man åbner shoppen (afsender med billede, hvad, evt. besked). "Tak! 🎉" gemmer tidspunktet i ny kolonne `gaver_set` i `Brugere` (handling `gaver_set`), så de ikke vises igen. Annullerede gaver vises ikke. Demo: Demo Hjemmeside har en Candybar fra Demo Redaktør.
 - **Profilbilleder** (2026-11-10): Config `BILLEDE_URL` = `https://leksione.dk/avatar/{ini}.png` (`{ini}` små, `{INI}` store bogstaver). Bruges overalt, hvor en person vises: eget badge (admin bruger mailens første del, `rmu`), Min profil, Månedens Webkollega (vinder + din stemme), top contributors (inkl. top 10), og i admin: nye bestillinger, Månedens Webkollega-kortet, seneste aktivitet, Bestillinger, Brugere, Konkurrencer (stilling + tidligere vindere) og Posteringer. Ikke i rullelister (native select kan ikke vise billeder). Billedet ligger over initialerne og fjernes ved fejl, så initialerne vises. **Ikke i demoen** – demoen er offentlig og bruger rigtige initialer på "Demo"-brugere, så URL'en står kun i arkets Config (sat automatisk af Opsæt faner).
 - **Afslør Månedens Webkollega** (2026-11-10): vinderen regnes ud automatisk, men vises og udbetales **først når admin trykker "🏆 Afslør vinder"** (admin-overblik og Konkurrencer) – det sker til briefingen. Indtil da ser medarbejderne "🥁 Afsløres snart", og vinderen står ikke i admins historik. Afslør: bekræftelse → stort resultat med konfetti; præmie i Webcoins ("50 Webcoins") lægges på saldoen (type `gevinst`, ref `mdk:<YYYY-MM>`), andre præmier gives manuelt. Ny fane `Webkollega` (maaned, praemie, vinder, afsloeret) husker præmien pr. måned, så sidste måneds præmie gælder, selv om en ny er sat før afsløringen. Demoen har stemmer fra sidste måned, så Afslør kan prøves.
 - **Startbeløb 5 Webcoins** (2026-11-10): alle brugere får `SORTIMENT.startWebcoins` (5) én gang – postering type `justering`, tekst "Velkommen til Webshoppen", ref `start:<INI>`. Gives, når admin opretter en bruger, og ved hver synk (så brugere skrevet direkte i arket også får dem). Tæller ikke som "optjent" på Min profil.
@@ -81,7 +82,7 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 7. **Webshoppen → Slå automatisk hentning til**.
 
 Ændringer i `shared/core.js`, `shared/sortiment.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=171`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=172`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test

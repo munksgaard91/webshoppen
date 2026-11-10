@@ -181,11 +181,26 @@
       S = s;
       if (S.me.admin) return api('admin_state').then(function (a) { A = a; render(); });
       render();
+      visGaver();
     }).catch(function (e) {
       if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') {
         app.innerHTML = '<div class="center-screen"><div class="login-card">' + boLogo('logo-login') + '<h1>Hov</h1><p>' + esc(e.message) + '</p><button class="btn primary" data-act="reload">Prøv igen</button></div></div>';
       }
     });
+  }
+
+  // Gaver modtaget siden sidst (fra admin eller en kollega) vises som popup ved login, indtil man trykker Tak
+  function visGaver() {
+    var g = S.gaver || [];
+    if (!g.length) return;
+    openModal('<div class="gave-pop"><div class="gave-ikon">🎁</div><h2>' + (g.length === 1 ? 'Du har fået en gave!' : 'Du har fået ' + g.length + ' gaver!') + '</h2>' +
+      '<div class="gave-liste">' + g.map(function (x) {
+        var hvad = x.beloeb ? '<b class="num">' + wc(x.beloeb) + '</b> ' + coin() : '<b>' + esc(x.hvad) + '</b>';
+        return '<div class="gave-item">' + pAvatar(x.fra, x.fra || 'A', 'mini-av md') + '<div><div>' + hvad + ' <span class="muted">fra ' + esc(x.fraNavn) + '</span></div>' +
+          (x.besked ? '<q>' + esc(x.besked) + '</q>' : '') + '</div></div>';
+      }).join('') + '</div>' +
+      '<div class="modal-acts"><button class="btn primary grow" data-act="gaver-ok">Tak! 🎉</button></div></div>');
+    konfetti(true);
   }
 
   function renderLogin(besked) {
@@ -1273,6 +1288,7 @@
       case 'bruger-ok':
         submit(t, 'admin_bruger', { origEmail: val('b-orig'), navn: val('b-navn'), initialer: val('b-ini'), gruppe: val('b-gruppe'), email: val('b-email'), aktiv: checked('b-aktiv') }, 'Bruger gemt');
         break;
+      case 'gaver-ok': closeModal(); api('gaver_set', {}).then(function () { S.gaver = []; }).catch(function () {}); break;
       case 'gave': openGave(t.dataset.ini); break;
       case 'gave-mode': gaveState.vare = t.dataset.v === '1'; renderGave(); break;
       case 'gave-forslag':

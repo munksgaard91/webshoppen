@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v49';
+  var KEY = 'webshoppen-demo-v50';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [

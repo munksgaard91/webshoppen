@@ -190,6 +190,20 @@ t('admin: ret saldo direkte og giv gave (Webcoins eller vare)', function () {
   eq(saldo(), 100);
   kaster(function () { Core.handle(db, B, 'admin_gave', { initialer: 'BBB', beloeb: 20 }, env); }, 'admin');
 });
+t('gave-popup: nye gaver vises, til de er set', function () {
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  Core.handle(db, B, 'gaver_set', {}, env);
+  eq(Core.handle(db, B, 'state', {}, env).gaver.length, 0);
+  var senere = { now: function () { return new Date(2026, 10, 15, 13, 0); }, uuid: env.uuid, notify: env.notify, shop: env.shop };
+  Core.handle(db, adm, 'admin_gave', { initialer: 'BBB', beloeb: 10, besked: 'Tak' }, senere);
+  var g = Core.handle(db, B, 'state', {}, senere).gaver;
+  eq(g.length, 1);
+  eq(g[0].beloeb, 10);
+  eq(g[0].besked, 'Tak');
+  eq(g[0].fraNavn, 'Admin');
+  Core.handle(db, B, 'gaver_set', {}, { now: function () { return new Date(2026, 10, 15, 14, 0); }, uuid: env.uuid });
+  eq(Core.handle(db, B, 'state', {}, senere).gaver.length, 0);
+});
 t('tie-breaker: første stemme vinder', function () {
   data.Stemmer.push({ id: 's1', tid: '2026-10-05T09:00:00.000Z', maaned: '2026-10', fra: 'CCC', til: 'BBB', begrundelse: 'x' });
   data.Stemmer.push({ id: 's2', tid: '2026-10-04T09:00:00.000Z', maaned: '2026-10', fra: 'BBB', til: 'AAA', begrundelse: 'y' });

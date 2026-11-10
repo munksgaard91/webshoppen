@@ -14,7 +14,8 @@ var Core = (function () {
 
   var TABELLER = {
     Config: ['noegle', 'vaerdi'],
-    Brugere: ['email', 'initialer', 'navn', 'gruppe', 'aktiv'],
+    // gaver_set = hvornår brugeren sidst så gave-popuppen (nye gaver efter det vises ved næste login)
+    Brugere: ['email', 'initialer', 'navn', 'gruppe', 'aktiv', 'gaver_set'],
     Stemmer: ['id', 'tid', 'maaned', 'fra', 'til', 'begrundelse'],
     Spil: ['id', 'tid', 'initialer', 'status', 'resultat'],
     Posteringer: ['id', 'tid', 'initialer', 'type', 'beloeb', 'tekst', 'ref'],
@@ -279,6 +280,7 @@ var Core = (function () {
       grupper: GRUPPER,
       teambudget: env.teambudget ? env.teambudget() : null,
       // Månedens mål + sidste måneds resultat (afgøres dagen efter månedens udgang, når tallene er opgjort)
+      gaver: nyeGaver(db, me),
       // Mønster til profilbilleder, fx https://leksione.dk/avatar/{ini}.png (Config BILLEDE_URL). Tom = initialer.
       billedeUrl: str(cfgVal(db, 'BILLEDE_URL', '')).trim(),
       faellesMaal: { maaned: maanedKey(nu), maal: faellesMaal(db, maanedKey(nu)), sidste: { maaned: forrigeMaaned(maanedKey(nu)), maal: faellesMaal(db, forrigeMaaned(maanedKey(nu))) } },
@@ -304,6 +306,41 @@ var Core = (function () {
         return fs.map(function (f) { return { id: f.id, navn: f.navn, ikon: f.ikon, type: f.type, beloeb: f.beloeb, andel: Math.round(Math.max(0, f.vaegt) / tot * 1000) / 1000, hoved: top > 0 && f.type === 'webcoins' && f.beloeb === top }; });
       })() }
     };
+  }
+
+  // Gaver modtaget siden brugeren sidst så gave-popuppen: fra kolleger (vare), fra admin (vare eller Webcoins)
+  function nyeGaver(db, me) {
+    if (!me.initialer) return [];
+    var row = null;
+    db.all('Brugere').forEach(function (u) { if (ini(u.initialer) === me.initialer) row = u; });
+    var sidst = row ? str(row.gaver_set) : '';
+    var navne = {}, best = {};
+    db.all('Brugere').forEach(function (u) { navne[ini(u.initialer)] = str(u.navn); });
+    db.all('Bestillinger').forEach(function (b) { best[str(b.id)] = b; });
+    var ud = [];
+    db.all('Posteringer').forEach(function (p) {
+      if (p.initialer !== me.initialer || str(p.tid) <= sidst) return;
+      var besked = str(p.tekst).split(' · ').slice(1).join(' · ');
+      if (p.type === 'gave_modtaget') {
+        var b = best[str(p.ref)];
+        if (!b || str(b.status) === 'annulleret') return;
+        var admin = /^Gave fra admin: /.test(str(b.vare));
+        ud.push({ id: str(p.id), tid: str(p.tid), fra: admin ? '' : ini(b.fra), fraNavn: admin ? 'Admin' : (navne[ini(b.fra)] || ini(b.fra)),
+          hvad: str(b.vare).replace(/^Gave fra admin: /, ''), beloeb: 0, besked: admin ? besked : '' });
+      } else if (str(p.ref) === 'admingave') {
+        ud.push({ id: str(p.id), tid: str(p.tid), fra: '', fraNavn: 'Admin', hvad: '', beloeb: num(p.beloeb), besked: besked });
+      }
+    });
+    return ud.sort(function (a, b) { return a.tid.localeCompare(b.tid); });
+  }
+
+  // Brugeren har set gave-popuppen
+  function gaverSet(db, me, data, env) {
+    kraevBruger(me);
+    var row = null;
+    db.all('Brugere').forEach(function (u) { if (ini(u.initialer) === me.initialer) row = u; });
+    if (row) db.update('Brugere', row, { gaver_set: env.now().toISOString() });
+    return { ok: true };
   }
 
   function bestil(db, me, data, env) {
@@ -709,7 +746,7 @@ var Core = (function () {
     }
     var beloeb = Math.floor(num(data.beloeb));
     if (!(beloeb > 0)) throw err('BAD', 'Angiv et beløb.');
-    db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: i, type: 'justering', beloeb: beloeb, tekst: '🎁 Gave fra admin' + (besked ? ' · ' + besked : ''), ref: '' });
+    db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: i, type: 'justering', beloeb: beloeb, tekst: '🎁 Gave fra admin' + (besked ? ' · ' + besked : ''), ref: 'admingave' });
     return { ok: true, navn: str(u.navn), beloeb: beloeb };
   }
 
@@ -818,10 +855,11 @@ var Core = (function () {
     admin_bruger: adminBruger,
     admin_justering: adminJustering,
     admin_saldo: adminSaldo,
+    gaver_set: gaverSet,
     admin_gave: adminGave,
     admin_sync: function (db, me, data, env) { kraevAdmin(me); return env.sync(); }
   };
-  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_gave: 1, admin_sync: 1 };
+  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, gaver_set: 1, admin_gave: 1, admin_sync: 1 };
 
   function handle(db, me, action, data, env) {
     var fn = HANDLINGER[action];
