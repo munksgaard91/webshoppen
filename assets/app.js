@@ -239,7 +239,7 @@
           (x.besked ? '<q>' + esc(x.besked) + '</q>' : '') + '</div></div>';
       }).join('') + '</div>' +
       '<div class="modal-acts"><button class="btn primary grow" data-act="gaver-ok">Tak! 🎉</button></div></div>');
-    konfetti(true);
+    konfetti();
   }
 
   function renderLogin(besked) {
@@ -422,21 +422,6 @@
     return '<span class="tag ' + esc(b.status) + '">' + (forud ? 'Forudbestilt' : esc(cap(b.status))) + '</span>';
   }
 
-  // Projekter: kun nr. 1 vises ("Top contributor"); resten (top 10) ses ved hover på "Se resten"
-  function topRaekke(t, i, me) {
-    var med = ['🥇', '🥈', '🥉'][i] || (i + 1) + '.';
-    return '<li class="' + (t.initialer === me.initialer ? 'mig' : '') + '"><span class="t3-med">' + med + '</span><span class="t3-navn">' + pAvatar(t.initialer, t.initialer, 'mini-av') + esc(t.navn) + '</span>' +
-      '<span class="t3-beloeb num"><b>' + fmt(t.beloeb) + '</b> ' + enhed(t.beloeb) + '</span></li>';
-  }
-  function topDonator(p, me) {
-    if (!p.top.length) return '<div class="top-don"><span class="top-don-titel">Top contributors</span><div class="faint" style="font-size:13px">Ingen bidrag endnu</div></div>';
-    return '<div class="top-don"><span class="top-don-titel">Top contributors</span>' +
-      '<ol class="top3-list">' + topRaekke(p.top[0], 0, me) + '</ol>' +
-      (p.top.length > 1 ? '<span class="info top10" tabindex="0"><span class="se-resten">Se resten</span>' +
-        '<span class="pop" role="tooltip"><b class="pop-title">Top 10 contributors</b><ol class="top3-list">' + p.top.map(function (t, i) { return topRaekke(t, i, me); }).join('') + '</ol></span></span>' : '') +
-      '</div>';
-  }
-
   function vareBillede(v) {
     if (v.billede) return '<span class="thumb"><img src="' + esc(v.billede) + '" alt="" loading="lazy"></span>';
     return '<span class="thumb">' + esc(v.ikon || '🛍️') + '</span>';
@@ -487,29 +472,8 @@
       }).join('') + '</div>' : '<div class="card empty">Menuen er tom.</div>') +
       '</section>';
 
-    // 3. Projekter – liste i fuld bredde med top 3
-    var projekter = '<section class="block"><h2 class="block-title">Events</h2>' +
-      (S.projekter.length ? '<div class="card list">' + S.projekter.slice().sort(function (a, b) {
-        // Billigst mål først; projekter uden mål til sidst
-        return ((a.maal || 1e9) - (b.maal || 1e9));
-      }).map(function (p) {
-        var pp = p.maal > 0 ? Math.min(100, (p.indsamlet / p.maal) * 100) : 0;
-        return '<div class="row proj-item">' +
-          '<span class="thumb">' + esc(p.ikon || '🎯') + '</span>' +
-          '<div class="row-main"><b>' + esc(p.navn) + '</b>' +
-          '<div class="bar bar-big' + (p.maal > 0 && p.indsamlet >= p.maal ? ' fuld' : '') + '"><i style="width:' + pp.toFixed(0) + '%"></i>' +
-          '<span class="bar-label num"><span class="bar-amt">' + (p.maal
-            ? '<b>' + fmt(p.indsamlet) + '</b> af ' + fmt(p.maal) + ' ' + enhed(p.maal) + coin()
-            : '<b>' + fmt(p.indsamlet) + '</b> ' + enhed(p.indsamlet) + coin()) + '</span>' + (p.maal ? '<b>' + pp.toFixed(0) + ' %</b>' : '') + '</span></div>' +
-          topDonator(p, me) + '</div>' +
-          '<div class="proj-acts"><div class="donate">' + (p.maal > 0 && p.indsamlet >= p.maal
-            ? '<button class="btn primary yehaw" data-act="yehaw">Yehaw! 🎉</button><span class="dit event">Event loading..</span>'
-            : '<button class="btn primary" data-act="indskyd" data-id="' + esc(p.id) + '"' + (kanKoebe && st.saldo > 0 ? '' : ' disabled') + '>Donér</button>') +
-          (p.mitBidrag ? '<span class="dit num">Dit bidrag<br>' + wc(p.mitBidrag) + '</span>' : '') + '</div></div></div>';
-      }).join('') + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et event?', 'projekt', kanKoebe) + '</div>' : '<div class="card list">' + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et event?', 'projekt', kanKoebe) + '</div>') + '</section>';
-
     var banner = lukket && me.admin ? '<div class="banner">Shoppen er lukket for medarbejderne lige nu' + (shop.grund === 'fravaer' ? ' (du er ikke til stede)' : '') + '. ' + esc(shop.tekst || '') + '</div>' : '';
-    return banner + top + menu + lucky(kanKoebe) + projekter + maanedHoved() + kollega(kanKoebe) + faellesMaal();
+    return banner + top + menu + lucky(kanKoebe) + maanedHoved() + kollega(kanKoebe) + faellesMaal();
   }
 
   // Stor overskrift over det, der gælder for indeværende måned (Månedens Webkollega + Fælles mål)
@@ -521,16 +485,32 @@
   // Fælles mål (fanen Maal) – "Fælles mål | Se status" i regel-boksen scroller hertil.
   // Månedens mål afgøres dagen efter månedens udgang; sidste måneds resultat vises, når tallene er skrevet ind.
   function decimal(n) { return Number(n).toLocaleString('da-DK', { maximumFractionDigits: 2 }); }
-  // Progressbar: grøn, når status er på målet. Under/over: "6,8 t · mål under 6,5 t" / "14 af 20 anmeldelser".
+  // Progressbar: fyldet går fra rødt (under 50 %) over orange mod grønt, og er helt grønt, når målet er nået.
+  // Under/over: "6,8 t · mål under 6,5 t" / "14 af 20 anmeldelser". Til højre ✓ / ✕ (– uden status).
+  function maalFarve(pct) { return Math.round(pct < 50 ? pct * 0.4 : 20 + (pct - 50) * 2); }
   function maalRaekke(m, slut) {
     var e = m.enhed ? ' ' + esc(m.enhed) : '';
-    var label = m.nu === null ? 'Ingen status endnu' : m.retning === 'under'
+    var label = m.nu === null ? (slut ? 'Opgøres' : 'Ingen status endnu') : m.retning === 'under'
       ? '<span><b>' + decimal(m.nu) + e + '</b> · mål under ' + decimal(m.graense) + e + '</span>'
       : '<span><b>' + decimal(m.nu) + '</b> af ' + decimal(m.graense) + e + '</span>';
-    var tag = !slut ? '' : m.nu === null ? '<span class="tag">Opgøres</span>' : '<span class="tag ' + (m.naaet ? 'ok' : 'annulleret') + '">' + (m.naaet ? 'Nået ✓' : 'Ikke nået') + '</span>';
-    return '<div class="maal-row' + (slut ? ' slut' : '') + '"><div class="maal-txt"><b>' + esc(m.navn) + '</b><small>' + esc(m.tekst) + '</small></div>' +
-      '<div class="bar bar-big' + (m.naaet ? ' fuld' : '') + '"><i style="width:' + m.pct + '%"></i><span class="bar-label num">' + label + (m.nu === null ? '' : '<b>' + m.pct + ' %</b>') + '</span></div>' +
-      (slut ? '<div class="maal-status">' + tag + '</div>' : '') + '</div>';
+    var ikon = m.nu === null ? '<span class="maal-ikon" title="Ingen status endnu">–</span>'
+      : m.naaet ? '<span class="maal-ikon ok" title="' + (slut ? 'Nået' : 'På mål lige nu') + '">✓</span>'
+      : '<span class="maal-ikon nej" title="' + (slut ? 'Ikke nået' : 'Ikke på mål lige nu') + '">✕</span>';
+    return '<div class="maal-row"><div class="maal-txt"><b>' + esc(m.navn) + '</b><small>' + esc(m.tekst) + '</small></div>' +
+      '<div class="bar bar-big' + (m.naaet ? ' fuld' : '') + '"><i style="width:' + m.pct + '%;--h:' + maalFarve(m.pct) + '"></i><span class="bar-label num">' + label + (m.nu === null ? '' : '<b>' + m.pct + ' %</b>') + '</span></div>' +
+      ikon + '</div>';
+  }
+  // Belønningen for månedens fælles mål: "Når vi 3 af 4 mål: Teamfrokost" + hvor mange der er nået lige nu.
+  // Ved sidste måned (slut) står resultatet i stedet.
+  function maalPraemie(p, slut) {
+    if (!p || !p.ialt) return '';
+    var hvad = p.praemie ? esc(p.praemie) : 'Coming soon';
+    var status = slut
+      ? '<span class="tag ' + (p.opnaaet ? 'ok' : 'annulleret') + '">' + (p.opnaaet ? 'Nået 🎉' : 'Ikke nået') + '</span>'
+      : '<span class="tag' + (p.opnaaet ? ' ok' : '') + '">' + p.naaet + ' af ' + p.ialt + ' på mål lige nu</span>';
+    return '<div class="maal-praemie' + (p.opnaaet ? ' opnaaet' : '') + '"><span class="mp-ikon" aria-hidden="true">🎁</span>' +
+      '<div class="mp-txt"><small>' + (slut ? p.naaet + ' af ' + p.ialt + ' mål nået · krav ' + p.antal : 'Når vi ' + p.antal + ' af ' + p.ialt + ' mål') + '</small>' +
+      '<b>' + hvad + '</b></div>' + status + '</div>';
   }
   function faellesMaal() {
     var f = S.faellesMaal || { maal: [], sidste: { maal: [] } };
@@ -539,8 +519,8 @@
     var denne = f.maal.map(function (m) { return maalRaekke(m, false); }).join('');
     var sidste = f.sidste.maal.map(function (m) { return maalRaekke(m, true); }).join('');
     return '<section class="block" id="faelles-maal"><div class="block-head"><h2 class="block-title">Fælles mål</h2><span class="note">Afgøres 1. ' + naeste + '</span></div>' +
-      '<div class="card maal-liste">' + (denne || '<p class="faint" style="margin:0">Ingen mål for ' + mNavn + ' endnu.</p>') + '</div>' +
-      (sidste ? '<h3 class="maal-sub">Resultat for ' + MAANEDER[(nu.getMonth() + 11) % 12] + '</h3><div class="card maal-liste">' + sidste + '</div>' : '') + '</section>';
+      '<div class="card maal-liste">' + (denne ? maalPraemie(f.praemie, false) + denne : '<p class="faint" style="margin:0">Ingen mål for ' + mNavn + ' endnu.</p>') + '</div>' +
+      (sidste ? '<h3 class="maal-sub">Resultat for ' + MAANEDER[(nu.getMonth() + 11) % 12] + '</h3><div class="card maal-liste">' + maalPraemie(f.sidste.praemie, true) + sidste + '</div>' : '') + '</section>';
   }
 
   // "Andet?"-række med én hvid knap, der sender et forslag direkte til admin
@@ -551,8 +531,8 @@
   }
 
   // Konfetti i Best One-farver. Ren DOM + CSS-animation, ryddes op efter 4 sek.
-  function konfetti(stille) {
-    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { if (!stille) toast('Yehaw! 🎉', 'Eventet er fuldt.'); return; }
+  function konfetti() {
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var farver = ['#225581', '#2f74b5', '#79b0ff', '#c9dcf2', '#ffffff', '#8b97ab'];
     var boks = document.createElement('div');
     boks.className = 'confetti';
@@ -814,8 +794,8 @@
       '<small class="pstat-ialt num">I alt ' + wc(st.optjentTotal) + '</small></div>' +
       '<div class="pstat"><div class="pstat-top"><span class="pico out">' + ico('cart') + '</span><span>Brugt i alt</span></div>' +
       '<b class="num">' + wc(st.brugt) + '</b>' +
-      '<div class="split"><i class="s1" style="width:' + del(st.brugtSelv).toFixed(1) + '%"></i><i class="s2" style="width:' + del(st.givet).toFixed(1) + '%"></i><i class="s3" style="width:' + del(st.indskudt).toFixed(1) + '%"></i><i class="s4" style="width:' + del(st.spins).toFixed(1) + '%"></i></div>' +
-      '<div class="legend num"><span><i class="s1"></i>Selv ' + fmt(st.brugtSelv) + '</span><span><i class="s2"></i>Donationer ' + fmt(st.givet) + '</span><span><i class="s3"></i>Events ' + fmt(st.indskudt) + '</span><span><i class="s4"></i>Spins ' + fmt(st.spins) + '</span></div></div>' +
+      '<div class="split"><i class="s1" style="width:' + del(st.brugtSelv).toFixed(1) + '%"></i><i class="s2" style="width:' + del(st.givet).toFixed(1) + '%"></i><i class="s4" style="width:' + del(st.spins).toFixed(1) + '%"></i></div>' +
+      '<div class="legend num"><span><i class="s1"></i>Selv ' + fmt(st.brugtSelv) + '</span><span><i class="s2"></i>Donationer ' + fmt(st.givet) + '</span><span><i class="s4"></i>Spins ' + fmt(st.spins) + '</span></div></div>' +
       '<div class="pstat"><div class="pstat-top"><span class="pico gift">' + ico('gift') + '</span><span>Donationer</span></div>' +
       '<b class="num">' + st.givetAntal + ' givet</b>' +
       '<div class="gift-row">' + giftDots(st.givetAntal, 'giv') + '</div>' +
@@ -963,15 +943,15 @@
       (m.historik.length ? '<small class="faint">Sidste vinder: ' + esc(m.historik[0].vinder.navn) + ' (' + esc(maanedLabel(m.historik[0].maaned)) + ')</small>' : '') +
       '</section>';
 
-    // Sorteret efter højeste procent først
-    var pct = function (p) { return p.maal > 0 ? p.indsamlet / p.maal : 0; };
-    var events = A.projekter.filter(function (p) { return p.aaben; }).sort(function (a, b) { return pct(b) - pct(a); });
-    var ev = '<section class="card"><div class="card-head"><h2 class="card-title">Events</h2></div>' +
-      (events.length ? events.map(function (p) {
-        var pp = p.maal > 0 ? Math.min(100, p.indsamlet / p.maal * 100) : 0;
-        return '<div class="adm-ev"><div class="adm-ev-top"><span>' + esc(p.ikon || '🎯') + ' <b>' + esc(p.navn) + '</b></span><span class="num faint">' + fmt(p.indsamlet) + (p.maal ? ' af ' + fmt(p.maal) : '') + ' · <b>' + pp.toFixed(0) + ' %</b></span></div>' +
-          '<div class="bar' + (pp >= 100 ? ' fuld' : '') + '"><i style="width:' + pp.toFixed(0) + '%"></i></div></div>';
-      }).join('') : '<div class="empty">Ingen åbne events.</div>') +
+    // Fælles mål: belønning + status pr. mål (erstatter Events)
+    var fm = S.faellesMaal || { maal: [] }, fp = fm.praemie;
+    var ev = '<section class="card"><div class="card-head"><h2 class="card-title">Fælles mål</h2><a class="link" href="#/admin/konkurrencer">Åbn</a></div>' +
+      (fm.maal.length ? '<div class="rule"><span>Belønning i ' + mNavn + '</span>' + (fp.praemie ? '<b>' + esc(fp.praemie) + '</b>' : '<a class="link" href="#/admin/konkurrencer">Coming soon – vælg belønning</a>') + '</div>' +
+        '<div class="rule"><span>På mål lige nu</span><b class="num">' + fp.naaet + ' af ' + fp.ialt + ' <span class="faint">(krav ' + fp.antal + ')</span></b></div>' +
+        fm.maal.map(function (m) {
+          return '<div class="adm-ev"><div class="adm-ev-top"><span><b>' + esc(m.navn) + '</b></span><span class="num faint">' + (m.nu === null ? 'Ingen status' : decimal(m.nu) + (m.enhed ? ' ' + esc(m.enhed) : '')) + ' · <b>' + (m.naaet ? 'På mål ✓' : m.pct + ' %') + '</b></span></div>' +
+            '<div class="bar' + (m.naaet ? ' fuld' : '') + '"><i style="width:' + m.pct + '%;--h:' + maalFarve(m.pct) + '"></i></div></div>';
+        }).join('') : '<div class="empty">Ingen fælles mål for ' + mNavn + ' endnu.</div>') +
       '</section>';
 
     var akt = '<section class="card"><div class="card-head"><h2 class="card-title">Seneste aktivitet</h2><a class="link" href="#/admin/posteringer">Se alle</a></div>' +
@@ -1034,11 +1014,20 @@
       '<button class="btn primary" data-act="afsloer">🏆 Afslør vinder</button></div>';
   }
 
-  // Konkurrencer: én blok pr. konkurrence. Indtil videre kun Månedens Webkollega – nye lægges ind under den.
+  // Konkurrencer: én blok pr. konkurrence – Månedens Webkollega og belønningen for fælles mål.
   function pageAdminKonkurrencer() {
     var m = A.mdk;
     var mNavn = MAANEDER[Number(m.maaned.slice(5)) - 1];
-    return adminHead('Konkurrencer') +
+    var fm = S.faellesMaal || { maal: [] }, fp = fm.praemie || { praemie: '', antal: 0, ialt: 0 };
+    var maalKort = '<h2 class="block-title">Fælles mål</h2>' +
+      '<section class="card" style="margin-bottom:28px"><div class="card-head"><h2 class="card-title">Belønning i ' + mNavn + '</h2><span class="tag' + (fp.opnaaet ? ' ok' : '') + '">' + (fp.naaet || 0) + ' af ' + (fp.ialt || 0) + ' på mål lige nu</span></div>' +
+      (fm.maal.length
+        ? '<div class="vote-form maal-form"><input class="input" id="maal-praemie" value="' + esc(fp.praemie) + '" placeholder="fx Teamfrokost">' +
+          '<label class="maal-antal">Når vi <input class="input num" type="number" id="maal-antal" min="1" max="' + fp.ialt + '" value="' + fp.antal + '"> af ' + fp.ialt + ' mål</label>' +
+          '<button class="btn primary" data-act="maal-praemie-ok">Gem</button></div>' +
+          '<small class="faint">' + (fp.praemie ? 'Gælder ' + mNavn + '.' : 'Ingen belønning for ' + mNavn + ' endnu – medarbejderne ser "Coming soon".') + ' Målene og deres status ligger i fanen Maal.</small>'
+        : '<div class="empty">Læg månedens mål ind i fanen Maal først.</div>') + '</section>';
+    return adminHead('Konkurrencer') + maalKort +
       '<h2 class="block-title">Månedens Webkollega</h2>' + (afsloerKnap(m) ? '<section class="card" style="margin-bottom:20px">' + afsloerKnap(m) + '</section>' : '') +
       '<section class="card" style="margin-bottom:20px"><div class="card-head"><h2 class="card-title">Præmie</h2></div>' +
       '<div class="vote-form"><input class="input" id="mdk-praemie" value="' + esc(m.praemie) + '" placeholder="fx 50 Webcoins"><button class="btn primary" data-act="mdk-praemie-ok">Gem</button></div>' +
@@ -1142,20 +1131,6 @@
       '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="koeb-ok"' + (efter < 0 || mangler || (k.gave && !k.til) ? ' disabled' : '') + '>' + (forud ? (k.gave ? 'Forudbestil donation' : 'Forudbestil') : (k.gave ? 'Donér' : 'Bestil')) + '</button></div>');
   }
 
-  var indskydState = null;
-  function openIndskyd(id) {
-    var p = S.projekter.filter(function (x) { return x.id === id; })[0];
-    if (!p) return;
-    indskydState = { p: p };
-    var maks = p.maal > 0 ? Math.min(S.stats.saldo, Math.max(0, p.maal - p.indsamlet)) : S.stats.saldo;
-    var forslag = [10, 20, 30, 40, 50, 100]; // beløb man ikke har råd til (eller som overstiger det der mangler) er slået fra
-    openModal('<h2><span class="ico">' + esc(p.ikon || '🎯') + '</span>' + esc(p.navn) + '</h2>' +
-      '<div class="field"><label for="ind-beloeb">Antal Webcoins' + (p.maal > 0 ? ' (der mangler ' + wc(Math.max(0, p.maal - p.indsamlet)) + ')' : '') + '</label><input class="input num" id="ind-beloeb" type="number" min="1" max="' + Math.max(0, maks) + '" inputmode="numeric" placeholder="0"></div>' +
-      '<div class="chips beloeb-chips">' + forslag.map(function (n) { return '<button class="chip" data-act="ind-forslag" data-n="' + n + '"' + (n > maks ? ' disabled' : '') + '>' + n + '</button>'; }).join('') + '</div>' +
-      '<div class="sum"><span class="muted">Din saldo</span><b class="num">' + wc(S.stats.saldo) + '</b></div>' +
-      '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="ind-ok">Donér</button></div>');
-  }
-
   function openBruger(email) {
     var u = email ? A.brugere.filter(function (x) { return x.email === email; })[0] : { email: '', initialer: '', navn: '', gruppe: '', aktiv: true };
     openModal('<h2>' + (email ? 'Rediger bruger' : 'Ny bruger') + '</h2>' +
@@ -1208,9 +1183,9 @@
 
     switch (act) {
       case 'forslag': {
-        var ftype = t.dataset.type || 'vare', proj = ftype === 'projekt', fb = ftype === 'feedback';
+        var ftype = t.dataset.type || 'vare', fb = ftype === 'feedback';
         openModal('<h2><span class="ico">' + (fb ? '💬' : '💡') + '</span>' + (fb ? 'Giv feedback' : 'Send forslag') + '</h2>' +
-          '<p class="muted" style="margin:-8px 0 14px">' + (fb ? 'Hvad kan gøres bedre i Webshoppen?' : proj ? 'Hvad skal vi samle ind til?' : 'Hvad mangler der i menuen?') + '</p>' +
+          '<p class="muted" style="margin:-8px 0 14px">' + (fb ? 'Hvad kan gøres bedre i Webshoppen?' : 'Hvad mangler der i menuen?') + '</p>' +
           '<input type="hidden" id="f-type" value="' + ftype + '">' +
           '<textarea class="input" id="f-tekst" rows="4" maxlength="1000"></textarea>' +
           '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="forslag-ok">Send</button></div>');
@@ -1222,7 +1197,6 @@
         submit(t, 'forslag', { type: val('f-type'), tekst: ft }, val('f-type') === 'feedback' ? 'Tak for din feedback!' : 'Tak! Dit forslag er sendt');
         break;
       }
-      case 'yehaw': konfetti(); break;
       case 'regler-boks':
         openModal('<h2><span class="info-btn dark">' + ico('info') + '</span>Sådan optjener du Webcoins</h2>' +
           '<p class="muted" style="margin:-8px 0 14px">Gælder for din gruppe: <b>' + esc(S.me.gruppe) + '</b></p>' +
@@ -1344,14 +1318,6 @@
           forud ? 'Den leveres, når shoppen åbner.' : 'Personlig levering, forvent lidt ventetid.');
         break;
       }
-      case 'indskyd': openIndskyd(t.dataset.id); break;
-      case 'ind-forslag':
-        document.getElementById('ind-beloeb').value = t.dataset.n;
-        document.querySelectorAll('.beloeb-chips .chip').forEach(function (c) { c.classList.toggle('on', c === t); });
-        break;
-      case 'ind-ok':
-        submit(t, 'indskyd', { projektId: indskydState.p.id, beloeb: val('ind-beloeb') }, 'Tak for din donation til ' + indskydState.p.navn);
-        break;
 
       case 'pfane': ui.profilFane = t.dataset.f; render(); break;
       case 'bfilter': ui.bestFilter = t.dataset.f; render(); break;
@@ -1413,12 +1379,15 @@
             (r.udbetalt ? '<div class="afsloer-praemie">' + coin() + '<span><b>' + wc(r.udbetalt) + '</b> er lagt på saldoen</span></div>'
               : r.praemie ? '<div class="afsloer-praemie">🎁<span>Husk at give præmien: <b>' + esc(r.praemie) + '</b></span></div>' : '') +
             '<div class="modal-acts"><button class="btn primary grow" data-act="close">Tillykke! 🎉</button></div></div>');
-          konfetti(true);
+          konfetti();
           return refresh();
         }).catch(function (e) {
           busy(t, false);
           if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true);
         });
+        break;
+      case 'maal-praemie-ok':
+        submit(t, 'admin_maal_praemie', { praemie: val('maal-praemie'), antal: val('maal-antal') }, 'Belønning gemt');
         break;
       case 'mdk-praemie-ok':
         submit(t, 'admin_mdk_praemie', { praemie: val('mdk-praemie') }, 'Præmie gemt');

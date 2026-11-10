@@ -24,6 +24,7 @@ var Core = (function () {
     Regler: ['gruppe', 'kilde', 'sats', 'tekst', 'navn', 'fra'],
     Afregning: ['maaned', 'sendt', 'tid'],
     Maal: ['maaned', 'navn', 'tekst', 'retning', 'graense', 'nu', 'enhed', 'kilde'],
+    MaalPraemie: ['maaned', 'antal', 'praemie'],
     // Månedens Webkollega pr. måned: præmien (sat af admin) og vinderen (sat, når admin trykker Afslør)
     Webkollega: ['maaned', 'praemie', 'vinder', 'afsloeret']
   };
@@ -225,6 +226,24 @@ var Core = (function () {
     });
   }
 
+  // Belønning for fælles mål: "Når vi <antal> af <ialt> mål, får vi <praemie>". Sættes pr. måned af admin
+  // (fanen MaalPraemie); uden række er kravet alle mål på nær ét, og præmien "Coming soon".
+  function maalPraemieRaekke(db, mk) {
+    var r = null;
+    try { db.all('MaalPraemie').forEach(function (x) { if (str(x.maaned).trim() === mk) r = x; }); } catch (e) { /* fanen mangler i et ældre ark */ }
+    return r;
+  }
+  function maalPraemie(db, mk, maal) {
+    var r = maalPraemieRaekke(db, mk);
+    var ialt = maal.length, naaet = maal.filter(function (m) { return m.naaet; }).length;
+    var antal = Math.min(ialt, r && num(r.antal) > 0 ? num(r.antal) : Math.max(1, ialt - 1));
+    return { praemie: r ? str(r.praemie).trim() : '', antal: antal, ialt: ialt, naaet: naaet, opnaaet: ialt > 0 && naaet >= antal };
+  }
+  function faellesMaalState(db, mk) {
+    var maal = faellesMaal(db, mk);
+    return { maaned: mk, maal: maal, praemie: maalPraemie(db, mk, maal) };
+  }
+
   // Status på et fælles mål ud fra en tabel som Fakturering → Web/Tekst: række 1 har månedsnavne, og under hver måned
   // står kolonnerne Antal | Tid. Resultatet er Tid ÷ Antal for måneden over alle rækker med en af `labels` (fx
   // Hjemmeside + Redesign). Kun personrækker tæller: initialerne står på rækken (Tekst) eller på personens
@@ -328,7 +347,7 @@ var Core = (function () {
       gaver: nyeGaver(db, me),
       // Mønster til profilbilleder, fx https://leksione.dk/avatar/{ini}.png (Config BILLEDE_URL). Tom = initialer.
       billedeUrl: str(cfgVal(db, 'BILLEDE_URL', '')).trim(),
-      faellesMaal: { maaned: maanedKey(nu), maal: faellesMaal(db, maanedKey(nu)), sidste: { maaned: forrigeMaaned(maanedKey(nu)), maal: faellesMaal(db, forrigeMaaned(maanedKey(nu))) } },
+      faellesMaal: Object.assign(faellesMaalState(db, maanedKey(nu)), { sidste: faellesMaalState(db, forrigeMaaned(maanedKey(nu))) }),
       shop: env.shop ? env.shop() : { aaben: true },
       mdk: (function () {
         var mk = maanedKey(nu), sidst = forrigeMaaned(mk);
@@ -548,6 +567,19 @@ var Core = (function () {
     return { ok: true };
   }
 
+  // Belønning for månedens fælles mål (fx "Teamfrokost", når 3 af 4 mål nås)
+  function adminMaalPraemie(db, me, data, env) {
+    kraevAdmin(me);
+    var tekst = str(data.praemie).trim(), antal = Math.floor(num(data.antal));
+    if (!tekst) throw err('BAD', 'Skriv en belønning.');
+    var mk = maanedKey(env.now());
+    var ialt = faellesMaal(db, mk).length;
+    if (antal < 1 || (ialt && antal > ialt)) throw err('BAD', 'Antal mål skal være mellem 1 og ' + (ialt || 1) + '.');
+    var row = maalPraemieRaekke(db, mk);
+    if (row) db.update('MaalPraemie', row, { antal: antal, praemie: tekst }); else db.insert('MaalPraemie', { maaned: mk, antal: antal, praemie: tekst });
+    return { ok: true };
+  }
+
   // Afslør sidste måneds vinder (til briefingen): vinderen regnes ud fra stemmerne, vises for alle,
   // og en præmie i Webcoins lægges på saldoen. Kan kun ske én gang pr. måned.
   function erAfsloeret(db, mk) { var r = mdkRaekke(db, mk); return !!(r && str(r.afsloeret).trim()); }
@@ -702,6 +734,9 @@ var Core = (function () {
     } else linjer.push('• Ingen bestillinger.');
     linjer.push('', 'Webcoins i omløb: ' + omloeb + ' Webcoins ≈ kr ' + Math.round(omloeb / 2));
     if (aabne) linjer.push('Bestillinger der ikke er udleveret: ' + aabne);
+    var fs = faellesMaalState(db, sidst);
+    if (fs.maal.length) linjer.push('Fælles mål for ' + sNavn + ': ' + fs.praemie.naaet + ' af ' + fs.praemie.ialt + ' nået' +
+      (fs.praemie.praemie ? (fs.praemie.opnaaet ? ' – holdet har fortjent ' + fs.praemie.praemie + ' 🎉' : ' (krav ' + fs.praemie.antal + ' for ' + fs.praemie.praemie + ')') : '') + ' (tjek, at alle tal er endelige).');
     var husk = [];
     var uaf = uafsloeretMaaned(db, mk);
     if (uaf) husk.push('Afslør Månedens Webkollega for ' + maanedNavn(uaf) + ' til briefingen (vinderen er klar).');
@@ -710,6 +745,7 @@ var Core = (function () {
     var mangler = maal.filter(function (m) { return m.nu === null; });
     if (mangler.length) husk.push('Skriv resultaterne for ' + sNavn.split(' ')[0] + ' i fanen Maal: ' + mangler.map(function (m) { return m.navn; }).join(', ') + '.');
     if (!faellesMaal(db, mk).length) husk.push('Læg fælles mål for ' + nNavn + ' ind i fanen Maal.');
+    if (!maalPraemieRaekke(db, mk)) husk.push('Vælg belønning for fælles mål i ' + nNavn + ' (Admin → Konkurrencer).');
     husk.push('Markér ' + sNavn.split(' ')[0] + ' som sendt til RAB på admin-overblikket, når beløbet er sendt.');
     linjer.push('', 'Husk:');
     husk.forEach(function (h) { linjer.push('☐ ' + h); });
@@ -956,6 +992,7 @@ var Core = (function () {
     stem: stem,
     forslag: forslag,
     admin_mdk_praemie: adminMdkPraemie,
+    admin_maal_praemie: adminMaalPraemie,
     admin_mdk_afsloer: adminMdkAfsloer,
     admin_afregnet: adminAfregnet,
     admin_state: adminState,
@@ -968,7 +1005,7 @@ var Core = (function () {
     admin_gave: adminGave,
     admin_sync: function (db, me, data, env) { kraevAdmin(me); return env.sync(); }
   };
-  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_udsolgt: 1, gaver_set: 1, admin_gave: 1, admin_sync: 1 };
+  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_maal_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_udsolgt: 1, gaver_set: 1, admin_gave: 1, admin_sync: 1 };
 
   function handle(db, me, action, data, env) {
     var fn = HANDLINGER[action];

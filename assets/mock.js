@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v50';
+  var KEY = 'webshoppen-demo-v51';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -131,8 +131,6 @@ window.Mock = (function () {
     Core.handle(db, jst, 'bestil', { vareId: 'monster' }, Object.assign({}, e, { notify: function () {} }));
     var dsi = Core.resolveUser(db, { email: 'demo.dsi@best-one.dk' }, ADMINS);
     Core.handle(db, dsi, 'bestil', { vareId: 'candybar', variant: 'Snickers', til: 'JST' }, Object.assign({}, e, { notify: function () {} }));
-    Core.handle(db, dsi, 'indskyd', { projektId: 'frokost', beloeb: 240 }, Object.assign({}, e, { notify: function () {} }));
-    var stille = Object.assign({}, e, { notify: function () {} });
     // Én stemme fra en pladsholder, så admin ser en stilling, mens alle demobrugere selv kan stemme.
     data.Stemmer.push({ id: 's9', tid: new Date().toISOString(), maaned: Core.maanedKey(new Date()), fra: 'ADE', til: 'CBO', begrundelse: 'Gav mig gode råd om en kunde' });
     // Sidste måned: stemmer + præmie, men ikke afsløret – så admin kan prøve "Afslør vinder" (til briefingen)
@@ -141,9 +139,6 @@ window.Mock = (function () {
       data.Stemmer.push({ id: 'so' + i, tid: new Date(sidstMd.getTime() + i * 864e5).toISOString(), maaned: sidstKey, fra: x[0], til: x[1], begrundelse: x[2] });
     });
     data.Webkollega = [{ maaned: sidstKey, praemie: '50 Webcoins', vinder: '', afsloeret: '' }, { maaned: Core.maanedKey(new Date()), praemie: '50 Webcoins', vinder: '', afsloeret: '' }];
-    [['demo.jst@best-one.dk', 'frokost', 160], ['demo.cbo@best-one.dk', 'frokost', 90], ['demo.jfr@best-one.dk', 'biograf', 120], ['demo.cbo@best-one.dk', 'biograf', 50], ['demo.jst@best-one.dk', 'kage', 160], ['demo.dsi@best-one.dk', 'kage', 140], ['demo.jfr@best-one.dk', 'kage', 100]].forEach(function (x) {
-      Core.handle(db, Core.resolveUser(db, { email: x[0] }, ADMINS), 'indskyd', { projektId: x[1], beloeb: x[2] }, stille);
-    });
     // Demo: alle testbrugere starter med en saldo på 67 Webcoins (resten af historikken bevares).
     BRUGERE.forEach(function (u) {
       var saldo = data.Posteringer.filter(function (p) { return p.initialer === u.initialer; }).reduce(function (sum, p) { return sum + Number(p.beloeb || 0); }, 0);

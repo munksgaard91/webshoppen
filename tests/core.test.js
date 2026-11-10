@@ -369,4 +369,26 @@ t('fælles mål: Tid ÷ Antal fra Web/Tekst, holdtotaler tæller ikke', function
   ];
   eq(Core.maalTid(tekst, '2026-11', kendte, ['tekster']), Math.round(15 / 33 * 100) / 100);
 });
+t('fælles mål: belønning (3 af 4) sættes af admin og tælles op', function () {
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  data.Maal = [
+    { maaned: '2026-11', navn: 'A', retning: 'under', graense: 6.5, nu: 6 },
+    { maaned: '2026-11', navn: 'B', retning: 'under', graense: 70, nu: 65 },
+    { maaned: '2026-11', navn: 'C', retning: 'under', graense: 0.7, nu: 0.71 },
+    { maaned: '2026-11', navn: 'D', retning: 'over', graense: 20, nu: 20 }
+  ];
+  var p = Core.handle(db, B, 'state', {}, env).faellesMaal.praemie;
+  eq(p.praemie, '', 'Coming soon uden belønning');
+  eq(p.antal, 3, 'standard: alle på nær ét');
+  eq(p.naaet, 3);
+  kaster(function () { Core.handle(db, B, 'admin_maal_praemie', { praemie: 'Teamfrokost', antal: 3 }, env); }, 'admin');
+  kaster(function () { Core.handle(db, adm, 'admin_maal_praemie', { praemie: 'Teamfrokost', antal: 5 }, env); }, 'mellem 1 og 4');
+  Core.handle(db, adm, 'admin_maal_praemie', { praemie: 'Teamfrokost', antal: 4 }, env);
+  p = Core.handle(db, B, 'state', {}, env).faellesMaal.praemie;
+  eq(p.praemie, 'Teamfrokost');
+  eq(p.opnaaet, false, '3 af 4 er ikke nok, når kravet er 4');
+  Core.handle(db, adm, 'admin_maal_praemie', { praemie: 'Teamfrokost', antal: 3 }, env);
+  eq(Core.handle(db, B, 'state', {}, env).faellesMaal.praemie.opnaaet, true);
+  eq(data.MaalPraemie.length, 1, 'samme måned opdateres');
+});
 print('OK: ' + ok + '  FEJL: ' + fejl);

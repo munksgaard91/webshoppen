@@ -274,14 +274,28 @@ a { color: inherit; }
 .saldo-ret input:focus { border-color: var(--brand); background: var(--card); }
 .maal-liste { padding-top: 6px; padding-bottom: 6px; }
 .maal-sub { font-size: 15px; font-weight: 800; margin: 22px 0 10px; color: var(--muted); }
-.maal-row { display: grid; grid-template-columns: 260px minmax(0, 1fr); align-items: center; gap: 20px; padding: 14px 0; border-top: 1px solid var(--line); }
-.maal-row.slut { grid-template-columns: 260px minmax(0, 1fr) 100px; }
-.maal-status { justify-content: flex-end; }
-@media (max-width: 700px) { .maal-row, .maal-row.slut { grid-template-columns: 1fr; gap: 8px; } .maal-status { justify-content: flex-start; } }
+.maal-row { display: grid; grid-template-columns: 260px minmax(0, 1fr) 30px; align-items: center; gap: 20px; padding: 14px 0; border-top: 1px solid var(--line); }
+@media (max-width: 700px) { .maal-row { grid-template-columns: minmax(0, 1fr) 30px; gap: 8px 12px; } .maal-row .maal-txt { grid-column: 1 / -1; } }
+/* Fyld efter status: --h er farvetonen (0 = rød … 120 = grøn), sat pr. bar i app.js. Nået = .fuld (helt grøn). */
+.maal-row .bar-big:not(.fuld) > i { background: hsl(var(--h) 78% 80%); }
+:root[data-theme="dark"] .maal-row .bar-big:not(.fuld) > i { background: hsl(var(--h) 65% 45% / .55); }
+.maal-ikon { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; font-weight: 800; color: var(--faint); background: var(--card-2); box-shadow: inset 0 0 0 1px var(--line); }
+.maal-ikon.ok { color: #fff; background: #2fa36f; box-shadow: none; }
+.maal-ikon.nej { color: var(--minus); background: rgba(207, 60, 74, .1); box-shadow: none; }
+/* Belønning for månedens fælles mål øverst i kortet */
+.maal-praemie { display: flex; align-items: center; gap: 14px; padding: 4px 0 16px; }
+.maal-praemie .mp-ikon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; background: var(--brand-soft); flex: none; }
+.maal-praemie .mp-txt { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.maal-praemie .mp-txt small { color: var(--muted); font-size: 13px; white-space: nowrap; }
+.maal-praemie .mp-txt b { font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.maal-praemie .tag { white-space: nowrap; }
+.maal-praemie + .maal-row { border-top: 1px solid var(--line); }
+.maal-form { align-items: center; flex-wrap: wrap; }
+.maal-antal { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--muted); font-size: 14px; }
+.maal-antal .input { width: 64px; text-align: center; }
 .maal-row:first-child { border-top: 0; }
 .maal-txt { display: grid; gap: 2px; min-width: 0; }
 .maal-txt small { color: var(--muted); font-size: 13px; }
-.maal-status { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 .rule-link { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--brand); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
 .tb-card { display: flex; flex-direction: column; justify-content: center; }
@@ -318,9 +332,6 @@ a { color: inherit; }
 .list.compact .row { padding: 11px 22px; }
 .list.compact .thumb { width: 42px; height: 42px; border-radius: 11px; font-size: 23px; margin: 0 5px; }
 .list.compact .row-main > b { font-size: 15px; }
-.proj-item { padding-top: 24px !important; padding-bottom: 24px !important; }
-.proj-item .row-main { margin-right: 48px; }
-.proj-item .row-main .bar { margin: 12px 0 0; max-width: 640px; }
 .bar-big { position: relative; height: 30px; border-radius: 10px; }
 .bar-big > i { background: linear-gradient(90deg, #cfe2f6, #a9cbee); }
 :root[data-theme="dark"] .bar-big > i { background: linear-gradient(90deg, rgba(121, 176, 255, .22), rgba(121, 176, 255, .42)); }
@@ -328,14 +339,6 @@ a { color: inherit; }
 .bar-label b { color: var(--text); font-weight: 800; }
 .bar-amt { display: inline-flex; align-items: center; white-space: pre; }
 .bar-amt .coin { width: 15px; height: 15px; vertical-align: 0; margin-left: 6px; }
-.top3-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 6px; font-size: 13px; color: var(--muted); max-width: 360px; }
-.top3-list li { display: flex; align-items: center; gap: 8px; }
-.top3-list li b { margin-left: 4px; color: var(--text); }
-.top3-list li.mig, .top3-list li.mig b { color: var(--brand-2); font-weight: 700; }
-.proj-acts { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex: none; width: 280px; }
-.proj-acts .btn { padding: 13px 34px; font-size: 16px; border-radius: 14px; min-width: 150px; }
-.donate { display: inline-flex; flex-direction: column; align-items: center; gap: 5px; }
-.proj-acts .dit { font-size: 10.5px; line-height: 1.2; color: var(--brand-2); font-weight: 700; text-align: center; max-width: 150px; }
 .top3 { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; font-size: 13px; color: var(--muted); }
 .top3 b { color: var(--text); }
 .top3 .mig b { color: var(--brand-2); }
@@ -343,7 +346,6 @@ a { color: inherit; }
 .disclaimer { margin: 14px 0 0; font-size: 12px; color: var(--faint); }
 
 /* 3. Projekter */
-.proj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
 
 /* 4. Statistik */
 .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
@@ -467,7 +469,6 @@ td.r, th.r { text-align: right; }
   .menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .item { padding: 12px; }
   .item .ico { width: 46px; height: 46px; font-size: 30px; }
-  .proj-grid { grid-template-columns: 1fr; }
   .stats, .stats.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .saldo-pill.big { margin-left: auto; font-size: 16px; padding: 10px 18px 10px 12px; }
 .month-name { width: 150px; flex: none; }
@@ -475,7 +476,7 @@ td.r, th.r { text-align: right; }
 .stats.two { grid-template-columns: 1fr; }
   .list .row { flex-wrap: wrap; }
   .row-price { min-width: 0; }
-  .list .row-acts, .proj-acts { width: auto; }
+  .list .row-acts { width: auto; }
   .row-2 { grid-template-columns: 1fr; }
   .search { max-width: none; width: 100%; }
 }
@@ -589,8 +590,6 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .split i { display: block; height: 100%; }
 .split .s1, .legend i.s1 { background: var(--brand-2); }
 .split .s2, .legend i.s2 { background: #a9c6e6; }
-.split .s3, .legend i.s3 { background: var(--brand); }
-:root[data-theme="dark"] .split .s3, :root[data-theme="dark"] .legend i.s3 { background: #c9dcf2; }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); margin-top: 2px; }
 .legend span { display: inline-flex; align-items: center; gap: 5px; }
 .legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
@@ -602,7 +601,6 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .forslag-row .row-main > b { color: var(--text); }
 .forslag-row .btn { background: var(--card); }
 .list .row.forslag-row .row-acts { width: 280px; }
-.proj-item + .forslag-row, .list .forslag-row { padding-top: 14px; padding-bottom: 14px; }
 #f-tekst { resize: vertical; min-height: 96px; }
 
 /* Teambudget: brugt-beløbet i en mild rød */
@@ -616,8 +614,6 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .btn.primary.locked:disabled { background: var(--card-2); border-color: var(--line-2); color: var(--muted); opacity: 1; }
 
 /* Yehaw! + konfetti */
-.btn.yehaw { background: var(--brand-2); border-color: var(--brand-2); }
-.btn.yehaw:hover { background: var(--brand); border-color: var(--brand); }
 .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 80; overflow: hidden; }
 .confetti i { position: absolute; top: -20px; border-radius: 2px; box-shadow: 0 0 0 1px rgba(16, 35, 61, .08); animation-name: konfetti; animation-timing-function: cubic-bezier(.25, .6, .4, 1); animation-fill-mode: forwards; }
 @keyframes konfetti { to { transform: translate(var(--dx), 105vh) rotate(var(--rot)); } }
@@ -712,35 +708,18 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .reel { border-radius: 8px; }
 
 /* Top 3: faste kolonner (medalje | navn | beløb højrestillet), så det flugter uanset navn og antal cifre */
-.top3-list { max-width: 400px; }
-.top3-list li { display: grid; grid-template-columns: 24px minmax(0, 1fr) 120px; align-items: center; gap: 6px; }
-.top3-list .t3-navn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.top3-list .t3-beloeb { text-align: right; white-space: nowrap; }
-.top3-list .t3-beloeb b { margin: 0; color: var(--text); }
-.top3-list li.mig .t3-beloeb b { color: var(--brand-2); }
-.top3-list li.faint { display: block; }
 /* Fuldt projekt: grøn progressbar */
 /* Fuldt projekt: samme grøn som Yehaw! og hvid skrift for kontrasten */
 .bar-big.fuld > i, :root[data-theme="dark"] .bar-big.fuld > i { background: linear-gradient(90deg, #34a874, #258a5a); }
 .bar-big.fuld .bar-label, .bar-big.fuld .bar-label b { color: #fff; }
 
 /* Projekter: Top donator + "Se resten" (top 10 ved hover) */
-.top-don { margin-top: 12px; max-width: 400px; }
-.top-don-titel { display: block; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-bottom: 4px; }
-.top-don .top3-list { margin: 0; }
-.top10 { display: inline-block; margin-top: 4px; }
-.se-resten { font-size: 12px; font-weight: 700; color: var(--brand-2); cursor: help; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(47, 116, 181, .35); }
-.top10 .pop { left: 0; right: auto; top: calc(100% + 6px); width: 340px; z-index: 30; }
-.top10 .pop .top3-list { gap: 4px; }
-.top10:focus-within .pop { opacity: 1; visibility: visible; transform: none; }
 /* Tombola-kort: næsten skarpe hjørner og meget diskrete kanter */
 .reel-card { border-radius: 2px; box-shadow: none; }
 .reel-card.vare { box-shadow: inset 0 0 0 1px var(--line-2); }
 .reel-card.nitte { box-shadow: none; }
 .reel { border-radius: 4px; }
 /* Yehaw! er grøn ligesom den fulde progressbar */
-.btn.yehaw { background: #2fa36f; border-color: #2fa36f; color: #fff; }
-.btn.yehaw:hover { background: #258a5d; border-color: #258a5d; }
 
 /* Teambudget-kortet: blå accent, ring med andel tilbage og svagt b-mærke */
 .tb-card { position: relative; overflow: hidden; }
@@ -767,18 +746,12 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 
 /* Tombola i tomgang: ruller langsomt i ring for at friste (pauser ved hover, slået fra ved "Reducer bevægelse") */
 /* Top contributors: beløbet tæt på navnet, men stadig i fast kolonne */
-.top3-list li { grid-template-columns: 24px 190px 110px; }
-.top-don, .top3-list { max-width: 340px; }
-.top10 .pop { width: 400px; padding: 18px 22px; }
-.top10 .pop .top3-list { gap: 9px; max-width: none; }
-.t3-navn .mini-av { width: 22px; height: 22px; }
 .split .s4, .legend i.s4 { background: #8b97ab; }
 .fb-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; padding: 16px 24px; }
 .fb-card b { font-size: 15px; }
 .beloeb-chips { margin-bottom: 14px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
 .beloeb-chips .chip { padding: 8px 0; text-align: center; }
 .beloeb-chips .chip:disabled { opacity: .35; cursor: not-allowed; }
-.proj-acts .dit.event { color: #2fa36f; }
 
 /* Månedens kollega v3: venstre = kun sidste vinder (tom teaser ved start), højre = afstemning med præmie + deadline */
 .mdk-spot { justify-content: center; }
@@ -818,6 +791,7 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .adm-main small { display: block; margin-top: 2px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .adm-ev { padding: 8px 0; }
 .adm-ev-top { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; margin-bottom: 6px; }
+.adm-ev .bar:not(.fuld) > i { background: hsl(var(--h) 72% 62%); }
 .adm-ev .bar.fuld > i { background: linear-gradient(90deg, #34a874, #258a5a); }
 
 /* Sidepanel: fold sammen til kun ikoner (desktop) */
