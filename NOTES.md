@@ -5,7 +5,7 @@ Sidst opdateret: **2026-11-10** (arbejds-Mac). Seneste kodegennemgang: **2026-11
 
 ## Status
 
-Alt kører i **demo-tilstand** (tom `API_URL`) på https://munksgaard91.github.io/webshoppen/. Backend er skrevet, men **ikke sat op i Google endnu**.
+**Live-backend sat op 2026-11-10** på https://munksgaard91.github.io/webshoppen/: arket "Webshoppen DB" (rmu's Drive, ikke delt), Apps Script-projektet "Webshoppen" (web app v1, kør som rmu, adgang alle), OAuth-client i Google Cloud-projektet "Webshoppen" (intern, oprindelser github.io + localhost:8765). `Brugere` udfyldt med de 13 kolleger, `SIDE_URL` = github.io-adressen indtil subdomænet er valgt. Admin-login testet lokalt. Mangler: kilder (`Kilder`), teambudget, Chat-webhook, trigger. Demoen kører nu kun lokalt med tom `API_URL`.
 
 ### Medarbejder – Overblik (`#/`)
 Rækkefølge (se også CLAUDE.md):
@@ -35,7 +35,7 @@ Lyst tema som standard, mørkt som valg. **Kun blå eller hvid/grå/mørk** – 
 Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den private Mac. Filen er **gitignored** (`*.local.*`), fordi repoet er offentligt – den skal kopieres ind i fanen `Brugere`, når arket sættes op. Fordelingen pr. gruppe står i filen og i fanen `Brugere`. Demoen har **13 testbrugere** som det rigtige hold (7 Hjemmeside, 3 Redaktør, 2 Support, 1 Fotograf): de fire "Demo …"-brugere på login-listen + 9 pladsholdere med opdigtede navne ("Anders Demo" …, initialer ADE–IDE, `ekstra: true` i mock.js), som kun ses i lister som Månedens Webkollega og Donér til en kollega. Alle demobrugere starter med 67 Webcoins (en "Demo-saldo"-justering i mock.js).
 
 ## Ikke gjort endnu
-- Backend er ikke sat op i Google (tjekliste nedenfor).
+- Kilder, teambudget, Chat-webhook og timer-trigger er ikke sat op endnu.
 - **Pladsholdere** der skal regnes igennem: varepriser og kostpriser, lykkehjulets præmier/vægte/pris (de tre sidste i `shared/sortiment.js`).
 - Kilder (faktureringsark, anmeldelser) og teambudget-arket er ikke koblet på.
 - Subdomæne ikke valgt (`xxx.leksione.dk`); `SIDE_URL` står som `webshoppen.leksione.dk`. Ingen `CNAME`-fil endnu.
