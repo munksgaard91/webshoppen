@@ -222,6 +222,10 @@ function syncOptjening() {
   lock.waitLock(30000);
   try {
     SheetDB.nulstil();
+    // OPTJENING_FRA er en måned (2026-11) eller en dato (2026-11-17 / 17-11-2026 = lanceringsdagen). Rækker før tælles ikke.
+    var fraV = String(cfg_().OPTJENING_FRA || '').trim();
+    var fraDato = dato_(fraV);
+    var fraMaaned = fraDato ? Core.maanedKey(fraDato) : fraV;
     var kilder = {};
     SheetDB.all('Kilder').forEach(function (k) {
       var id = String(k.kilde).trim();
@@ -236,7 +240,7 @@ function syncOptjening() {
         for (var r = (Number(k.start_raekke) || 2) - 1; r < rows.length; r++) {
           var ini = String(rows[r][cI] || '').trim().toUpperCase();
           var d = dato_(rows[r][cD]);
-          if (!ini || !d) continue;
+          if (!ini || !d || (fraDato && d < fraDato)) continue;
           var v = cV >= 0 ? Core.num(rows[r][cV]) : 1;
           var key = ini + '|' + Core.maanedKey(d);
           data[key] = (data[key] || 0) + v;
@@ -245,7 +249,7 @@ function syncOptjening() {
         console.error('Kilde ' + id + ' fejlede: ' + e);
       }
     });
-    var res = Core.applyEarnings(SheetDB, kilder, env_(), cfg_().OPTJENING_FRA || '');
+    var res = Core.applyEarnings(SheetDB, kilder, env_(), fraMaaned);
     SpreadsheetApp.flush();
     return res;
   } finally {

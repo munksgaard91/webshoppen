@@ -5,7 +5,7 @@ Sidst opdateret: **2026-11-10** (arbejds-Mac). Seneste kodegennemgang: **2026-11
 
 ## Status
 
-**Live-backend sat op 2026-11-10** på **https://webshoppen.leksione.dk** (CNAME hos Curanet → munksgaard91.github.io, `CNAME`-fil i repoet; github.io-adressen sender videre): arket "Webshoppen DB" (rmu's Drive, ikke delt), Apps Script-projektet "Webshoppen" (web app v1, kør som rmu, adgang alle), OAuth-client i Google Cloud-projektet "Webshoppen" (intern, oprindelser github.io + localhost:8765). `Brugere` udfyldt med de 13 kolleger, `SIDE_URL` = https://webshoppen.leksione.dk. OAuth-oprindelser: subdomænet, github.io og localhost:8765. Admin-login testet lokalt. Mangler: kilder (`Kilder`), teambudget, Chat-webhook, trigger. Demoen kører nu kun lokalt med tom `API_URL`.
+**Live-backend sat op 2026-11-10** på **https://webshoppen.leksione.dk** (CNAME hos Curanet → munksgaard91.github.io, `CNAME`-fil i repoet; github.io-adressen sender videre): arket "Webshoppen DB" (rmu's Drive, ikke delt), Apps Script-projektet "Webshoppen" (web app v1, kør som rmu, adgang alle), OAuth-client i Google Cloud-projektet "Webshoppen" (intern, oprindelser github.io + localhost:8765). `Brugere` udfyldt med de 13 kolleger, `SIDE_URL` = https://webshoppen.leksione.dk. OAuth-oprindelser: subdomænet, github.io og localhost:8765. Admin-login testet lokalt. Kilder: fanen **Nyfak** i "Fakturering 26/27" (dato C, data fra række 4): sager = T/Q, tekster = P/N, sessioner = W/U. Anmeldelser mangler. Mangler også: teambudget, Chat-webhook, trigger. Demoen kører nu kun lokalt med tom `API_URL`.
 
 ### Medarbejder – Overblik (`#/`)
 Rækkefølge (se også CLAUDE.md):
@@ -62,7 +62,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 - **Apps Script + Google Sheet som backend** (ikke Cloudflare): datakilderne er Google Sheets, mail/Chat er indbygget, DNS styres via GitHub Pages + Curanet, og der er ingen Node på den private Mac.
 - **Saldoen kan aldrig gå i minus:** bestil/donér til kollega, køb af drej og donation til projekt afvises i backend, hvis man ikke har råd (og knapperne er slået fra i UI). Admins saldo-rettelse afvises også, hvis den ville sende nogen under 0. (Undtagelse: hvis en optjening rettes ned efter synk, kan saldoen i princippet blive negativ – det er en datarettelse, ikke et køb.)
 - **Saldo = sum af posteringer.** Admin kan rette direkte i arket.
-- **Optjening pr. måned** med fast `ref` → synk kan køres igen uden dobbelt-optjening. `OPTJENING_FRA` i Config styrer startmåned.
+- **Optjening pr. måned** med fast `ref` → synk kan køres igen uden dobbelt-optjening. `OPTJENING_FRA` i Config styrer starten: en måned (`2026-11`) eller en **dato** (`2026-11-17` / `17-11-2026` = lanceringsdagen – rækker i kildearket før datoen tælles ikke; startbonussen på 5 gives uanset).
 - **Gave = vare** (ikke rå Webcoins). Giveren betaler, admin leverer.
 - **Kostpris gemmes på bestillingen**, så gamle måneder ikke ændres, når en pris rettes.
 - **Lykkehjul og stemmer afgøres altid i backend** (`spin`, `stem` i core.js). Chancerne pr. præmie er offentlige (i-ikonet ved Drej) og står i `shared/sortiment.js`; stemmetal ses kun af admin.
