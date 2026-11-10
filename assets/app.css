@@ -613,7 +613,7 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .lucky-acts .tag svg, .btn.lg svg { width: 16px; height: 16px; }
 .btn.primary.locked:disabled { background: var(--card-2); border-color: var(--line-2); color: var(--muted); opacity: 1; }
 
-/* Yehaw! + konfetti */
+/* Konfetti (Afslør vinder) */
 .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 80; overflow: hidden; }
 .confetti i { position: absolute; top: -20px; border-radius: 2px; box-shadow: 0 0 0 1px rgba(16, 35, 61, .08); animation-name: konfetti; animation-timing-function: cubic-bezier(.25, .6, .4, 1); animation-fill-mode: forwards; }
 @keyframes konfetti { to { transform: translate(var(--dx), 105vh) rotate(var(--rot)); } }
@@ -708,8 +708,8 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .reel { border-radius: 8px; }
 
 /* Top 3: faste kolonner (medalje | navn | beløb højrestillet), så det flugter uanset navn og antal cifre */
-/* Fuldt projekt: grøn progressbar */
-/* Fuldt projekt: samme grøn som Yehaw! og hvid skrift for kontrasten */
+/* Nået mål: grøn progressbar */
+/* Nået mål: grøn og hvid skrift for kontrasten */
 .bar-big.fuld > i, :root[data-theme="dark"] .bar-big.fuld > i { background: linear-gradient(90deg, #34a874, #258a5a); }
 .bar-big.fuld .bar-label, .bar-big.fuld .bar-label b { color: #fff; }
 
@@ -719,7 +719,6 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .reel-card.vare { box-shadow: inset 0 0 0 1px var(--line-2); }
 .reel-card.nitte { box-shadow: none; }
 .reel { border-radius: 4px; }
-/* Yehaw! er grøn ligesom den fulde progressbar */
 
 /* Teambudget-kortet: blå accent, ring med andel tilbage og svagt b-mærke */
 .tb-card { position: relative; overflow: hidden; }

@@ -255,12 +255,19 @@ function syncOptjening() {
       }
     });
     var res = Core.applyEarnings(SheetDB, kilder, env_(), fraMaaned);
-    opdaterMaal_(raa);
     SpreadsheetApp.flush();
-    return res;
   } finally {
     lock.releaseLock();
   }
+  // Fælles mål efter låsen: ClickUp og målarket kan tage tid, og kun synken skriver i fanen Maal,
+  // så bestillinger skal ikke vente på dem. En fejl her stopper ikke optjeningen.
+  try {
+    opdaterMaal_(raa);
+    SpreadsheetApp.flush();
+  } catch (e) {
+    console.error('Fælles mål kunne ikke opdateres: ' + e);
+  }
+  return res;
 }
 
 // Fælles mål med `kilde` i fanen Maal får `nu` udfyldt ved hver synk (indeværende og sidste måned):
@@ -322,7 +329,7 @@ function clickupAntal_(conf, liste, status) {
     var svar = JSON.parse(UrlFetchApp.fetch(url, { headers: { Authorization: conf.CLICKUP_TOKEN } }).getContentText());
     var opg = svar.tasks || [];
     antal += opg.length;
-    if (svar.last_page !== false || !opg.length) break;
+    if (svar.last_page === true || opg.length < 100) break;
   }
   return antal;
 }
@@ -358,6 +365,11 @@ function kol_(s) {
 function dato_(v) {
   if (v instanceof Date) return isNaN(v) ? null : v;
   var s = String(v || '').trim();
+  // En datocelle i et af vores egne faner kommer som ISO i UTC (SheetDB.all) – læs den som lokal dato, ellers bliver 17-11 til 16-11
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+    var iso = new Date(s);
+    return isNaN(iso) ? null : new Date(iso.getFullYear(), iso.getMonth(), iso.getDate());
+  }
   var m = s.match(/^(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{2,4})/);
   if (m) return new Date(Number(m[3].length === 2 ? '20' + m[3] : m[3]), Number(m[2]) - 1, Number(m[1]));
   m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);

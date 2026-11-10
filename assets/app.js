@@ -192,15 +192,17 @@
     });
   }
 
-  // Sidste forside gemmes i browseren, så siden vises med det samme ved næste besøg og opdateres, når backend svarer
+  // Sidste forside gemmes i browseren, så siden vises med det samme ved næste besøg og opdateres, når backend svarer.
+  // CACHE_V hæves, når state skifter form, så en gammel cache ikke tegnes med en nyere app.js.
+  var CACHE_V = 2;
   function gemCache() {
-    if (!DEMO && session && S && !ui.visSom) store('webshoppen-cache', JSON.stringify({ noegle: session.token, state: S, admin: A }));
+    if (!DEMO && session && S && !ui.visSom) store('webshoppen-cache', JSON.stringify({ v: CACHE_V, noegle: session.token, state: S, admin: A }));
   }
   function laesCache() {
     if (DEMO || !session) return null;
     try {
       var c = JSON.parse(store('webshoppen-cache') || 'null');
-      return c && c.noegle === session.token && c.state ? c : null;
+      return c && c.v === CACHE_V && c.noegle === session.token && c.state ? c : null;
     } catch (e) { return null; }
   }
 
@@ -213,8 +215,11 @@
 
   function start(klar) {
     var cache = !klar && laesCache();
-    if (cache) { S = cache.state; A = cache.admin; render(); }
-    else if (!klar) app.innerHTML = '<div class="boot"><span class="spinner"></span></div>';
+    if (cache) {
+      // Kan cachen ikke tegnes (fx fra en ældre version), smides den væk, og vi venter på backend i stedet
+      try { S = cache.state; A = cache.admin; render(); } catch (e) { store('webshoppen-cache', null); cache = null; S = null; A = null; }
+    }
+    if (!cache && !klar) app.innerHTML = '<div class="boot"><span class="spinner"></span></div>';
     (klar ? Promise.resolve(klar) : hentBoot()).then(function (b) {
       S = b.state; A = b.admin;
       gemCache();
@@ -295,6 +300,7 @@
   }
 
   function renderNotReg() {
+    store('webshoppen-cache', null);
     app.innerHTML = '<div class="center-screen"><div class="login-card">' +
       '<h1>Ikke registreret</h1>' +
       '<p>Du er desværre ikke registreret i Webshoppen.</p>' +

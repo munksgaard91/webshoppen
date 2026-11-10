@@ -151,26 +151,6 @@ var Core = (function () {
   // Kun et udtrykkeligt ja/true tæller (oenske, snart)
   function ja(v) { return v === true || /^(ja|true|1)$/i.test(str(v).trim()); }
 
-  function projekterMedStatus(db, initialer) {
-    var poster = db.all('Posteringer');
-    var navne = {};
-    db.all('Brugere').forEach(function (u) { navne[ini(u.initialer)] = str(u.navn); });
-    return sortiment().events.map(function (p) {
-      var indsamlet = 0, mit = 0, pr = {};
-      poster.forEach(function (x) {
-        if (x.type === 'projekt' && str(x.ref) === str(p.id)) {
-          indsamlet -= num(x.beloeb);
-          pr[x.initialer] = (pr[x.initialer] || 0) - num(x.beloeb);
-          if (initialer && x.initialer === initialer) mit -= num(x.beloeb);
-        }
-      });
-      var top = Object.keys(pr).filter(function (i) { return pr[i] > 0; })
-        .sort(function (a, b) { return pr[b] - pr[a]; }).slice(0, 10)
-        .map(function (i) { return { initialer: i, navn: navne[i] || i, beloeb: pr[i] }; });
-      return { id: str(p.id), navn: str(p.navn), ikon: str(p.ikon), maal: num(p.maal), aaben: til(p.aaben), indsamlet: indsamlet, mitBidrag: mit, top: top };
-    });
-  }
-
   // Udsolgte varer (sat af admin, Config UDSOLGT = "monster, sodavand") kan ikke bestilles, før de er på lager igen
   function udsolgte(db) {
     return str(cfgVal(db, 'UDSOLGT', '')).split(/[,;\s]+/).filter(String);
@@ -330,7 +310,6 @@ var Core = (function () {
       nu: nu.toISOString(),
       stats: me.initialer ? statsFor(poster, me.initialer, nu) : statsFor([], '', nu),
       menu: menu(db, false),
-      projekter: projekterMedStatus(db, me.initialer).filter(function (p) { return p.aaben; }),
       kolleger: aktiveBrugere(db).filter(function (u) { return ini(u.initialer) !== me.initialer; }).map(function (u) {
         return { initialer: ini(u.initialer), navn: str(u.navn), gruppe: str(u.gruppe) };
       }).sort(function (a, b) { return a.navn.localeCompare(b.navn, 'da'); }),
@@ -526,7 +505,7 @@ var Core = (function () {
     return { ok: true };
   }
 
-  // Forslag til menu eller projekter – sendes direkte til admin (mail/Chat via env.notify).
+  // Forslag til menuen eller feedback – sendes direkte til admin (mail/Chat via env.notify).
   function forslag(db, me, data, env) {
     kraevBruger(me);
     var tekst = str(data.tekst).trim().slice(0, 1000);
@@ -535,7 +514,7 @@ var Core = (function () {
       env.notify({ emne: 'Feedback på Webshoppen fra ' + me.navn, tekst: me.navn + ' (' + me.initialer + ') har feedback til Webshoppen:\n\n' + tekst });
       return { ok: true };
     }
-    var hvad = str(data.type) === 'projekt' ? 'events' : 'menuen';
+    var hvad = 'menuen';
     env.notify({ emne: 'Forslag til ' + hvad + ' fra ' + me.navn, tekst: me.navn + ' (' + me.initialer + ') foreslår til ' + hvad + ':\n\n' + tekst });
     return { ok: true };
   }
@@ -666,28 +645,6 @@ var Core = (function () {
   }
 
 
-  function indskyd(db, me, data, env) {
-    kraevBruger(me);
-    var beloeb = Math.floor(num(data.beloeb));
-    if (!(beloeb > 0)) throw err('BAD', 'Angiv et beløb.');
-    var p = null;
-    sortiment().events.forEach(function (x) { if (str(x.id) === str(data.projektId) && til(x.aaben)) p = x; });
-    if (!p) throw err('BAD', 'Eventet er lukket.');
-    // Et fuldt projekt kan ikke få flere donationer, og man kan ikke donere mere, end der mangler.
-    var maal = num(p.maal);
-    if (maal > 0) {
-      var indsamlet = 0;
-      db.all('Posteringer').forEach(function (x) { if (x.type === 'projekt' && str(x.ref) === str(p.id)) indsamlet -= num(x.beloeb); });
-      var mangler = Math.max(0, maal - indsamlet);
-      if (mangler <= 0) throw err('BAD', 'Eventet er fuldt. Yehaw!');
-      if (beloeb > mangler) throw err('BAD', 'Der mangler kun ' + mangler + (mangler === 1 ? ' Webcoin.' : ' Webcoins.'));
-    }
-    if (saldoFor(db.all('Posteringer'), me.initialer) < beloeb) throw err('FUNDS', 'Du har ikke nok Webcoins.');
-    db.insert('Posteringer', { id: env.uuid(), tid: env.now().toISOString(), initialer: me.initialer, type: 'projekt', beloeb: -beloeb, tekst: str(p.navn), ref: str(p.id) });
-    env.notify({ emne: 'Event: ' + p.navn, tekst: me.navn + ' (' + me.initialer + ') har lagt ' + beloeb + ' Webcoins i ' + str(p.ikon) + ' ' + p.navn + '.' });
-    return { ok: true };
-  }
-
   // ---------- Admin ----------
 
   // Rigtige penge pr. måned: kostpris på alle bestillinger, der ikke er annulleret.
@@ -771,7 +728,6 @@ var Core = (function () {
       posteringer: poster.slice().sort(nyesteFoerst).slice(0, 2000).map(function (p) {
         return { id: str(p.id), tid: str(p.tid), initialer: str(p.initialer), navn: navne[p.initialer] || p.initialer, type: str(p.type), beloeb: num(p.beloeb), tekst: str(p.tekst), maaned: postMaaned(p) };
       }),
-      projekter: projekterMedStatus(db, ''),
       mdk: (function () {
         var mk = maanedKey(nu), hist = [], m = mk;
         var afgivet = db.all('Stemmer').filter(function (v) { return str(v.maaned) === mk; }).length;
@@ -986,7 +942,6 @@ var Core = (function () {
     admin_vis_som: adminVisSom,
     state: state,
     bestil: bestil,
-    indskyd: indskyd,
     spin: spin,
     koeb_drej: koebDrej,
     stem: stem,
@@ -1005,7 +960,7 @@ var Core = (function () {
     admin_gave: adminGave,
     admin_sync: function (db, me, data, env) { kraevAdmin(me); return env.sync(); }
   };
-  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_maal_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_udsolgt: 1, gaver_set: 1, admin_gave: 1, admin_sync: 1 };
+  var SKRIVER = { bestil: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_maal_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_udsolgt: 1, gaver_set: 1, admin_gave: 1, admin_sync: 1 };
 
   function handle(db, me, action, data, env) {
     var fn = HANDLINGER[action];
