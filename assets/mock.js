@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v36';
+  var KEY = 'webshoppen-demo-v37';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -33,18 +33,18 @@ window.Mock = (function () {
       Kilder: [
         { kilde: 'nyfak', navn: 'Nyfak' },
         { kilde: 'genfak', navn: 'Genfak' },
-        { kilde: 'anmeldelser', navn: 'Anmeldelser' },
+        { kilde: 'anmeldelser', navn: 'Anmeldelse' },
         { kilde: 'leverancer', navn: 'Leverancer' }
       ],
       Regler: [
         { gruppe: 'Hjemmeside', kilde: 'nyfak', sats: 0.002, tekst: '2 Webcoins pr. 1.000 kr' },
-        { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins pr. 5-stjernet anmeldelse' },
+        { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
         { gruppe: 'Redaktør', kilde: 'leverancer', sats: 8, tekst: '8 Webcoins pr. leverance' },
-        { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins pr. 5-stjernet anmeldelse' },
+        { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
         { gruppe: 'Fotograf', kilde: 'leverancer', sats: 12, tekst: '12 Webcoins pr. optagelse' },
-        { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins pr. 5-stjernet anmeldelse' },
+        { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
         { gruppe: 'Support', kilde: 'genfak', sats: 0.004, tekst: '4 Webcoins pr. 1.000 kr' },
-        { gruppe: 'Support', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins pr. 5-stjernet anmeldelse' }
+        { gruppe: 'Support', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' }
       ]
     };
   }
