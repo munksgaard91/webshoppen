@@ -15,7 +15,7 @@ var SORTIMENT = {
   hjulPris: 30,
 
   menu: [
-    { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 20, kostpris: 8, oenske: true },
+    { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 20, kostpris: 10, oenske: true },
     { id: 'monster', navn: 'Hvid Monster', ikon: '⚡', pris: 30, kostpris: 15 },
     { id: 'candybar', navn: 'Candybar', ikon: '🍫', pris: 10, kostpris: 6, varianter: 'Marsbar, Snickers' },
     { id: 'andet', navn: 'Andet?', ikon: '💡', pris: 0, kostpris: 0, snart: true }
@@ -25,7 +25,7 @@ var SORTIMENT = {
     { id: 'h-100', navn: '100 Webcoins', ikon: '🏆', type: 'webcoins', beloeb: 100, vaegt: 30 },
     { id: 'h-nitte', navn: 'Nitte', ikon: '🙈', type: 'intet', vaegt: 100 },
     { id: 'h-10', navn: '10 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 10, vaegt: 80 },
-    { id: 'h-sodavand', navn: 'Sodavand', ikon: '🥤', type: 'vare', kostpris: 8, vaegt: 120 },
+    { id: 'h-sodavand', navn: 'Sodavand', ikon: '🥤', type: 'vare', kostpris: 10, vaegt: 120 },
     { id: 'h-20', navn: '20 Webcoins', ikon: '💫', type: 'webcoins', beloeb: 20, vaegt: 180 },
     { id: 'h-candybar', navn: 'Candybar', ikon: '🍫', type: 'vare', kostpris: 6, vaegt: 80 },
     { id: 'h-30', navn: '30 Webcoins', ikon: '💎', type: 'webcoins', beloeb: 30, vaegt: 200 },
