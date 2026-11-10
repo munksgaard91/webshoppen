@@ -104,6 +104,7 @@ Demo-tricks: `?lukket=fravaer` / `?lukket=tid` viser lukket shop. "Nulstil demod
 5. Månedens Webkollega-præmie og webcoins-justeringer gives **manuelt**.
 
 ## Næste skridt
+0. **På lanceringsdagen:** sæt `OPTJENING_FRA` i Config til datoen (står midlertidigt på `2099-01-01`, så ingen optjener før lancering – kun startbonussen på 5).
 1. Skriv resultaterne for november i fanen `Maal` (kolonne `nu`) den 1. december, og læg decembers mål ind.
 2. Evt. baggrundsbilleder.
 4. Sæt backend op (tjekliste ovenfor) og kobl faktureringsark, anmeldelser og teambudget på.
