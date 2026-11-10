@@ -958,7 +958,7 @@ var Core = (function () {
       });
       // Klub-bonus (regler med `fra`): fast beløb, når månedens tal når grænsen. Kun den højeste klub pr. kilde tæller,
       // og den ligger på én fast ref, så den rykker op (Klub 15 → Klub 20), hvis tallet stiger.
-      // Falder tallet under laveste klub (fx rettet i kildearket), sættes bonussen til 0.
+      // Falder tallet igen, beholdes den bonus, der allerede er tjent (se nedenfor).
       var klubber = regelListe.filter(function (r) { return str(r.gruppe) === str(u.gruppe) && num(r.fra) > 0; });
       var klubKilder = {};
       klubber.forEach(function (r) { klubKilder[str(r.kilde)] = 1; });
@@ -979,29 +979,23 @@ var Core = (function () {
     });
     var eksisterende = {};
     db.all('Posteringer').forEach(function (p) { if (p.type === 'optjent' && p.ref) eksisterende[str(p.ref)] = p; });
+    // Tjente Webcoins tages aldrig fra nogen: en optjening kan kun stige (ny regel, gruppeskift, fjernet regel
+    // eller rettelse i kildearket sænker den ikke). Afsluttede måneder er låst – fra den 4. i næste måned
+    // (3 dages frist til sene registreringer) rettes en eksisterende optjening ikke mere. Regler gælder dermed kun fremad.
+    var nu = env.now();
+    var laastFoer = maanedKey(new Date(nu.getFullYear(), nu.getMonth() - (nu.getDate() <= 3 ? 1 : 0), 1));
     var nye = 0, rettede = 0;
     Object.keys(oensket).forEach(function (ref) {
       var o = oensket[ref];
       var p = eksisterende[ref];
       if (p) {
-        if (num(p.beloeb) !== o.beloeb || str(p.tekst) !== o.tekst) { db.update('Posteringer', p, { beloeb: o.beloeb, tekst: o.tekst }); rettede++; }
+        var mk = ref.split(':')[2];
+        if (mk < laastFoer || o.beloeb <= num(p.beloeb)) return;
+        db.update('Posteringer', p, { beloeb: o.beloeb, tekst: o.tekst }); rettede++;
       } else if (o.beloeb !== 0) {
         db.insert('Posteringer', { id: env.uuid(), tid: env.now().toISOString(), initialer: o.initialer, type: 'optjent', beloeb: o.beloeb, tekst: o.tekst, ref: ref });
         nye++;
       }
-    });
-    // Forældede optjeninger (gruppeskift, fjernet regel): sættes til 0 i stedet for at blive liggende.
-    // Kun for kilder, der faktisk blev hentet denne gang (en kilde med fejl rører intet), måneder fra `fra` og aktive brugere.
-    var aktive = {};
-    aktiveBrugere(db).forEach(function (u) { aktive[ini(u.initialer)] = 1; });
-    Object.keys(eksisterende).forEach(function (ref) {
-      if (oensket[ref]) return;
-      var dele = ref.split(':');
-      if (dele.length !== 4 || dele[0] !== 'optjent') return;
-      var kilde = dele[1].replace(/-klub$/, '');
-      if (!kilder[kilde] || dele[2] < fra || !aktive[dele[3]]) return;
-      var p = eksisterende[ref];
-      if (num(p.beloeb) !== 0) { db.update('Posteringer', p, { beloeb: 0 }); rettede++; }
     });
     return { nye: nye, rettede: rettede };
   }

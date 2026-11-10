@@ -166,20 +166,23 @@ t('klub-bonus: kun højeste klub, rykker op når tallet stiger', function () {
   eq(bonus().length, 1);
   eq(bonus()[0].beloeb, 20);
   eq(bonus()[0].tekst, 'Klub 20 · november 2026');
-  Core.applyEarnings(db, { sager: { 'BBB|2026-11': 12 } }, env); // rettet ned under laveste klub
-  eq(bonus()[0].beloeb, 0);
+  Core.applyEarnings(db, { sager: { 'BBB|2026-11': 12 } }, env); // rettet ned – tjente Webcoins beholdes
+  eq(bonus()[0].beloeb, 20);
   data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'sager'; });
 });
-t('forældet optjening sættes til 0, men kun for kilder der blev hentet', function () {
+t('optjening: tjente Webcoins tages aldrig fra nogen, afsluttede måneder er låst', function () {
   data.Regler.push({ gruppe: 'Support', kilde: 'gammel', sats: 2, navn: '', fra: 0 });
-  var post = function () { return data.Posteringer.filter(function (p) { return p.ref === 'optjent:gammel:2026-11:BBB'; })[0]; };
-  Core.applyEarnings(db, { gammel: { 'BBB|2026-11': 5 } }, env);
-  eq(post().beloeb, 10);
+  var post = function (mk) { return data.Posteringer.filter(function (p) { return p.ref === 'optjent:gammel:' + mk + ':BBB'; })[0]; };
+  Core.applyEarnings(db, { gammel: { 'BBB|2026-11': 5, 'BBB|2026-10': 5 } }, env);
+  eq(post('2026-11').beloeb, 10);
   data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'gammel'; }); // regel fjernet
-  Core.applyEarnings(db, {}, env); // kilden ikke hentet (fejl) → rør intet
-  eq(post().beloeb, 10);
   Core.applyEarnings(db, { gammel: { 'BBB|2026-11': 5 } }, env);
-  eq(post().beloeb, 0);
+  eq(post('2026-11').beloeb, 10); // beholdes
+  data.Regler.push({ gruppe: 'Support', kilde: 'gammel', sats: 4, navn: '', fra: 0 }); // højere sats
+  Core.applyEarnings(db, { gammel: { 'BBB|2026-11': 5, 'BBB|2026-10': 5 } }, env);
+  eq(post('2026-11').beloeb, 20); // indeværende måned stiger
+  eq(post('2026-10').beloeb, 10); // oktober er låst (d. 15. november)
+  data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'gammel'; });
 });
 t('startbeløb: 5 Webcoins én gang pr. bruger', function () {
   var start = function () { return data.Posteringer.filter(function (p) { return p.ref === 'start:BBB'; }); };
