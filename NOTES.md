@@ -91,7 +91,7 @@ Config-nøgler: `VEDLIGEHOLD` (ja = "Shoppen opdateres"), `UDSOLGT`, `CLIENT_ID`
 7. **Webshoppen → Slå automatisk hentning til** (hentning hver time + månedsmail den 1.). Prøv mailen med **Send månedsmail nu (test)**.
 
 Ændringer i `shared/core.js`, `shared/sortiment.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=190`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=195`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test
