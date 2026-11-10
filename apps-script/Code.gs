@@ -357,8 +357,8 @@ function opsaet() {
     { gruppe: 'Fotograf', kilde: 'sessioner', sats: 1, tekst: '1 Webcoin' },
     { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
     { gruppe: 'Support', kilde: 'anmeldelser', sats: 25, tekst: '25 Webcoins' },
-    { gruppe: 'Alle', kilde: 'konkurrencer', sats: 0, tekst: '?' },
-    { gruppe: 'Alle', kilde: 'faelles_maal', sats: 0, tekst: 'Se status' }
+    { gruppe: 'Alle', kilde: 'faelles_maal', sats: 0, tekst: 'Se status' },
+    { gruppe: 'Alle', kilde: 'konkurrencer', sats: 0, tekst: '?' }
   ]);
   var standard = ss.getSheetByName('Ark1') || ss.getSheetByName('Sheet1');
   if (standard && standard.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(standard);
