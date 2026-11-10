@@ -228,7 +228,7 @@
       '</div></div>';
     if (!DEMO) loadGis(function () {
       google.accounts.id.initialize({ client_id: C.GOOGLE_CLIENT_ID, callback: onCredential, auto_select: true, use_fedcm_for_prompt: true });
-      google.accounts.id.renderButton(document.getElementById('gbtn'), { theme: 'outline', size: 'large', shape: 'pill', text: 'signin_with', locale: 'da' });
+      google.accounts.id.renderButton(document.getElementById('gbtn'), { theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'filled_black' : 'outline', size: 'large', shape: 'pill', text: 'signin_with', locale: 'da' });
       google.accounts.id.prompt();
     });
   }
@@ -645,15 +645,15 @@
   }
 
   // Tomgang: JS flytter rullen langsomt og husker positionen (ui.idle), så den aldrig springer tilbage ved
-  // opdateringer. Den står stille, når musen er over den, og er slået fra ved "Reducer bevægelse".
+  // opdateringer. Den kører også, når musen er over den, og er slået fra ved "Reducer bevægelse".
   var IDLE_FART = 75; // px pr. sekund
   function idleLoop(ts) {
-    var spor = document.getElementById('reel'), box = document.getElementById('reel-box');
+    var spor = document.getElementById('reel');
     var sidst = ui.idleTs || ts;
     ui.idleTs = ts;
     if (spor && spor.classList.contains('tomgang') && ui.reelStartKort) {
       var periode = ui.reelStartKort.length * KORT_B;
-      if (!(box && box.matches(':hover'))) ui.idleOffset = ((ui.idleOffset || 0) + Math.min(100, ts - sidst) / 1000 * IDLE_FART) % periode;
+      ui.idleOffset = ((ui.idleOffset || 0) + Math.min(100, ts - sidst) / 1000 * IDLE_FART) % periode;
       spor.style.transform = 'translateX(' + (-ui.idleOffset).toFixed(1) + 'px)';
     }
     requestAnimationFrame(idleLoop);

@@ -97,6 +97,8 @@ a { color: inherit; }
 .login-card h1 { font-size: 34px; font-weight: 900; letter-spacing: -0.02em; margin: 4px 0 6px; }
 .login-card p { color: var(--muted); margin: 0 0 26px; }
 .login-card .gbtn { display: flex; justify-content: center; min-height: 44px; }
+/* Googles knap-iframe er lys; uden dette maler browseren en hvid firkant bag den i mørkt tema */
+.login-card .gbtn iframe { color-scheme: light; }
 .demo-list { display: grid; gap: 8px; text-align: left; }
 .demo-list button { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--card-2); }
 .demo-list button:hover { border-color: var(--brand-2); }
