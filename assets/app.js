@@ -855,9 +855,12 @@
     var m = A.mdk;
 
 
-    var stats = '<div class="stat-grid to">' +
+    // Webcoins i omløb = alle saldi tilsammen – penge, der er lovet holdet, men ikke brugt endnu (1 kr = 2 Webcoins)
+    var omloeb = iOmloeb();
+    var stats = '<div class="stat-grid tre">' +
       statBox('Brugt i ' + mNavn, wcSmall(denne ? denne.wc : 0) + coin(), denne ? denne.antal + ' bestillinger' : 'Ingen bestillinger') +
       (tb ? statBox('Teambudget tilbage', kr(tb.rest), 'Brugt i sæsonen: ' + kr(tb.brugt)) : '') +
+      statBox('Webcoins i omløb', wcSmall(omloeb) + coin(), '≈ ' + kr(omloeb / 2) + ' på saldierne') +
       '</div>';
 
     var best = '<section class="card"><div class="card-head"><h2 class="card-title">Nye bestillinger' + (nye.length ? ' <span class="badge">' + nye.length + '</span>' : '') + '</h2><a class="link" href="#/admin/bestillinger">Se alle</a></div>' +
@@ -924,7 +927,10 @@
     });
   }
 
+  function iOmloeb() { return A.brugere.reduce(function (sum, u) { return sum + Math.max(0, u.saldo); }, 0); }
+
   function pageAdminBrugere() {
+    var omloeb = iOmloeb();
     return adminHead('Brugere', '<button class="btn primary" data-act="ny-bruger">Tilføj bruger</button>') +
       '<section class="card"><div class="card-head"><input class="input search" placeholder="Søg navn, initialer, gruppe" data-search="brugere"></div>' +
       '<div class="table-wrap"><table><thead><tr>' + sortTh('navn', 'Navn') + sortTh('initialer', 'Initialer') + sortTh('gruppe', 'Gruppe') + sortTh('saldo', 'Saldo', 'r') + '<th></th></tr></thead><tbody>' +
@@ -932,7 +938,7 @@
         var q = (u.navn + ' ' + u.initialer + ' ' + u.email + ' ' + u.gruppe).toLowerCase();
         return '<tr data-q="' + esc(q) + '"' + (u.aktiv ? '' : ' style="opacity:.5"') + '><td><b>' + esc(u.navn) + '</b>' + (u.aktiv ? '' : ' <span class="tag">Inaktiv</span>') + '</td><td>' + esc(u.initialer) + '</td><td>' + (u.gruppe ? esc(u.gruppe) : '<span class="tag ny">Ingen gruppe</span>') + '</td><td class="r num"><b>' + wc(u.saldo) + '</b></td>' +
           '<td><div class="row-acts"><button class="btn sm" data-act="ret-bruger" data-email="' + esc(u.email) + '">Rediger</button><button class="btn sm" data-act="juster" data-ini="' + esc(u.initialer) + '">Justér</button></div></td></tr>';
-      }).join('') + '</tbody></table></div></section>';
+      }).join('') + '</tbody><tfoot><tr><td colspan="3"><b>Samlet</b> <span class="faint">· ' + A.brugere.length + ' brugere</span></td><td class="r num"><b>' + wc(omloeb) + '</b><small class="faint" style="display:block">≈ ' + kr(omloeb / 2) + '</small></td><td></td></tr></tfoot></table></div></section>';
   }
 
   // Konkurrencer: én blok pr. konkurrence. Indtil videre kun Månedens Webkollega – nye lægges ind under den.
