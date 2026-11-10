@@ -3,7 +3,7 @@
 Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskine.
 Sidst opdateret: **2026-11-10 aften** (privat Mac). Seneste kodegennemgang: **2026-11-10 (2)** – uafhængig gennemgang af alt efter `3e26bac` (live-backend, hurtig login, Vis som medarbejder, fælles mål med automatisk status + belønning, events fjernet) + klik igennem alle sider som medarbejder og admin i demo (ingen konsolfejl, ingen vandret scroll), `tests/core.test.js` 35/35 OK, alle filer parser. Rettet: gammel browser-cache kunne låse admin-overblikket (cachen har nu version `CACHE_V`, og en cache der ikke kan tegnes smides væk) · fælles mål opdateres efter synk-låsen (ClickUp kunne få bestillinger til at vente/fejle) og en fejl i målene stopper ikke optjeningen · `indskyd` (event-donation) fjernet fra backend, så ingen kan donere via devtools · cachen ryddes ved "Ikke registreret" · `OPTJENING_FRA` som datocelle læses som lokal dato (ikke en dag for tidligt) · ClickUp-optælling sideløser korrekt over 100. Forrige gennemgang: 2026-11-10 (formiddag) – klub-bonus, glemt Afslør-måned, login-nøgle, kolonner i ældre ark, gave-popup.
 
-> **Venter på backend-opdatering:** **Code.gs** og **Core.gs** er ændret efter sidste udgivelse (Feedback-fanen, besked ved annullering, advarsel ved fejl i hentningen, pænere notifikationer, optjening sænkes aldrig og afsluttede måneder låses). Kopiér begge ind, udgiv en **Ny version**, og kør **Webshoppen → Opsæt faner** (opretter fanen `Forslag` med `laest`). Sortiment.gs er uændret. Sidst udgivet: 2026-11-10 aften (Luk shoppen, ikon til præmier, belønning for fælles mål).
+> **Backend er opdateret** 2026-11-10 sent (Code.gs, Core.gs, Sortiment.gs, ny version, Opsæt faner kørt; `OPTJENING_FRA` = 2026-11-01; Support-anmeldelser 25 + genberegnet). Live: Feedback-fanen, besked ved annullering, advarsel ved fejl i hentningen, notifikationer med ikon/link, optjening sænkes aldrig, mini-varer i menuen.
 **Husk ved hver ændring i `shared/core.js`, `shared/sortiment.js` eller `apps-script/Code.gs`:** kopiér filen ind i Apps Script (`LC_ALL=en_US.UTF-8 pbcopy < fil`) og udgiv en **Ny version** – ellers kører live-siden med den gamle backend.
 
 ## Status
@@ -119,6 +119,6 @@ Demo-tricks: `?lukket=fravaer` / `?lukket=tid` viser lukket shop, `?synkfejl` vi
 1. **Vælg belønning for november** under Admin → Konkurrencer (3 af 4 mål).
 2. Test med 2–3 kolleger, før alle får adgang (login, bestil, hjul, gave, notifikationer). Giv dem evt. Webcoins via Brugere → Gave.
 3. Den 1. december: tjek at novembers mål-tal er endelige (synken opdaterer `nu` – Afventer online er øjebliksbillede og står fast), og læg decembers mål + `kilde` ind i fanen `Maal`.
-4. Valgfrit: Google Chat-webhook i `CHAT_WEBHOOK`.
+4. ~~Google Chat~~ – sat op 2026-11-10 (rummet "Webshoppen", `CHAT_WEBHOOK` i Config). Ikke testet endnu – ses ved første bestilling.
 5. Regn økonomien igennem, når der er rigtige optjeningstal: optjening pr. gruppe vs. varepriser vs. lykkehjulets forventede værdi.
 6. Evt. baggrundsbilleder.
