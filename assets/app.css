@@ -276,11 +276,16 @@ a { color: inherit; }
 .maal-sub { font-size: 15px; font-weight: 800; margin: 22px 0 10px; color: var(--muted); }
 .maal-row { display: grid; grid-template-columns: 260px minmax(0, 1fr) 30px; align-items: center; gap: 20px; padding: 14px 0; border-top: 1px solid var(--line); }
 @media (max-width: 700px) { .maal-row { grid-template-columns: minmax(0, 1fr) 30px; gap: 8px 12px; } .maal-row .maal-txt { grid-column: 1 / -1; } }
-/* Fyld efter status: --h er farvetonen (0 = rød … 120 = grøn), sat pr. bar i app.js. Nået = .fuld (helt grøn). */
-.maal-row .bar-big:not(.fuld) > i { background: hsl(var(--h) 78% 80%); }
-:root[data-theme="dark"] .maal-row .bar-big:not(.fuld) > i { background: hsl(var(--h) 65% 45% / .55); }
+/* Fyld efter status: --p (0–99) blander lyseblå → Best One-blå, sat pr. bar i app.js. Nået = .fuld (dyb grøn). */
+.maal-row .bar-big:not(.fuld) > i, .adm-ev .bar:not(.fuld) > i { background: color-mix(in srgb, #225581 calc(var(--p, 0) * 1%), #c3dbf3); }
+:root[data-theme="dark"] .maal-row .bar-big:not(.fuld) > i, :root[data-theme="dark"] .adm-ev .bar:not(.fuld) > i { background: color-mix(in srgb, #225581 calc(var(--p, 0) * 1%), #7fa9d6); }
+.maal-row .bar-big.lys-v .bar-label > span, .maal-row .bar-big.lys-v .bar-label > span b { color: #fff; }
+.maal-row .bar-big.lys-h .bar-label > b { background: var(--card); color: var(--brand); padding: 1px 7px; border-radius: 7px; }
+:root[data-theme="dark"] .maal-row .bar-big.lys-h .bar-label > b { color: var(--text); }
+/* Nået: dyb grøn (samme som ✓) */
+:root .maal-row .bar-big.fuld > i, :root .adm-ev .bar.fuld > i, :root[data-theme="dark"] .maal-row .bar-big.fuld > i, :root[data-theme="dark"] .adm-ev .bar.fuld > i { background: #1f8a55; }
 .maal-ikon { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; font-weight: 800; color: var(--faint); background: var(--card-2); box-shadow: inset 0 0 0 1px var(--line); }
-.maal-ikon.ok { color: #fff; background: #2fa36f; box-shadow: none; }
+.maal-ikon.ok { color: #fff; background: #1f8a55; box-shadow: none; }
 .maal-ikon.nej { color: var(--minus); background: rgba(207, 60, 74, .1); box-shadow: none; }
 /* Belønning for månedens fælles mål øverst i kortet */
 .maal-praemie { display: flex; align-items: center; gap: 14px; padding: 4px 0 16px; }
@@ -790,8 +795,6 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .adm-main small { display: block; margin-top: 2px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .adm-ev { padding: 8px 0; }
 .adm-ev-top { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; margin-bottom: 6px; }
-.adm-ev .bar:not(.fuld) > i { background: hsl(var(--h) 72% 62%); }
-.adm-ev .bar.fuld > i { background: linear-gradient(90deg, #34a874, #258a5a); }
 
 /* Sidepanel: fold sammen til kun ikoner (desktop) */
 .side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

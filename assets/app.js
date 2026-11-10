@@ -514,7 +514,10 @@
   function decimal(n) { return Number(n).toLocaleString('da-DK', { maximumFractionDigits: 2 }); }
   // Progressbar: fyldet går fra rødt (under 50 %) over orange mod grønt, og er helt grønt, når målet er nået.
   // Under/over: "6,8 t · mål under 6,5 t" / "14 af 20 anmeldelser". Til højre ✓ / ✕ (– uden status).
-  function maalFarve(pct) { return Math.round(pct < 50 ? pct * 0.4 : 20 + (pct - 50) * 2); }
+  // Fyldets farve følger status: lyseblå ved 0 % → Best One-blå ved 99 % (--p, CSS color-mix). Nået = .fuld (dyb grøn).
+  function maalFarve(pct) { return Math.max(0, Math.min(99, Math.round(pct))); }
+  // Tekst på mørkt fyld: venstre tal bliver hvidt ved ≥ 60 %; procenten yderst til højre får en lys pille ved ≥ 85 %
+  function maalTekst(m) { return m.naaet ? '' : (m.pct >= 60 ? ' lys-v' : '') + (m.pct >= 85 ? ' lys-h' : ''); }
   function maalRaekke(m, slut) {
     var e = m.enhed ? ' ' + esc(m.enhed) : '';
     var label = m.nu === null ? (slut ? 'Opgøres' : 'Ingen status endnu') : m.retning === 'under'
@@ -524,7 +527,7 @@
       : m.naaet ? '<span class="maal-ikon ok" title="' + (slut ? 'Nået' : 'På mål lige nu') + '">✓</span>'
       : '<span class="maal-ikon nej" title="' + (slut ? 'Ikke nået' : 'Ikke på mål lige nu') + '">✕</span>';
     return '<div class="maal-row"><div class="maal-txt"><b>' + esc(m.navn) + '</b><small>' + esc(m.tekst) + '</small></div>' +
-      '<div class="bar bar-big' + (m.naaet ? ' fuld' : '') + '"><i style="width:' + m.pct + '%;--h:' + maalFarve(m.pct) + '"></i><span class="bar-label num">' + label + (m.nu === null ? '' : '<b>' + m.pct + ' %</b>') + '</span></div>' +
+      '<div class="bar bar-big' + (m.naaet ? ' fuld' : '') + maalTekst(m) + '"><i style="width:' + m.pct + '%;--p:' + maalFarve(m.pct) + '"></i><span class="bar-label num">' + label + (m.nu === null ? '' : '<b>' + m.pct + ' %</b>') + '</span></div>' +
       ikon + '</div>';
   }
   // Belønningen for månedens fælles mål: "Når vi 3 af 4 mål: Teamfrokost" + hvor mange der er nået lige nu.
@@ -978,7 +981,7 @@
         '<div class="rule"><span>På mål lige nu</span><b class="num">' + fp.naaet + ' af ' + fp.ialt + ' <span class="faint">(krav ' + fp.antal + ')</span></b></div>' +
         fm.maal.map(function (m) {
           return '<div class="adm-ev"><div class="adm-ev-top"><span><b>' + esc(m.navn) + '</b></span><span class="num faint">' + (m.nu === null ? 'Ingen status' : decimal(m.nu) + (m.enhed ? ' ' + esc(m.enhed) : '')) + ' · <b>' + (m.naaet ? 'På mål ✓' : m.pct + ' %') + '</b></span></div>' +
-            '<div class="bar' + (m.naaet ? ' fuld' : '') + '"><i style="width:' + m.pct + '%;--h:' + maalFarve(m.pct) + '"></i></div></div>';
+            '<div class="bar' + (m.naaet ? ' fuld' : '') + '"><i style="width:' + m.pct + '%;--p:' + maalFarve(m.pct) + '"></i></div></div>';
         }).join('') : '<div class="empty">Ingen fælles mål for ' + mNavn + ' endnu.</div>') +
       '</section>';
 
