@@ -31,6 +31,8 @@ function doPost(e) {
     var me = Core.resolveUser(SheetDB, profil, liste_(conf.ADMIN_EMAILS));
     var data;
     if (req.action === 'login') {
+      // Kun et Google-login kan give en ny nøgle – ellers kunne en nøgle fornyes i det uendelige
+      if (String(req.token).indexOf('ws1.') === 0) throw Core.err('TOKEN_EXPIRED', 'Log ind med Google.');
       // Google-login tjekkes én gang (ovenfor) – derefter bruger browseren Webshoppens egen nøgle i 30 dage
       data = { token: udstedNoegle_(profil) };
     } else if (Core.skriver(req.action)) {
@@ -341,15 +343,22 @@ var SheetDB = (function () {
 
 function opsaet() {
   var ss = SpreadsheetApp.getActive();
-  var tekstKol = ['id', 'tid', 'maaned', 'initialer', 'fra', 'til', 'ref', 'email', 'sheet_id', 'noegle', 'vaerdi'];
+  var tekstKol = ['id', 'tid', 'maaned', 'initialer', 'fra', 'til', 'ref', 'email', 'sheet_id', 'noegle', 'vaerdi', 'gaver_set', 'afsloeret', 'vinder'];
   Object.keys(Core.TABELLER).forEach(function (navn) {
     var headers = Core.TABELLER[navn];
     var sh = ss.getSheetByName(navn) || ss.insertSheet(navn);
     if (sh.getLastRow() === 0) {
       sh.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
       sh.setFrozenRows(1);
+    } else {
+      // Ældre ark: tilføj nye kolonner sidst, så fx gaver_set og fra også findes der
+      var har = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(String);
+      headers.filter(function (h) { return har.indexOf(h) < 0; }).forEach(function (h) {
+        sh.getRange(1, sh.getLastColumn() + 1).setValue(h).setFontWeight('bold');
+      });
     }
-    headers.forEach(function (h, i) {
+    var alle = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    alle.forEach(function (h, i) {
       if (tekstKol.indexOf(h) >= 0) sh.getRange(1, i + 1, sh.getMaxRows(), 1).setNumberFormat('@');
     });
   });

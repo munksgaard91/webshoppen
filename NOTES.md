@@ -1,7 +1,7 @@
 # NOTES – status og næste skridt
 
 Opdateres ved hver arbejdsblok, så arbejdet kan fortsættes fra en anden maskine.
-Sidst opdateret: **2026-11-10** (arbejds-Mac): kostpriser rettet (Sodavand 10 kr, Candybar 5 kr) – alle varer følger nu 1 kr = 2 Webcoins. Seneste kodegennemgang: 2026-11-09 (sen aften) – alle filer parser, `tests/core.test.js` 23/23 OK, alle sider klikket igennem som de fire demobrugere, som ren admin og som ikke-registreret uden konsolfejl. Død kode fra Sortiment-siden og de gamle kollegakort fjernet. Privatliv: demobrugernes mails var de rigtige kollegers adresser – nu `demo.<ini>@best-one.dk`; ingen rigtige navne/mails tilbage i sporede filer (de gamle adresser findes stadig i git-historikken).
+Sidst opdateret: **2026-11-10** (arbejds-Mac). Seneste kodegennemgang: **2026-11-10** – uafhængig gennemgang af alle dagens ændringer + alle sider klikket igennem som de fire demobrugere, admin og ikke-registreret (ingen konsolfejl, ingen vandret scroll), `tests/core.test.js` 33/33 OK. Rettet: klub-bonus falder til 0, hvis tallet rettes under laveste klub · glemt Afslør-måned kan stadig afsløres (ældste først, nævnes i månedsmailen) · login-nøglen kan ikke fornys uden Google-login · Opsæt faner tilføjer nye kolonner i et ældre ark (og tekstformat på gaver_set/afsloeret) · gave-popuppen gemmer tidspunktet for den nyeste viste gave. Forrige gennemgang: 2026-11-09 (sen aften) – alle filer parser, `tests/core.test.js` 23/23 OK, alle sider klikket igennem som de fire demobrugere, som ren admin og som ikke-registreret uden konsolfejl. Død kode fra Sortiment-siden og de gamle kollegakort fjernet. Privatliv: demobrugernes mails var de rigtige kollegers adresser – nu `demo.<ini>@best-one.dk`; ingen rigtige navne/mails tilbage i sporede filer (de gamle adresser findes stadig i git-historikken).
 
 ## Status
 
@@ -85,7 +85,7 @@ Config-nøgler: `UDSOLGT`, `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE
 7. **Webshoppen → Slå automatisk hentning til** (hentning hver time + månedsmail den 1.). Prøv mailen med **Send månedsmail nu (test)**.
 
 Ændringer i `shared/core.js`, `shared/sortiment.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=174`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=175`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test

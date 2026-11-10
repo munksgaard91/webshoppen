@@ -166,6 +166,8 @@ t('klub-bonus: kun højeste klub, rykker op når tallet stiger', function () {
   eq(bonus().length, 1);
   eq(bonus()[0].beloeb, 20);
   eq(bonus()[0].tekst, 'Klub 20 · november 2026');
+  Core.applyEarnings(db, { sager: { 'BBB|2026-11': 12 } }, env); // rettet ned under laveste klub
+  eq(bonus()[0].beloeb, 0);
   data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'sager'; });
 });
 t('startbeløb: 5 Webcoins én gang pr. bruger', function () {
@@ -315,5 +317,12 @@ t('saldoen kan aldrig gå i minus', function () {
   eq(Core.handle(db, F, 'state', {}, env).stats.saldo, 2, 'kun det, der var råd til');
   Core.handle(db, A, 'admin_justering', { initialer: 'FFF', beloeb: -2, tekst: 'Ned til nul' }, env);
   eq(Core.handle(db, F, 'state', {}, env).stats.saldo, 0);
+});
+t('afslør: en glemt måned kan stadig afsløres (ældste først)', function () {
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  data.Stemmer.push({ id: 's-sep', tid: '2026-09-10T09:00:00.000Z', maaned: '2026-09', fra: 'AAA', til: 'BBB', begrundelse: '' });
+  eq(Core.handle(db, adm, 'admin_state', {}, env).mdk.afsloer.maaned, '2026-09');
+  eq(Core.handle(db, adm, 'admin_mdk_afsloer', {}, env).maaned, '2026-09');
+  eq(/september 2026/.test(Core.maanedsrapport(db, env).tekst), false);
 });
 print('OK: ' + ok + '  FEJL: ' + fejl);

@@ -354,7 +354,10 @@ var Core = (function () {
     kraevBruger(me);
     var row = null;
     db.all('Brugere').forEach(function (u) { if (ini(u.initialer) === me.initialer) row = u; });
-    if (row) db.update('Brugere', row, { gaver_set: env.now().toISOString() });
+    // Gem tidspunktet for den nyeste viste gave (ikke "nu"), så en gave, der kommer mens popuppen er åben, vises næste gang
+    var nu = env.now().toISOString(), set = str(data.seneste);
+    if (!/^\d{4}-\d{2}-\d{2}T/.test(set) || set > nu) set = nu;
+    if (row && set > str(row.gaver_set)) db.update('Brugere', row, { gaver_set: set });
     return { ok: true };
   }
 
@@ -509,15 +512,27 @@ var Core = (function () {
     saetCfg(db, 'MDK_PRAEMIE_MAANED', mk);
     // Præmien gemmes også pr. måned, så sidste måneds præmie huskes, selv om en ny er sat før afsløringen
     var row = mdkRaekke(db, mk);
-    if (row) db.update('Webkollega', row, { praemie: tekst }); else db.insert('Webkollega', { maaned: mk, praemie: tekst, vinder: '', afsloeret: '' });
+    try {
+      if (row) db.update('Webkollega', row, { praemie: tekst }); else db.insert('Webkollega', { maaned: mk, praemie: tekst, vinder: '', afsloeret: '' });
+    } catch (e) { /* fanen mangler i et ældre ark – Config-præmien gælder stadig */ }
     return { ok: true };
   }
 
   // Afslør sidste måneds vinder (til briefingen): vinderen regnes ud fra stemmerne, vises for alle,
   // og en præmie i Webcoins lægges på saldoen. Kan kun ske én gang pr. måned.
+  function erAfsloeret(db, mk) { var r = mdkRaekke(db, mk); return !!(r && str(r.afsloeret).trim()); }
+  // Ældste afsluttede måned (op til 12 mdr. tilbage) med stemmer, der ikke er afsløret – så en glemt måned ikke går tabt
+  function uafsloeretMaaned(db, mk) {
+    var fund = '', m = mk;
+    for (var i = 0; i < 12; i++) {
+      m = forrigeMaaned(m);
+      if (!erAfsloeret(db, m) && mdkStilling(db, m).length) fund = m;
+    }
+    return fund;
+  }
   function adminMdkAfsloer(db, me, data, env) {
     kraevAdmin(me);
-    var mk = forrigeMaaned(maanedKey(env.now()));
+    var mk = uafsloeretMaaned(db, maanedKey(env.now())) || forrigeMaaned(maanedKey(env.now()));
     var row = mdkRaekke(db, mk);
     if (row && str(row.afsloeret).trim()) throw err('BAD', 'Vinderen for ' + maanedNavn(mk).split(' ')[0] + ' er allerede afsløret.');
     var vinder = mdkStilling(db, mk)[0];
@@ -658,8 +673,8 @@ var Core = (function () {
     linjer.push('', 'Webcoins i omløb: ' + omloeb + ' Webcoins ≈ kr ' + Math.round(omloeb / 2));
     if (aabne) linjer.push('Bestillinger der ikke er udleveret: ' + aabne);
     var husk = [];
-    var row = mdkRaekke(db, sidst);
-    if (mdkStilling(db, sidst).length && !(row && str(row.afsloeret).trim())) husk.push('Afslør Månedens Webkollega for ' + sNavn.split(' ')[0] + ' til briefingen (vinderen er klar).');
+    var uaf = uafsloeretMaaned(db, mk);
+    if (uaf) husk.push('Afslør Månedens Webkollega for ' + maanedNavn(uaf) + ' til briefingen (vinderen er klar).');
     if (!mdkPraemie(db, mk)) husk.push('Vælg præmie til Månedens Webkollega i ' + nNavn + '.');
     var maal = faellesMaal(db, sidst);
     var mangler = maal.filter(function (m) { return m.nu === null; });
@@ -694,18 +709,16 @@ var Core = (function () {
       mdk: (function () {
         var mk = maanedKey(nu), hist = [], m = mk;
         var afgivet = db.all('Stemmer').filter(function (v) { return str(v.maaned) === mk; }).length;
-        var forrige = forrigeMaaned(mk), fRow = mdkRaekke(db, forrige);
-        var fSkjult = !(fRow && str(fRow.afsloeret).trim());
         for (var i = 0; i < 6; i++) {
           m = forrigeMaaned(m);
-          // Sidste måneds vinder står ikke i historikken, før den er afsløret (så skærmen ikke afslører den før briefingen)
-          if (m === forrige && fSkjult) continue;
+          // En vinder står ikke i historikken, før den er afsløret (så skærmen ikke afslører den før briefingen)
+          if (!erAfsloeret(db, m)) continue;
           var st = mdkStilling(db, m);
           if (st.length) hist.push({ maaned: m, vinder: st[0], stemmer: st.reduce(function (s, x) { return s + x.stemmer; }, 0) });
         }
-        var sidst = forrigeMaaned(mk), sRow = mdkRaekke(db, sidst), sVinder = mdkStilling(db, sidst)[0] || null;
+        var sidst = uafsloeretMaaned(db, mk) || forrigeMaaned(mk), sVinder = mdkStilling(db, sidst)[0] || null;
         var afsloer = { maaned: sidst, praemie: mdkPraemie(db, sidst), vinder: sVinder ? { initialer: sVinder.initialer, navn: sVinder.navn, stemmer: sVinder.stemmer } : null,
-          afsloeret: !!(sRow && str(sRow.afsloeret).trim()) };
+          afsloeret: erAfsloeret(db, sidst) };
         return { maaned: mk, stilling: mdkStilling(db, mk), afgivet: afgivet, praemie: mdkPraemie(db, mk), historik: hist, afsloer: afsloer };
       })(),
       regler: regler(db),
@@ -854,18 +867,22 @@ var Core = (function () {
       });
       // Klub-bonus (regler med `fra`): fast beløb, når månedens tal når grænsen. Kun den højeste klub pr. kilde tæller,
       // og den ligger på én fast ref, så den rykker op (Klub 15 → Klub 20), hvis tallet stiger.
+      // Falder tallet under laveste klub (fx rettet i kildearket), sættes bonussen til 0.
       var klubber = regelListe.filter(function (r) { return str(r.gruppe) === str(u.gruppe) && num(r.fra) > 0; });
-      klubber.forEach(function (r) {
-        var data = kilder[str(r.kilde)] || {};
+      var klubKilder = {};
+      klubber.forEach(function (r) { klubKilder[str(r.kilde)] = 1; });
+      Object.keys(klubKilder).forEach(function (kilde) {
+        var data = kilder[kilde] || {};
         Object.keys(data).forEach(function (key) {
           var dele = key.split('|');
           if (dele[0] !== i || dele[1] < fra) return;
           var vaerdi = num(data[key]);
-          var bedst = klubber.filter(function (x) { return str(x.kilde) === str(r.kilde) && vaerdi >= num(x.fra); })
+          var bedst = klubber.filter(function (x) { return str(x.kilde) === kilde && vaerdi >= num(x.fra); })
             .sort(function (a, b) { return num(b.fra) - num(a.fra); })[0];
-          if (bedst !== r) return;
-          var ref = 'optjent:' + str(r.kilde) + '-klub:' + dele[1] + ':' + i;
-          oensket[ref] = { initialer: i, beloeb: Math.floor(num(r.sats)), tekst: (str(r.navn) || 'Klub ' + num(r.fra)) + ' · ' + maanedNavn(dele[1]) };
+          var ref = 'optjent:' + kilde + '-klub:' + dele[1] + ':' + i;
+          oensket[ref] = bedst
+            ? { initialer: i, beloeb: Math.floor(num(bedst.sats)), tekst: (str(bedst.navn) || 'Klub ' + num(bedst.fra)) + ' · ' + maanedNavn(dele[1]) }
+            : { initialer: i, beloeb: 0, tekst: 'Klub · ' + maanedNavn(dele[1]) };
         });
       });
     });

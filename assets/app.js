@@ -1294,7 +1294,7 @@
       case 'bruger-ok':
         submit(t, 'admin_bruger', { origEmail: val('b-orig'), navn: val('b-navn'), initialer: val('b-ini'), gruppe: val('b-gruppe'), email: val('b-email'), aktiv: checked('b-aktiv') }, 'Bruger gemt');
         break;
-      case 'gaver-ok': closeModal(); api('gaver_set', {}).then(function () { S.gaver = []; }).catch(function () {}); break;
+      case 'gaver-ok': closeModal(); api('gaver_set', { seneste: (S.gaver[S.gaver.length - 1] || {}).tid }).then(function () { S.gaver = []; }).catch(function () {}); break;
       case 'udsolgt': submit(t, 'admin_udsolgt', { vareId: t.dataset.id, udsolgt: t.dataset.u === '1' }, t.dataset.u === '1' ? 'Markeret som udsolgt' : 'På lager igen'); break;
       case 'gave': openGave(t.dataset.ini); break;
       case 'gave-mode': gaveState.vare = t.dataset.v === '1'; renderGave(); break;
