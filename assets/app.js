@@ -567,7 +567,7 @@
     var sidste = f.sidste.maal.map(function (m) { return maalRaekke(m, true); }).join('');
     return '<section class="block" id="faelles-maal"><div class="block-head"><h2 class="block-title">Fælles mål</h2><span class="note">Afgøres 1. ' + naeste + '</span></div>' +
       '<div class="card maal-liste">' + (denne ? maalPraemie(f.praemie, false, mNavn) + denne : '<p class="faint" style="margin:0">Ingen mål for ' + mNavn + ' endnu.</p>') +
-      '<div class="maal-ide"><span>💡 Har du en idé til en fremtidig belønning?</span><button class="btn sm" data-act="forslag" data-type="praemie">' + ico('send') + 'Send forslag</button></div></div>' +
+      '<div class="maal-ide"><span>💡 Har du en idé til hvad vi skal lave næste gang?</span><button class="btn sm" data-act="forslag" data-type="praemie">' + ico('send') + 'Send forslag</button></div></div>' +
       (sidste ? '<h3 class="maal-sub">Resultat for ' + MAANEDER[(nu.getMonth() + 11) % 12] + '</h3><div class="card maal-liste">' + maalPraemie(f.sidste.praemie, true) + sidste + '</div>' : '') + '</section>';
   }
 

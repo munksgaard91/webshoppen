@@ -71,7 +71,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs" +
 - Gave til kollega hedder **"Donér til en kollega"** (knap og dialog); bekræftelse "Din donation er sendt 🎁".
 - Ventetid: **"Personlig levering, forvent lidt ventetid."**
 - Bestil-listen har **ingen små undertekster** under varenavne og bruger **emojis**, ikke produktfotos. I bestillingsvinduet styres det pr. vare: `varianter` → valgknapper, `oenske = ja` → "Dit ønske"-felt, ellers direkte bestilling.
-- "Andet?"-rækken i menuen ("Har du en idé?") har én hvid knap **"Send forslag"**. Forslag og feedback sendes via backend (`forslag`): gemmes i fanen `Forslag` og vises under **Admin → Feedback** (+ mail/Chat til admin), ikke mailto. Fælles mål har nederst "Har du en idé til en fremtidig belønning?" + "Send forslag" (type `praemie`).
+- "Andet?"-rækken i menuen ("Har du en idé?") har én hvid knap **"Send forslag"**. Forslag og feedback sendes via backend (`forslag`): gemmes i fanen `Forslag` og vises under **Admin → Feedback** (+ mail/Chat til admin), ikke mailto. Fælles mål har nederst "Har du en idé til hvad vi skal lave næste gang?" + "Send forslag" (type `praemie`).
 - Saldo-kortet: **"Hvordan optjener jeg?"** + i-ikon; klik åbner en boks med gruppens regler, hover viser en boble.
 - Teambudget: rest i alt som stort tal; "Brugt i sæsonen" står i **mild rød** (`.tb-sub .brugt`).
 - Månedens Webkollega: begrundelse frivillig (alt godtages, også tomt); præmien er "Coming soon" ved ny måned, indtil admin vælger en (`MDK_PRAEMIE_MAANED`); tekst: "Stem på en kollega, der har hjulpet dig, gjort noget ekstra eller løftet stemningen. Det handler om mennesker, ikke salgstal."
