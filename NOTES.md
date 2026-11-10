@@ -44,6 +44,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 - Rigtigt Google-login er ikke testet (kræver backend + Client ID).
 
 ## Beslutninger
+- **Login i 30 dage** (2026-11-10): ved login sender browseren Google-beviset (1 t) med handlingen `login`; backend tjekker det én gang og returnerer en egen nøgle `ws1.<data>.<HMAC>` (gælder 30 dage), som bruges ved alle forespørgsler. Signeret med `SESSION_SECRET` i Apps Script → Projektindstillinger → **Script Properties** (oprettes automatisk ved første login, aldrig i repoet). Brugeren slås stadig op i `Brugere` hver gang, så deaktiverede er ude med det samme. **Nødbremse:** slet `SESSION_SECRET` → alle logges ud.
 - **Klub-bonusser** (2026-11-10): faste månedsbonusser, når man når en grænse (kolonne `fra` i `Regler`). Hjemmeside: Klub 15/20/25 sager = 15/20/25 Webcoins · Redaktør: Klub 150/200/250 tekster = 15/20/25 · Fotograf: Klub 25/30 sessioner = 15/20. **Kun den højeste klub tæller** (ikke lagt sammen); den ligger på én ref `optjent:<kilde>-klub:<YYYY-MM>:<ini>`, så den rykker op, hvis tallet stiger i løbet af måneden.
 - **Fælles mål** (2026-11-10): fanen `Maal` (maaned, navn, tekst, retning `under`/`over`, graense, nu, enhed). Vises nederst på Overblik med en **progressbar pr. mål**: `nu` er status og opdateres løbende i arket (tom = "Ingen status endnu"). Ved `over` = nu ÷ grænse ("14 af 20 anmeldelser"), ved `under` = grænse ÷ nu ("6,8 t · mål under 6,5 t"); baren bliver grøn, når status er på målet. Overskrift: måned + "Afgøres 1. <næste måned>". Målene **afgøres dagen efter månedens udgang**, når tallene er opgjort: skriv det endelige tal i `nu` – under **Resultat for <sidste måned>** står så Nået ✓ / Ikke nået. November 2026: Hjemmeside under 6,5 t produktionstid pr. sag · Afventer online under 70 kunder på listen · Redaktører under 0,7 t produktionstid pr. tekst · Support 20 anmeldelser eller flere.
 - **Optjening – bevidst stramt** (2026-11-10): fælles budget, så hellere starte stramt og løsne senere (kollegerne betaler i dag selv). Hjemmeside **1 Webcoin pr. sag** · Redaktør **1 Webcoin pr. 10 tekster** · Fotograf **1 Webcoin pr. session** · **20 Webcoins pr. 5-stjernet anmeldelse** (Support **30**, fordi de har færre muligheder – Supports egne måletal afventer) (en anmeldelse giver 100 kr til fælleskassen, så den må veje tungt; arket registrerer kun 5-stjernede). Bedste Hjemmeside-måned hidtil: 80 sager i alt (19/14/13/12/11/9/2). Peak: ca. 20 sager, 170–200 tekster, 25 sessioner pr. person. Priserne beholdes. Nyfak, leverancer og genfak er droppet som kilder. **Hos alle:** øverst **Månedens Webkollega | <månedens præmie> 🪙** (fra `MDK_PRAEMIE`, "Coming soon" uden præmie – står i koden, ikke i arket), og efter gruppens egne regler (gruppe `Alle` i fanen `Regler`): **Konkurrencer | ? 🪙** (Månedens Webkollega m.m., gives manuelt) og **Fælles mål | Se status** (knap der scroller til sektionen "Fælles mål" nederst på Overblik – indholdet kommer senere).
@@ -77,7 +78,7 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 7. **Webshoppen → Slå automatisk hentning til**.
 
 Ændringer i `shared/core.js`, `shared/sortiment.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=161`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=162`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test
@@ -88,7 +89,7 @@ Dækker: ren admin uden deltagelse, forslag, login-afvisning, varianter, ønske-
 Demo-tricks: `?lukket=fravaer` / `?lukket=tid` viser lukket shop. "Nulstil demodata" på login-siden.
 
 ## Før go-live (kendte svagheder)
-1. **Login udløber hver time** – Google ID-token (~1 t). Ved udløb sendes brugeren til login. Overvej stille fornyelse.
+1. ~~Login udløber hver time~~ – løst 2026-11-10: Google-login byttes ved login til Webshoppens egen nøgle (`ws1.…`, 30 dage). **Skal testes, når backend er sat op.**
 2. ~~Månedsfejl omkring midnat i Opgørelse~~ – rettet 2026-11-09 (lokal tid).
 3. **Ingen refusion af event-donationer**, hvis et event lukkes (`aaben: false` i sortiment.js). Brug Justér under Brugere.
 4. **Forældede optjeningsposteringer** – ved gruppeskift eller fjernet regel bliver gamle `optjent`-posteringer liggende (applyEarnings opdaterer kun refs, den stadig beregner).

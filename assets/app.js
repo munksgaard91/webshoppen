@@ -204,10 +204,16 @@
     document.head.appendChild(s);
   }
 
+  // Google-beviset (1 time) byttes til Webshoppens egen login-nøgle (30 dage), så man ikke ryger ud hver time
   function onCredential(r) {
     session = { token: r.credential };
-    store('webshoppen-session', JSON.stringify(session));
-    start();
+    api('login').then(function (res) {
+      session = { token: res.token };
+      store('webshoppen-session', JSON.stringify(session));
+      start();
+    }).catch(function (e) {
+      if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Login fejlede', e.message, true);
+    });
   }
 
   function logout(besked) {

@@ -29,7 +29,10 @@ function doPost(e) {
     var profil = verificer_(req.token, conf);
     var me = Core.resolveUser(SheetDB, profil, liste_(conf.ADMIN_EMAILS));
     var data;
-    if (Core.skriver(req.action)) {
+    if (req.action === 'login') {
+      // Google-login tjekkes én gang (ovenfor) – derefter bruger browseren Webshoppens egen nøgle i 30 dage
+      data = { token: udstedNoegle_(profil) };
+    } else if (Core.skriver(req.action)) {
       var lock = LockService.getScriptLock();
       lock.waitLock(20000);
       try {
@@ -65,8 +68,35 @@ function liste_(s) {
 
 // ---------- Login ----------
 
+// Webshoppens egen login-nøgle: "ws1.<data>.<signatur>", signeret med SESSION_SECRET (Script Properties, aldrig i repoet).
+// Gælder 30 dage. Brugeren slås stadig op i Brugere ved hver forespørgsel, så deaktiverede er ude med det samme.
+// Nødbremse: slet SESSION_SECRET under Projektindstillinger → Script Properties, så er alle logget ud.
+var NOEGLE_DAGE_ = 30;
+function hemmelighed_() {
+  var props = PropertiesService.getScriptProperties();
+  var s = props.getProperty('SESSION_SECRET');
+  if (!s) { s = Utilities.getUuid() + Utilities.getUuid(); props.setProperty('SESSION_SECRET', s); }
+  return s;
+}
+function signer_(data) {
+  return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(data, hemmelighed_())).replace(/=+$/, '');
+}
+function udstedNoegle_(profil) {
+  var data = Utilities.base64EncodeWebSafe(JSON.stringify({ e: profil.email, n: profil.name, p: profil.picture, x: Date.now() + NOEGLE_DAGE_ * 864e5 }), Utilities.Charset.UTF_8).replace(/=+$/, '');
+  return 'ws1.' + data + '.' + signer_(data);
+}
+function tjekNoegle_(token) {
+  var dele = String(token).split('.');
+  if (dele.length !== 3 || signer_(dele[1]) !== dele[2]) throw Core.err('TOKEN_EXPIRED', 'Ugyldigt login. Log ind igen.');
+  var pad = dele[1] + '===='.slice(0, (4 - dele[1].length % 4) % 4);
+  var o = JSON.parse(Utilities.newBlob(Utilities.base64DecodeWebSafe(pad)).getDataAsString('UTF-8'));
+  if (!(o.x > Date.now())) throw Core.err('TOKEN_EXPIRED', 'Din session er udløbet. Log ind igen.');
+  return { email: String(o.e).toLowerCase(), name: o.n || '', picture: o.p || '' };
+}
+
 function verificer_(token, conf) {
   if (!token) throw Core.err('TOKEN_EXPIRED', 'Log ind igen.');
+  if (String(token).indexOf('ws1.') === 0) return tjekNoegle_(token);
   var cache = CacheService.getScriptCache();
   var key = 't:' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, token)).slice(0, 43);
   var hit = cache.get(key);
