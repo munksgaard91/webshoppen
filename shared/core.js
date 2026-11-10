@@ -936,7 +936,10 @@ var Core = (function () {
    * Optjening. `kilder` = { kildeId: { 'INI|YYYY-MM': værdi } } (summeret pr. måned).
    * Laver/opdaterer én postering pr. regel-kilde, måned og person. Idempotent.
    */
-  function applyEarnings(db, kilder, env, fraMaaned) {
+  // opts.genberegn = true (kun via admin, menuen "Genberegn optjening (også ned)"): ulåste måneder må også rettes ned
+  // – fx når en regel er sat for højt. Saldoen må stadig ikke gå i minus, så den sænkes højst til 0.
+  function applyEarnings(db, kilder, env, fraMaaned, opts) {
+    var genberegn = !!(opts && opts.genberegn === true);
     giveStart(db, env);
     var fra = fraMaaned || '0000-00';
     var navne = {};
@@ -990,8 +993,15 @@ var Core = (function () {
       var p = eksisterende[ref];
       if (p) {
         var mk = ref.split(':')[2];
-        if (mk < laastFoer || o.beloeb <= num(p.beloeb)) return;
-        db.update('Posteringer', p, { beloeb: o.beloeb, tekst: o.tekst }); rettede++;
+        if (mk < laastFoer || o.beloeb === num(p.beloeb)) return;
+        var ny = o.beloeb;
+        if (ny < num(p.beloeb)) {
+          if (!genberegn) return;
+          var saldo = saldoFor(db.all('Posteringer'), o.initialer);
+          ny = Math.max(ny, num(p.beloeb) - Math.max(0, saldo));
+          if (ny === num(p.beloeb)) return;
+        }
+        db.update('Posteringer', p, { beloeb: ny, tekst: o.tekst }); rettede++;
       } else if (o.beloeb !== 0) {
         db.insert('Posteringer', { id: env.uuid(), tid: env.now().toISOString(), initialer: o.initialer, type: 'optjent', beloeb: o.beloeb, tekst: o.tekst, ref: ref });
         nye++;

@@ -183,6 +183,12 @@ t('optjening: tjente Webcoins tages aldrig fra nogen, afsluttede måneder er lå
   eq(post('2026-11').beloeb, 20); // indeværende måned stiger
   eq(post('2026-10').beloeb, 10); // oktober er låst (d. 15. november)
   data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'gammel'; });
+  data.Regler.push({ gruppe: 'Support', kilde: 'gammel', sats: 3, navn: '', fra: 0 }); // sat for højt → rettes ned
+  Core.applyEarnings(db, { gammel: { 'BBB|2026-11': 5 } }, env);
+  eq(post('2026-11').beloeb, 20); // almindelig hentning sænker ikke
+  Core.applyEarnings(db, { gammel: { 'BBB|2026-11': 5 } }, env, null, { genberegn: true });
+  eq(post('2026-11').beloeb, 15); // genberegn gør
+  data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'gammel'; });
 });
 t('startbeløb: 5 Webcoins én gang pr. bruger', function () {
   var start = function () { return data.Posteringer.filter(function (p) { return p.ref === 'start:BBB'; }); };

@@ -11,6 +11,7 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('Webshoppen')
     .addItem('Opsæt faner (første gang)', 'opsaet')
     .addItem('Hent optjening nu', 'syncOptjening')
+    .addItem('Genberegn optjening (også ned)', 'genberegnOptjening')
     .addItem('Slå automatisk hentning til (hver time + månedsmail)', 'installerTrigger')
     .addItem('Send månedsmail nu (test)', 'maanedsmail')
     .addToUi();
@@ -257,7 +258,18 @@ function fravaer_(conf) {
 
 // ---------- Optjening ----------
 
-function syncOptjening() {
+// Efter en regel er sat for højt: retter indeværende (ulåste) måned efter de nuværende regler – også ned.
+// Saldoen sænkes højst til 0. Kør kun bevidst fra menuen; den timelige hentning sænker aldrig.
+function genberegnOptjening() {
+  var ui = SpreadsheetApp.getUi();
+  var svar = ui.alert('Genberegn optjening', 'Optjening for ulåste måneder rettes efter de nuværende regler – også ned. Fortsæt?', ui.ButtonSet.OK_CANCEL);
+  if (svar !== ui.Button.OK) return;
+  var res = syncOptjening({ genberegn: true });
+  ui.alert('Færdig: ' + (res ? res.nye + ' nye, ' + res.rettede + ' rettede' : 'se loggen'));
+}
+
+function syncOptjening(opts) {
+  var genberegn = !!(opts && opts.genberegn === true); // timer-triggeren sender et event-objekt uden genberegn
   var fejl = [], res;
   var lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -297,7 +309,7 @@ function syncOptjening() {
     });
     // En kilde, der fejlede, tages helt ud – så dens optjeninger hverken rettes eller nulstilles på et halvt datasæt
     Object.keys(fejlede).forEach(function (id) { delete kilder[id]; });
-    res = Core.applyEarnings(SheetDB, kilder, env_(), fraMaaned);
+    res = Core.applyEarnings(SheetDB, kilder, env_(), fraMaaned, { genberegn: genberegn });
     SpreadsheetApp.flush();
   } catch (e) {
     fejl.push('Optjening: ' + (e.message || e));
