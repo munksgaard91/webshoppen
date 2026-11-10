@@ -644,7 +644,7 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .reel-card { position: relative; overflow: hidden; flex: none; width: 120px; height: 108px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 8px; background: linear-gradient(180deg, #1d3354, #172a46); color: #eef4fb; transition: transform .35s, box-shadow .35s, opacity .35s, filter .35s; }
 .reel-card b.num { font-size: 28px; font-weight: 900; line-height: 1; }
 .reel-card small { font-size: 12px; font-weight: 700; opacity: .75; margin-top: 3px; }
-.reel-card b.txt { font-size: 15px; font-weight: 800; line-height: 1.15; }
+.reel-card b.txt { font-size: 14px; font-weight: 800; line-height: 1.15; white-space: nowrap; letter-spacing: -0.01em; }
 .reel-card.nitte { color: #93a7bf; }
 .reel-card.hoved { background: linear-gradient(180deg, #f8d26b, #f6c344); color: #3d2a00; }
 .reel.stoppet .reel-card { opacity: .35; filter: saturate(.5); }

@@ -85,14 +85,14 @@ Config-nøgler: `UDSOLGT`, `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE
 7. **Webshoppen → Slå automatisk hentning til** (hentning hver time + månedsmail den 1.). Prøv mailen med **Send månedsmail nu (test)**.
 
 Ændringer i `shared/core.js`, `shared/sortiment.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=173`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=174`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test
 ```bash
 cd ~/code/webshoppen && /System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc shared/core.js tests/core.test.js
 ```
-Dækker: ren admin uden deltagelse, forslag, login-afvisning, varianter, ønske-felt, kommer snart, gave + refusion, admin-rettigheder, forudbestilling, saldo-tjek, lykkehjul (alle tre typer), stemmeregler (frivillig begrundelse), hemmelige stemmer, tie-breaker, "Coming soon"-præmie ved ny måned, afregning til RAB, idempotent optjening, åbningstider. Testen har sit eget `SORTIMENT` og indlæser ikke `shared/sortiment.js`.
+Dækker: ren admin uden deltagelse, forslag, login-afvisning, varianter, ønske-felt, kommer snart, gave + refusion, admin-rettigheder, forudbestilling, saldo-tjek, lykkehjul (alle tre typer), stemmeregler (frivillig begrundelse), hemmelige stemmer (admin ser afsender), tie-breaker, Afslør (skjult indtil afsløret, præmie udbetales én gang og huskes pr. måned), "Coming soon"-præmie ved ny måned, afregning til RAB, idempotent optjening, klub-bonus (kun højeste), startbeløb, fælles mål (under/over, procent), ret saldo, gaver fra admin, gave-popup, udsolgt, månedsrapport, åbningstider. Testen har sit eget `SORTIMENT` og indlæser ikke `shared/sortiment.js`.
 Demo-tricks: `?lukket=fravaer` / `?lukket=tid` viser lukket shop. "Nulstil demodata" på login-siden.
 
 ## Før go-live (kendte svagheder)
