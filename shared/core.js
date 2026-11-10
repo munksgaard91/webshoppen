@@ -22,7 +22,9 @@ var Core = (function () {
     Kilder: ['kilde', 'navn', 'sheet_id', 'fane', 'kol_initialer', 'kol_vaerdi', 'kol_dato', 'start_raekke'],
     Regler: ['gruppe', 'kilde', 'sats', 'tekst', 'navn', 'fra'],
     Afregning: ['maaned', 'sendt', 'tid'],
-    Maal: ['maaned', 'navn', 'tekst', 'retning', 'graense', 'nu', 'enhed']
+    Maal: ['maaned', 'navn', 'tekst', 'retning', 'graense', 'nu', 'enhed'],
+    // Månedens Webkollega pr. måned: præmien (sat af admin) og vinderen (sat, når admin trykker Afslør)
+    Webkollega: ['maaned', 'praemie', 'vinder', 'afsloeret']
   };
 
   function err(code, msg) {
@@ -283,9 +285,13 @@ var Core = (function () {
         var mk = maanedKey(nu), sidst = forrigeMaaned(mk);
         var min = null, minHvorfor = '';
         db.all('Stemmer').forEach(function (v) { if (str(v.maaned) === mk && ini(v.fra) === me.initialer) { min = ini(v.til); minHvorfor = str(v.begrundelse); } });
-        var vinder = mdkStilling(db, sidst)[0] || null;
+        // Sidste måneds vinder vises først, når admin har trykket Afslør. Indtil da: "afsløres snart" (hvis der var stemmer).
+        var row = mdkRaekke(db, sidst);
+        var afsloeret = row && str(row.afsloeret).trim() && ini(row.vinder);
+        var vinder = afsloeret ? { initialer: ini(row.vinder), navn: navne[ini(row.vinder)] || ini(row.vinder) } : null;
+        var afventer = !afsloeret && db.all('Stemmer').some(function (v) { return str(v.maaned) === sidst; });
         return { maaned: mk, minStemme: min ? { initialer: min, navn: navne[min] || min, begrundelse: minHvorfor } : null, praemie: mdkPraemie(db, mk),
-          sidste: vinder ? { maaned: sidst, initialer: vinder.initialer, navn: vinder.navn } : null };
+          sidste: vinder ? { maaned: sidst, initialer: vinder.initialer, navn: vinder.navn } : null, afventer: afventer ? sidst : '' };
       })(),
       hjul: { pris: Math.floor(num(sortiment().hjulPris)), klar: me.initialer ? ubrugteDrej(db, me.initialer) : 0, felter: (function () {
         // Felternes størrelse på hjulet følger chancen (andel 0–1), så hjulet viser de rigtige odds.
@@ -377,9 +383,21 @@ var Core = (function () {
   }
   // Præmien gælder kun den måned, admin har sat den for (MDK_PRAEMIE_MAANED). Ny måned = tom ("Coming soon"),
   // indtil admin vælger en ny præmie. Vinderen af sidste måned findes automatisk ud fra stemmerne.
+  function mdkRaekke(db, mk) {
+    var row = null;
+    try { db.all('Webkollega').forEach(function (r) { if (str(r.maaned).trim() === mk) row = r; }); } catch (e) { row = null; }
+    return row;
+  }
   function mdkPraemie(db, mk) {
+    var row = mdkRaekke(db, mk);
+    if (row && str(row.praemie).trim()) return str(row.praemie).trim();
     if (str(cfgVal(db, 'MDK_PRAEMIE_MAANED', '')).trim() !== mk) return '';
     return str(cfgVal(db, 'MDK_PRAEMIE', '')).trim();
+  }
+  // "50 Webcoins" -> 50. Andre præmier (fx "Biografbillet") -> 0 = gives manuelt.
+  function mdkWebcoins(praemie) {
+    var m = str(praemie).match(/(\d[\d.]*)\s*webcoin/i);
+    return m ? Math.floor(num(m[1])) : 0;
   }
   function saetCfg(db, noegle, vaerdi) {
     var row = null;
@@ -431,9 +449,33 @@ var Core = (function () {
     kraevAdmin(me);
     var tekst = str(data.praemie).trim();
     if (!tekst) throw err('BAD', 'Skriv en præmie.');
+    var mk = maanedKey(env.now());
     saetCfg(db, 'MDK_PRAEMIE', tekst);
-    saetCfg(db, 'MDK_PRAEMIE_MAANED', maanedKey(env.now()));
+    saetCfg(db, 'MDK_PRAEMIE_MAANED', mk);
+    // Præmien gemmes også pr. måned, så sidste måneds præmie huskes, selv om en ny er sat før afsløringen
+    var row = mdkRaekke(db, mk);
+    if (row) db.update('Webkollega', row, { praemie: tekst }); else db.insert('Webkollega', { maaned: mk, praemie: tekst, vinder: '', afsloeret: '' });
     return { ok: true };
+  }
+
+  // Afslør sidste måneds vinder (til briefingen): vinderen regnes ud fra stemmerne, vises for alle,
+  // og en præmie i Webcoins lægges på saldoen. Kan kun ske én gang pr. måned.
+  function adminMdkAfsloer(db, me, data, env) {
+    kraevAdmin(me);
+    var mk = forrigeMaaned(maanedKey(env.now()));
+    var row = mdkRaekke(db, mk);
+    if (row && str(row.afsloeret).trim()) throw err('BAD', 'Vinderen for ' + maanedNavn(mk).split(' ')[0] + ' er allerede afsløret.');
+    var vinder = mdkStilling(db, mk)[0];
+    if (!vinder) throw err('BAD', 'Ingen stemmer i ' + maanedNavn(mk).split(' ')[0] + '.');
+    var praemie = mdkPraemie(db, mk);
+    var tid = env.now().toISOString();
+    var v = { praemie: praemie, vinder: vinder.initialer, afsloeret: tid };
+    if (row) db.update('Webkollega', row, v); else db.insert('Webkollega', { maaned: mk, praemie: praemie, vinder: vinder.initialer, afsloeret: tid });
+    var beloeb = mdkWebcoins(praemie);
+    if (beloeb > 0) {
+      db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: vinder.initialer, type: 'gevinst', beloeb: beloeb, tekst: 'Månedens Webkollega · ' + maanedNavn(mk), ref: 'mdk:' + mk });
+    }
+    return { maaned: mk, initialer: vinder.initialer, navn: vinder.navn, stemmer: vinder.stemmer, praemie: praemie, udbetalt: beloeb };
   }
 
   // Feelin' Lucky? – gevinsten afgøres altid her (server), aldrig i browseren.
@@ -567,12 +609,19 @@ var Core = (function () {
       mdk: (function () {
         var mk = maanedKey(nu), hist = [], m = mk;
         var afgivet = db.all('Stemmer').filter(function (v) { return str(v.maaned) === mk; }).length;
+        var forrige = forrigeMaaned(mk), fRow = mdkRaekke(db, forrige);
+        var fSkjult = !(fRow && str(fRow.afsloeret).trim());
         for (var i = 0; i < 6; i++) {
           m = forrigeMaaned(m);
+          // Sidste måneds vinder står ikke i historikken, før den er afsløret (så skærmen ikke afslører den før briefingen)
+          if (m === forrige && fSkjult) continue;
           var st = mdkStilling(db, m);
           if (st.length) hist.push({ maaned: m, vinder: st[0], stemmer: st.reduce(function (s, x) { return s + x.stemmer; }, 0) });
         }
-        return { maaned: mk, stilling: mdkStilling(db, mk), afgivet: afgivet, praemie: mdkPraemie(db, mk), historik: hist };
+        var sidst = forrigeMaaned(mk), sRow = mdkRaekke(db, sidst), sVinder = mdkStilling(db, sidst)[0] || null;
+        var afsloer = { maaned: sidst, praemie: mdkPraemie(db, sidst), vinder: sVinder ? { initialer: sVinder.initialer, navn: sVinder.navn, stemmer: sVinder.stemmer } : null,
+          afsloeret: !!(sRow && str(sRow.afsloeret).trim()) };
+        return { maaned: mk, stilling: mdkStilling(db, mk), afgivet: afgivet, praemie: mdkPraemie(db, mk), historik: hist, afsloer: afsloer };
       })(),
       regler: regler(db),
       grupper: GRUPPER
@@ -718,6 +767,7 @@ var Core = (function () {
     stem: stem,
     forslag: forslag,
     admin_mdk_praemie: adminMdkPraemie,
+    admin_mdk_afsloer: adminMdkAfsloer,
     admin_afregnet: adminAfregnet,
     admin_state: adminState,
     admin_bestilling: adminBestilling,
@@ -725,7 +775,7 @@ var Core = (function () {
     admin_justering: adminJustering,
     admin_sync: function (db, me, data, env) { kraevAdmin(me); return env.sync(); }
   };
-  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_sync: 1 };
+  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_sync: 1 };
 
   function handle(db, me, action, data, env) {
     var fn = HANDLINGER[action];

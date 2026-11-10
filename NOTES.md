@@ -44,6 +44,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 - Rigtigt Google-login er ikke testet (kræver backend + Client ID).
 
 ## Beslutninger
+- **Afslør Månedens Webkollega** (2026-11-10): vinderen regnes ud automatisk, men vises og udbetales **først når admin trykker "🏆 Afslør vinder"** (admin-overblik og Konkurrencer) – det sker til briefingen. Indtil da ser medarbejderne "🥁 Afsløres snart", og vinderen står ikke i admins historik. Afslør: bekræftelse → stort resultat med konfetti; præmie i Webcoins ("50 Webcoins") lægges på saldoen (type `gevinst`, ref `mdk:<YYYY-MM>`), andre præmier gives manuelt. Ny fane `Webkollega` (maaned, praemie, vinder, afsloeret) husker præmien pr. måned, så sidste måneds præmie gælder, selv om en ny er sat før afsløringen. Demoen har stemmer fra sidste måned, så Afslør kan prøves.
 - **Startbeløb 5 Webcoins** (2026-11-10): alle brugere får `SORTIMENT.startWebcoins` (5) én gang – postering type `justering`, tekst "Velkommen til Webshoppen", ref `start:<INI>`. Gives, når admin opretter en bruger, og ved hver synk (så brugere skrevet direkte i arket også får dem). Tæller ikke som "optjent" på Min profil.
 - **Login i 30 dage** (2026-11-10): ved login sender browseren Google-beviset (1 t) med handlingen `login`; backend tjekker det én gang og returnerer en egen nøgle `ws1.<data>.<HMAC>` (gælder 30 dage), som bruges ved alle forespørgsler. Signeret med `SESSION_SECRET` i Apps Script → Projektindstillinger → **Script Properties** (oprettes automatisk ved første login, aldrig i repoet). Brugeren slås stadig op i `Brugere` hver gang, så deaktiverede er ude med det samme. **Nødbremse:** slet `SESSION_SECRET` → alle logges ud.
 - **Klub-bonusser** (2026-11-10): faste månedsbonusser, når man når en grænse (kolonne `fra` i `Regler`). Hjemmeside: Klub 15/20/25 sager = 15/20/25 Webcoins · Redaktør: Klub 150/200/250 tekster = 15/20/25 · Fotograf: Klub 25/30 sessioner = 15/20. **Kun den højeste klub tæller** (ikke lagt sammen); den ligger på én ref `optjent:<kilde>-klub:<YYYY-MM>:<ini>`, så den rykker op, hvis tallet stiger i løbet af måneden.
@@ -79,7 +80,7 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 7. **Webshoppen → Slå automatisk hentning til**.
 
 Ændringer i `shared/core.js`, `shared/sortiment.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=164`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=165`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test

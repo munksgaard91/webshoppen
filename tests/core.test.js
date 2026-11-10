@@ -178,7 +178,14 @@ t('startbeløb: 5 Webcoins én gang pr. bruger', function () {
 t('tie-breaker: første stemme vinder', function () {
   data.Stemmer.push({ id: 's1', tid: '2026-10-05T09:00:00.000Z', maaned: '2026-10', fra: 'CCC', til: 'BBB', begrundelse: 'x' });
   data.Stemmer.push({ id: 's2', tid: '2026-10-04T09:00:00.000Z', maaned: '2026-10', fra: 'BBB', til: 'AAA', begrundelse: 'y' });
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  // Før Afslør: vinderen er skjult for brugerne
+  eq(Core.handle(db, B, 'state', {}, env).mdk.sidste, null);
+  eq(Core.handle(db, B, 'state', {}, env).mdk.afventer, '2026-10');
+  var r = Core.handle(db, adm, 'admin_mdk_afsloer', {}, env);
+  eq(r.initialer, 'AAA');
   eq(Core.handle(db, B, 'state', {}, env).mdk.sidste.initialer, 'AAA');
+  kaster(function () { Core.handle(db, adm, 'admin_mdk_afsloer', {}, env); }, 'allerede');
 });
 t('præmie: Coming soon ved ny måned, indtil admin vælger', function () {
   eq(Core.handle(db, B, 'state', {}, env).mdk.praemie, '');
@@ -186,7 +193,20 @@ t('præmie: Coming soon ved ny måned, indtil admin vælger', function () {
   Core.handle(db, adm, 'admin_mdk_praemie', { praemie: '25 Webcoins' }, env);
   eq(Core.handle(db, B, 'state', {}, env).mdk.praemie, '25 Webcoins');
   data.Config.forEach(function (r) { if (r.noegle === 'MDK_PRAEMIE_MAANED') r.vaerdi = '2026-10'; });
+  data.Webkollega.forEach(function (w) { if (w.maaned === '2026-11') w.maaned = '2026-10'; }); // præmien blev sat i oktober
   eq(Core.handle(db, B, 'state', {}, env).mdk.praemie, '');
+});
+t('afslør: præmien i Webcoins udbetales én gang og huskes, selv om ny præmie er sat', function () {
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var okt = { now: function () { return new Date(2026, 9, 20, 12, 0); }, uuid: env.uuid, notify: env.notify };
+  Core.handle(db, adm, 'admin_mdk_praemie', { praemie: '50 Webcoins' }, okt); // sat i oktober
+  data.Stemmer.push({ id: 's3', tid: '2026-10-06T09:00:00.000Z', maaned: '2026-10', fra: 'AAA', til: 'BBB', begrundelse: '' });
+  data.Webkollega = data.Webkollega.filter(function (w) { return w.maaned !== '2026-10' || (w.afsloeret = '', w.vinder = '', true); });
+  Core.handle(db, adm, 'admin_mdk_praemie', { praemie: 'Biografbillet' }, env); // ny præmie i november før afsløring
+  var r = Core.handle(db, adm, 'admin_mdk_afsloer', {}, env);
+  eq(r.praemie, '50 Webcoins');
+  eq(r.udbetalt, 50);
+  eq(data.Posteringer.filter(function (p) { return p.ref === 'mdk:2026-10'; }).length, 1);
 });
 t('afregning: admin krydser måned af som sendt til RAB', function () {
   var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);

@@ -478,8 +478,8 @@
   }
 
   // Konfetti i Best One-farver. Ren DOM + CSS-animation, ryddes op efter 4 sek.
-  function konfetti() {
-    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { toast('Yehaw! 🎉', 'Eventet er fuldt.'); return; }
+  function konfetti(stille) {
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { if (!stille) toast('Yehaw! 🎉', 'Eventet er fuldt.'); return; }
     var farver = ['#225581', '#2f74b5', '#79b0ff', '#c9dcf2', '#ffffff', '#8b97ab'];
     var boks = document.createElement('div');
     boks.className = 'confetti';
@@ -513,6 +513,10 @@
         ? '<span class="mdk-eyebrow">Vinder i ' + MAANEDER[Number(m.sidste.maaned.slice(5)) - 1] + '</span>' +
           '<div class="mdk-winner"><span class="mdk-crown">🏆</span><span class="mdk-avatar">' + esc(m.sidste.initialer || forkort(m.sidste.navn)) + '</span></div>' +
           '<b class="mdk-name">' + esc(m.sidste.navn) + '</b>'
+        : m.afventer
+        ? '<span class="mdk-eyebrow">Vinder i ' + forrigeNavn + '</span>' +
+          '<div class="mdk-winner"><span class="mdk-crown">🥁</span><span class="mdk-avatar empty">?</span></div>' +
+          '<b class="mdk-name">Afsløres snart</b><span class="mdk-tease">Vinderen afsløres til briefingen</span>'
         : '<span class="mdk-eyebrow">Vinder i ' + forrigeNavn + '</span>' +
           '<div class="mdk-winner"><span class="mdk-crown faded">🏆</span><span class="mdk-avatar empty">?</span></div>' +
           '<b class="mdk-name">Det kunne være dig!</b><span class="mdk-tease">Den første vinder kåres 1. ' + naesteNavn + '</span>') +
@@ -872,7 +876,7 @@
       '</section>';
 
     var top = m.stilling.slice(0, 3);
-    var kollega = '<section class="card"><div class="card-head"><h2 class="card-title">Månedens Webkollega</h2><a class="link" href="#/admin/konkurrencer">Åbn</a></div>' +
+    var kollega = '<section class="card"><div class="card-head"><h2 class="card-title">Månedens Webkollega</h2><a class="link" href="#/admin/konkurrencer">Åbn</a></div>' + afsloerKnap(m) +
       '<div class="rule"><span>Præmie i ' + mNavn + '</span>' + (m.praemie ? '<b>' + esc(m.praemie) + '</b>' : '<a class="link" href="#/admin/konkurrencer">Coming soon – vælg præmie</a>') + '</div>' +
       '<div class="rule"><span>Stemmer</span><b class="num">' + m.afgivet + '</b></div>' +
       (top.length ? top.map(function (x, i) { return '<div class="rule"><span>' + ['🥇', '🥈', '🥉'][i] + ' ' + esc(x.navn) + '</span><b class="num">' + x.stemmer + '</b></div>'; }).join('') : '') +
@@ -941,12 +945,21 @@
       }).join('') + '</tbody><tfoot><tr><td colspan="3"><b>Samlet</b> <span class="faint">· ' + A.brugere.length + ' brugere</span></td><td class="r num"><b>' + wc(omloeb) + '</b><small class="faint" style="display:block">≈ ' + kr(omloeb / 2) + '</small></td><td></td></tr></tfoot></table></div></section>';
   }
 
+  // "Afslør"-knap til briefingen: vises, når sidste måned har en vinder, der ikke er afsløret endnu. Navnet vises først efter klik.
+  function afsloerKnap(m) {
+    var a = m.afsloer;
+    if (!a || !a.vinder || a.afsloeret) return '';
+    var mNavn = MAANEDER[Number(a.maaned.slice(5)) - 1];
+    return '<div class="afsloer"><div><b>Vinderen for ' + mNavn + ' er klar 🥁</b><small class="faint">Præmie: ' + (a.praemie ? esc(a.praemie) : 'ingen valgt') + '</small></div>' +
+      '<button class="btn primary" data-act="afsloer">🏆 Afslør vinder</button></div>';
+  }
+
   // Konkurrencer: én blok pr. konkurrence. Indtil videre kun Månedens Webkollega – nye lægges ind under den.
   function pageAdminKonkurrencer() {
     var m = A.mdk;
     var mNavn = MAANEDER[Number(m.maaned.slice(5)) - 1];
     return adminHead('Konkurrencer') +
-      '<h2 class="block-title">Månedens Webkollega</h2>' +
+      '<h2 class="block-title">Månedens Webkollega</h2>' + (afsloerKnap(m) ? '<section class="card" style="margin-bottom:20px">' + afsloerKnap(m) + '</section>' : '') +
       '<section class="card" style="margin-bottom:20px"><div class="card-head"><h2 class="card-title">Præmie</h2></div>' +
       '<div class="vote-form"><input class="input" id="mdk-praemie" value="' + esc(m.praemie) + '" placeholder="fx 50 Webcoins"><button class="btn primary" data-act="mdk-praemie-ok">Gem</button></div>' +
       '<small class="faint">' + (m.praemie ? 'Gælder ' + mNavn + '.' : 'Ingen præmie for ' + mNavn + ' endnu – medarbejderne ser "Coming soon".') + ' Præmien nulstilles hver måned og gives manuelt (Brugere → Justér).</small></section>' +
@@ -1252,6 +1265,27 @@
         if (!ui.stemKlar) break;
         submit(t, 'stem', ui.stemKlar, 'Tak for din stemme');
         ui.stemKlar = null;
+        break;
+      case 'afsloer': {
+        var af = A.mdk.afsloer, afM = MAANEDER[Number(af.maaned.slice(5)) - 1];
+        openModal('<h2>Afslør vinderen for ' + afM + '?</h2>' +
+          '<p class="muted">Vinderen vises for alle' + (/webcoin/i.test(af.praemie) ? ', og ' + esc(af.praemie) + ' lægges på saldoen' : '') + '. Det kan ikke fortrydes.</p>' +
+          '<div class="modal-acts"><button class="btn" data-act="close">Annullér</button><button class="btn primary grow" data-act="afsloer-ok">🏆 Afslør</button></div>');
+        break;
+      }
+      case 'afsloer-ok':
+        busy(t, true);
+        api('admin_mdk_afsloer', {}).then(function (r) {
+          openModal('<div class="afsloer-res"><span class="mdk-eyebrow">Månedens Webkollega · ' + MAANEDER[Number(r.maaned.slice(5)) - 1] + '</span>' +
+            '<div class="afsloer-crown">🏆</div><h2>' + esc(r.navn) + '</h2>' +
+            '<p class="muted">' + r.stemmer + (r.stemmer === 1 ? ' stemme' : ' stemmer') + (r.udbetalt ? ' · ' + wc(r.udbetalt) + ' ' + coin() + ' er lagt på saldoen' : r.praemie ? ' · Husk at give præmien: ' + esc(r.praemie) : '') + '</p>' +
+            '<div class="modal-acts"><button class="btn primary grow" data-act="close">Tillykke! 🎉</button></div></div>');
+          konfetti(true);
+          return refresh();
+        }).catch(function (e) {
+          busy(t, false);
+          if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true);
+        });
         break;
       case 'mdk-praemie-ok':
         submit(t, 'admin_mdk_praemie', { praemie: val('mdk-praemie') }, 'Præmie gemt');

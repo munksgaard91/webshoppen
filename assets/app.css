@@ -221,6 +221,12 @@ a { color: inherit; }
 .maaned-hoved h2 { margin: 12px 0 0; font-size: 30px; font-weight: 900; letter-spacing: -0.02em; }
 .maaned-pill { display: inline-block; padding: 6px 16px; border-radius: 99px; background: var(--brand); color: #fff; font-size: 14px; font-weight: 700; }
 .maaned-hoved + .block { margin-top: 28px; }
+.afsloer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; margin: 4px 0 12px; border-radius: 14px; background: var(--brand-soft); }
+.afsloer > div { display: grid; gap: 2px; }
+.afsloer .btn { white-space: nowrap; }
+.afsloer-res { text-align: center; }
+.afsloer-res h2 { font-size: 30px; margin: 4px 0 6px; }
+.afsloer-crown { font-size: 56px; line-height: 1; margin-top: 10px; }
 .maal-liste { padding-top: 6px; padding-bottom: 6px; }
 .maal-sub { font-size: 15px; font-weight: 800; margin: 22px 0 10px; color: var(--muted); }
 .maal-row { display: grid; grid-template-columns: 260px minmax(0, 1fr); align-items: center; gap: 20px; padding: 14px 0; border-top: 1px solid var(--line); }
