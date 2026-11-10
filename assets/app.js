@@ -944,7 +944,8 @@
       '</section>';
 
     // Fælles mål: belønning + status pr. mål (erstatter Events)
-    var fm = S.faellesMaal || { maal: [] }, fp = fm.praemie;
+    var fm = S.faellesMaal || { maal: [] };
+    var fp = fm.praemie || { praemie: '', antal: Math.max(1, fm.maal.length - 1), ialt: fm.maal.length, naaet: 0 }; // ældre backend uden belønning
     var ev = '<section class="card"><div class="card-head"><h2 class="card-title">Fælles mål</h2><a class="link" href="#/admin/konkurrencer">Åbn</a></div>' +
       (fm.maal.length ? '<div class="rule"><span>Belønning i ' + mNavn + '</span>' + (fp.praemie ? '<b>' + esc(fp.praemie) + '</b>' : '<a class="link" href="#/admin/konkurrencer">Coming soon – vælg belønning</a>') + '</div>' +
         '<div class="rule"><span>På mål lige nu</span><b class="num">' + fp.naaet + ' af ' + fp.ialt + ' <span class="faint">(krav ' + fp.antal + ')</span></b></div>' +
@@ -1018,7 +1019,8 @@
   function pageAdminKonkurrencer() {
     var m = A.mdk;
     var mNavn = MAANEDER[Number(m.maaned.slice(5)) - 1];
-    var fm = S.faellesMaal || { maal: [] }, fp = fm.praemie || { praemie: '', antal: 0, ialt: 0 };
+    var fm = S.faellesMaal || { maal: [] };
+    var fp = fm.praemie || { praemie: '', antal: Math.max(1, fm.maal.length - 1), ialt: fm.maal.length, naaet: 0 };
     var maalKort = '<h2 class="block-title">Fælles mål</h2>' +
       '<section class="card" style="margin-bottom:28px"><div class="card-head"><h2 class="card-title">Belønning i ' + mNavn + '</h2><span class="tag' + (fp.opnaaet ? ' ok' : '') + '">' + (fp.naaet || 0) + ' af ' + (fp.ialt || 0) + ' på mål lige nu</span></div>' +
       (fm.maal.length
