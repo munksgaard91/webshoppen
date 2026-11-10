@@ -1094,12 +1094,14 @@
     var u = A.brugere.filter(function (x) { return x.initialer === ini; })[0];
     if (!u) return;
     gaveState = { u: u, vare: false };
+    closeModal();
     renderGave();
   }
   function renderGave() {
     var g = gaveState, besked = val('g-besked');
     var varer = S.menu.filter(function (v) { return !v.snart; });
-    openModal('<h2><span class="ico">🎁</span>Gave til ' + esc(fornavn(g.u.navn)) + '</h2>' +
+    // modalIndhold: kun indholdet skiftes, så vinduet ikke blinker, når man skifter fane
+    modalIndhold('<h2><span class="ico">🎁</span>Gave til ' + esc(fornavn(g.u.navn)) + '</h2>' +
       '<div class="seg"><button class="' + (g.vare ? '' : 'on') + '" data-act="gave-mode" data-v="0">Webcoins</button><button class="' + (g.vare ? 'on' : '') + '" data-act="gave-mode" data-v="1">Vare fra menuen</button></div>' +
       (g.vare
         ? '<div class="field"><label for="g-vare">Vare</label><select class="input" id="g-vare">' + varer.map(function (v) { return '<option value="' + esc(v.id) + '">' + esc(v.ikon) + ' ' + esc(v.navn) + '</option>'; }).join('') + '</select></div>'
