@@ -176,13 +176,14 @@ function gemSynkStatus_(fejl) {
 function notify_(b) {
   var conf = cfg_();
   var side = b.side === undefined ? 'bestillinger' : b.side;
-  var url = conf.SIDE_URL ? '\n' + conf.SIDE_URL + '/#/' + (side ? 'admin/' + side : '') : '';
+  var link = conf.SIDE_URL ? conf.SIDE_URL + '/#/' + (side ? 'admin/' + side : '') : '';
+  var url = link ? '\n' + link : '';
   var ikon = b.ikon || '🛒';
   try {
     if (conf.CHAT_WEBHOOK) {
       UrlFetchApp.fetch(conf.CHAT_WEBHOOK, {
         method: 'post', contentType: 'application/json; charset=UTF-8', muteHttpExceptions: true,
-        payload: JSON.stringify({ text: ikon + ' *' + b.emne + '*\n' + b.tekst + url })
+        payload: JSON.stringify({ text: ikon + ' *' + b.emne + '*\n' + b.tekst + (link ? '\n<' + link + '|Åbn i admin>' : '') })
       });
     }
     if (conf.NOTIFIKATION_MAIL) {
