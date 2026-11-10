@@ -111,6 +111,15 @@
     return '<svg class="coin ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="var(--gold)"/><circle cx="12" cy="12" r="8.3" fill="none" stroke="var(--gold-deep)" stroke-width="1.4"/><path d="M7.2 8.6 9 15.4l3-5.2 3 5.2 1.8-6.8" fill="none" stroke="var(--gold-deep)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   }
 
+  // Mønt der drejer 360° om sig selv (login + saldo-kortet): for- og bagside + kant af tynde lag, så den har tykkelse.
+  // Startvinklen følger uret, så mønten ikke springer tilbage, når siden tegnes om.
+  function coinSpin(cls) {
+    var kant = '';
+    for (var i = 0; i < 7; i++) kant += '<i class="ce" style="--z:' + (i - 3) * 0.5 + 'px"></i>';
+    return '<i class="coin-3d ' + cls + '" aria-hidden="true"><i class="coin-rot" style="animation-delay:-' + (Date.now() % 4000) + 'ms">' +
+      '<i class="cf">' + coin() + '</i>' + kant + '<i class="cf cb">' + coin() + '</i></i></i>';
+  }
+
   var IKON = {
     home: '<path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6z"/>',
@@ -211,7 +220,7 @@
       }).join('') + '</div><p style="margin:18px 0 0"><button class="btn sm" data-act="demo-reset">Nulstil demodata</button></p>';
     }
     app.innerHTML = '<div class="center-screen"><div class="login-card">' +
-      coin('coin-xl') +
+      coinSpin('coin-xl') +
       boLogo('logo-login') +
       '<h1>Webshoppen</h1>' +
       '<p>' + esc(besked || 'Log ind med din Best One-konto') + '</p>' +
@@ -413,7 +422,7 @@
         '<span class="pop pop-regler" role="tooltip"><b class="pop-title">' + esc(me.gruppe) + '</b>' + mineRegler() + '</span></span>' : '') +
       '</div>' +
       (kanKoebe
-        ? '<div class="saldo-big num">' + coin('coin-lg') + '<span>' + fmt(st.saldo) + '</span><small>' + enhed(st.saldo) + '</small></div>'
+        ? '<div class="saldo-big num">' + coinSpin('coin-lg') + '<span>' + fmt(st.saldo) + '</span><small>' + enhed(st.saldo) + '</small></div>'
         : '<div class="saldo-big"><span style="font-size:40px">Admin</span></div><div class="saldo-sub">Du deltager ikke. Her ser du siden, som medarbejderne gør.</div>') +
       '</section>';
 
