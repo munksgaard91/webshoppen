@@ -344,9 +344,11 @@ function opsaet() {
     { kilde: 'tekster', navn: 'Tekster', sheet_id: '', fane: '', kol_initialer: '', kol_vaerdi: '', kol_dato: '', start_raekke: 2 },
     { kilde: 'sessioner', navn: 'Session', sheet_id: '', fane: '', kol_initialer: '', kol_vaerdi: '', kol_dato: '', start_raekke: 2 },
     { kilde: 'anmeldelser', navn: 'Anmeldelse', sheet_id: '', fane: '', kol_initialer: '', kol_vaerdi: '', kol_dato: '', start_raekke: 2 },
-    { kilde: 'genfak', navn: 'Genfak', sheet_id: '', fane: '', kol_initialer: '', kol_vaerdi: '', kol_dato: '', start_raekke: 2 }
+    // Uden ark: kun til visning i regel-boksen. Konkurrencer gives manuelt (Justér), fælles mål vises på overblikket.
+    { kilde: 'konkurrencer', navn: 'Konkurrencer', sheet_id: '', fane: '', kol_initialer: '', kol_vaerdi: '', kol_dato: '', start_raekke: 2 },
+    { kilde: 'faelles_maal', navn: 'Fælles mål', sheet_id: '', fane: '', kol_initialer: '', kol_vaerdi: '', kol_dato: '', start_raekke: 2 }
   ]);
-  // Bevidst stramt (2026-11-10) – hellere løsne senere. Support (genfak) er stadig en pladsholder.
+  // Bevidst stramt (2026-11-10) – hellere løsne senere. Gruppe 'Alle' vises hos alle grupper.
   seed('Regler', [
     { gruppe: 'Hjemmeside', kilde: 'sager', sats: 1, tekst: '1 Webcoin' },
     { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
@@ -354,8 +356,9 @@ function opsaet() {
     { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
     { gruppe: 'Fotograf', kilde: 'sessioner', sats: 1, tekst: '1 Webcoin' },
     { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
-    { gruppe: 'Support', kilde: 'genfak', sats: 0.004, tekst: '4 Webcoins pr. 1.000 kr' },
-    { gruppe: 'Support', kilde: 'anmeldelser', sats: 25, tekst: '25 Webcoins' }
+    { gruppe: 'Support', kilde: 'anmeldelser', sats: 25, tekst: '25 Webcoins' },
+    { gruppe: 'Alle', kilde: 'konkurrencer', sats: 0, tekst: '?' },
+    { gruppe: 'Alle', kilde: 'faelles_maal', sats: 0, tekst: 'Se status' }
   ]);
   var standard = ss.getSheetByName('Ark1') || ss.getSheetByName('Sheet1');
   if (standard && standard.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(standard);

@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v40';
+  var KEY = 'webshoppen-demo-v41';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -35,7 +35,8 @@ window.Mock = (function () {
         { kilde: 'tekster', navn: 'Tekster' },
         { kilde: 'sessioner', navn: 'Session' },
         { kilde: 'anmeldelser', navn: 'Anmeldelse' },
-        { kilde: 'genfak', navn: 'Genfak' }
+        { kilde: 'konkurrencer', navn: 'Konkurrencer' },
+        { kilde: 'faelles_maal', navn: 'Fælles mål' }
       ],
       Regler: [
         { gruppe: 'Hjemmeside', kilde: 'sager', sats: 1, tekst: '1 Webcoin' },
@@ -44,8 +45,9 @@ window.Mock = (function () {
         { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
         { gruppe: 'Fotograf', kilde: 'sessioner', sats: 1, tekst: '1 Webcoin' },
         { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
-        { gruppe: 'Support', kilde: 'genfak', sats: 0.004, tekst: '4 Webcoins pr. 1.000 kr' },
-        { gruppe: 'Support', kilde: 'anmeldelser', sats: 25, tekst: '25 Webcoins' }
+        { gruppe: 'Support', kilde: 'anmeldelser', sats: 25, tekst: '25 Webcoins' },
+        { gruppe: 'Alle', kilde: 'konkurrencer', sats: 0, tekst: '?' },
+        { gruppe: 'Alle', kilde: 'faelles_maal', sats: 0, tekst: 'Se status' }
       ]
     };
   }
@@ -61,7 +63,7 @@ window.Mock = (function () {
 
   // Falske kildetal for de seneste 4 måneder, så der er noget at se på.
   function falskeKilder(nu) {
-    var k = { sager: {}, tekster: {}, sessioner: {}, anmeldelser: {}, genfak: {} };
+    var k = { sager: {}, tekster: {}, sessioner: {}, anmeldelser: {} };
     var tilfaeldig = (function (s) { return function () { s = (s * 9301 + 49297) % 233280; return s / 233280; }; })(42);
     data.Brugere.forEach(function (u) {
       for (var i = 3; i >= 0; i--) {
@@ -72,7 +74,6 @@ window.Mock = (function () {
         k.tekster[key] = Math.round((100 + tilfaeldig() * 100) * del);
         k.sessioner[key] = Math.round((10 + tilfaeldig() * 15) * del);
         k.anmeldelser[key] = Math.round(tilfaeldig() * 4 * del);
-        k.genfak[key] = Math.round((60000 + tilfaeldig() * 120000) * del);
       }
     });
     return k;

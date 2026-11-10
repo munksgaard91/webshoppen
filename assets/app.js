@@ -322,12 +322,16 @@
   // ---------- Sider ----------
 
   function mineRegler() {
-    var r = S.regler.filter(function (x) { return x.gruppe === S.me.gruppe; });
+    // Gruppens egne regler først, derefter dem for alle (Konkurrencer, Fælles mål)
+    var r = S.regler.filter(function (x) { return x.gruppe === S.me.gruppe; }).concat(S.regler.filter(function (x) { return x.gruppe === 'Alle'; }));
     if (!r.length) return '<div class="faint">Ingen regler for din gruppe endnu.</div>';
     return r.map(function (x) { return '<div class="rule"><span>' + esc(x.kildeNavn) + '</span><b>' + regelVaerdi(x) + '</b></div>'; }).join('');
   }
   // Regelens værdi med mønten til sidst, fx "20 Webcoins 🪙"
-  function regelVaerdi(x) { return esc(x.tekst || x.sats) + ' ' + coin(); }
+  function regelVaerdi(x) {
+    if (x.kilde === 'faelles_maal') return '<button class="rule-link" data-act="faelles-maal">' + esc(x.tekst || 'Se status') + '</button>';
+    return esc(x.tekst || x.sats) + ' ' + coin();
+  }
 
   function statusTag(b) {
     var forud = b.forud && b.status === 'ny';
@@ -421,7 +425,12 @@
       }).join('') + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et event?', 'projekt', kanKoebe) + '</div>' : '<div class="card list">' + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et event?', 'projekt', kanKoebe) + '</div>') + '</section>';
 
     var banner = lukket && me.admin ? '<div class="banner">Shoppen er lukket for medarbejderne lige nu' + (shop.grund === 'fravaer' ? ' (du er ikke til stede)' : '') + '. ' + esc(shop.tekst || '') + '</div>' : '';
-    return banner + top + menu + lucky(kanKoebe) + projekter + kollega(kanKoebe);
+    return banner + top + menu + lucky(kanKoebe) + projekter + kollega(kanKoebe) + faellesMaal();
+  }
+
+  // Fælles mål for hele holdet – "Fælles mål | Se status" i regel-boksen linker hertil. Indholdet kommer senere.
+  function faellesMaal() {
+    return '<section class="block" id="faelles-maal"><h2 class="block-title">Fælles mål</h2><div class="card"><p class="faint" style="margin:0">Kommer snart.</p></div></section>';
   }
 
   // "Andet?"-række med én hvid knap, der sender et forslag direkte til admin
@@ -770,9 +779,9 @@
   // Regler: simpel liste – overskrift pr. gruppe og hvad hver ting er værd
   function pageRegler() {
     return adminHead('Regler') +
-      '<section class="card regel-liste">' + S.grupper.map(function (g) {
+      '<section class="card regel-liste">' + S.grupper.concat('Alle').map(function (g) {
         var r = S.regler.filter(function (x) { return x.gruppe === g; });
-        return '<h2 class="card-title">' + esc(g) + '</h2>' +
+        return '<h2 class="card-title">' + esc(g === 'Alle' ? 'Alle grupper' : g) + '</h2>' +
           (r.length ? '<ul>' + r.map(function (x) { return '<li><span>' + esc(x.kildeNavn) + '</span><b>' + regelVaerdi(x) + '</b></li>'; }).join('') + '</ul>' : '<p class="faint">Kommer senere.</p>');
       }).join('') + '</section>';
   }
@@ -1069,6 +1078,12 @@
           '<p class="note" style="margin:14px 0 0">Webcoins hentes automatisk og lægges på din saldo hver måned.</p>' +
           '<div class="modal-acts"><button class="btn primary grow" data-act="close">Forstået</button></div>');
         break;
+      case 'faelles-maal': {
+        closeModal();
+        var fm = document.getElementById('faelles-maal');
+        if (fm) fm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      }
       case 'me-menu': t.parentNode.classList.toggle('open'); break;
       case 'demo-login':
         session = { email: t.dataset.email };
