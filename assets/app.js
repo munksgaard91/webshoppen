@@ -858,7 +858,7 @@
           var acts = '';
           if (b.status === 'ny') acts = '<button class="btn primary sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="udleveret">Udleveret</button><button class="btn danger sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="annulleret">Annullér</button>';
           else if (b.status === 'udleveret') acts = '<button class="btn sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="ny">Fortryd</button><button class="btn danger sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="annulleret">Annullér</button>';
-          return '<tr><td class="faint">' + dato(b.tid) + '</td><td>' + esc(b.fraNavn) + '</td><td>' + (b.til !== b.fra ? '🎁 ' + esc(b.tilNavn) : '<span class="faint">—</span>') + '</td><td><b>' + esc(b.vare) + '</b>' + (b.oenske ? '<small class="variants">Ønske: ' + esc(b.oenske) + '</small>' : '') + '</td><td class="r num">' + wc(b.pris) + '</td><td>' + statusTag(b) + '</td><td><div class="row-acts">' + acts + '</div></td></tr>';
+          return '<tr><td class="faint">' + dato(b.tid) + '</td><td class="nowrap">' + pAvatar(b.fra, b.fra, 'mini-av') + esc(b.fraNavn) + '</td><td class="nowrap">' + (b.til !== b.fra ? '🎁 ' + pAvatar(b.til, b.til, 'mini-av') + esc(b.tilNavn) : '<span class="faint">—</span>') + '</td><td><b>' + esc(b.vare) + '</b>' + (b.oenske ? '<small class="variants">Ønske: ' + esc(b.oenske) + '</small>' : '') + '</td><td class="r num">' + wc(b.pris) + '</td><td>' + statusTag(b) + '</td><td><div class="row-acts">' + acts + '</div></td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty">Ingen bestillinger.</div>') +
       '</section>';
   }
@@ -884,8 +884,9 @@
 
     var best = '<section class="card"><div class="card-head"><h2 class="card-title">Nye bestillinger' + (nye.length ? ' <span class="badge">' + nye.length + '</span>' : '') + '</h2><a class="link" href="#/admin/bestillinger">Se alle</a></div>' +
       (nye.length ? '<div class="adm-list">' + nye.slice(0, 10).map(function (b) {
-        return '<div class="adm-row"><div class="adm-main"><b>' + esc(b.vare) + '</b>' + (b.oenske ? ' <span class="faint">· ' + esc(b.oenske) + '</span>' : '') +
-          '<small class="faint">Til ' + esc(b.til !== b.fra ? b.tilNavn : b.fraNavn) + (b.til !== b.fra ? ' · 🎁 gave fra ' + esc(b.fraNavn) : '') + ' · ' + dato(b.tid) + (b.forud ? ' · forudbestilt' : '') + '</small></div>' +
+        var modt = b.til !== b.fra ? b.til : b.fra;
+        return '<div class="adm-row"><div class="adm-who">' + pAvatar(modt, modt, 'mini-av md') + '<div class="adm-main"><b>' + esc(b.vare) + '</b>' + (b.oenske ? ' <span class="faint">· ' + esc(b.oenske) + '</span>' : '') +
+          '<small class="faint">Til ' + esc(b.til !== b.fra ? b.tilNavn : b.fraNavn) + (b.til !== b.fra ? ' · 🎁 gave fra ' + esc(b.fraNavn) : '') + ' · ' + dato(b.tid) + (b.forud ? ' · forudbestilt' : '') + '</small></div></div>' +
           '<div class="row-acts"><button class="btn primary sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="udleveret">Udleveret</button><button class="btn danger sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="annulleret">Annullér</button></div></div>';
       }).join('') + '</div>' + (nye.length > 10 ? '<small class="faint">+ ' + (nye.length - 10) + ' flere</small>' : '') : '<div class="empty">Ingen nye bestillinger.</div>') +
       '</section>';
@@ -894,7 +895,7 @@
     var kollega = '<section class="card"><div class="card-head"><h2 class="card-title">Månedens Webkollega</h2><a class="link" href="#/admin/konkurrencer">Åbn</a></div>' + afsloerKnap(m) +
       '<div class="rule"><span>Præmie i ' + mNavn + '</span>' + (m.praemie ? '<b>' + esc(m.praemie) + '</b>' : '<a class="link" href="#/admin/konkurrencer">Coming soon – vælg præmie</a>') + '</div>' +
       '<div class="rule"><span>Stemmer</span><b class="num">' + m.afgivet + '</b></div>' +
-      (top.length ? top.map(function (x, i) { return '<div class="rule"><span>' + ['🥇', '🥈', '🥉'][i] + ' ' + esc(x.navn) + '</span><b class="num">' + x.stemmer + '</b></div>'; }).join('') : '') +
+      (top.length ? top.map(function (x, i) { return '<div class="rule"><span>' + ['🥇', '🥈', '🥉'][i] + ' ' + pAvatar(x.initialer, x.initialer, 'mini-av') + esc(x.navn) + '</span><b class="num">' + x.stemmer + '</b></div>'; }).join('') : '') +
       (m.historik.length ? '<small class="faint">Sidste vinder: ' + esc(m.historik[0].vinder.navn) + ' (' + esc(maanedLabel(m.historik[0].maaned)) + ')</small>' : '') +
       '</section>';
 
@@ -911,7 +912,7 @@
 
     var akt = '<section class="card"><div class="card-head"><h2 class="card-title">Seneste aktivitet</h2><a class="link" href="#/admin/posteringer">Se alle</a></div>' +
       (A.posteringer.length ? '<div class="adm-list">' + A.posteringer.filter(function (p) { return p.type !== 'gave_modtaget'; }).slice(0, 6).map(function (p) {
-        return '<div class="adm-row"><div class="adm-main"><b>' + esc(p.navn) + '</b><small class="faint">' + esc(TYPER[p.type] || p.type) + ' · ' + esc(p.tekst) + ' · ' + dato(p.tid) + '</small></div>' +
+        return '<div class="adm-row"><div class="adm-who">' + pAvatar(p.initialer, p.initialer, 'mini-av md') + '<div class="adm-main"><b>' + esc(p.navn) + '</b><small class="faint">' + esc(TYPER[p.type] || p.type) + ' · ' + esc(p.tekst) + ' · ' + dato(p.tid) + '</small></div></div>' +
           '<span class="num ' + (p.beloeb < 0 ? 'minus' : 'plus') + '">' + (p.beloeb > 0 ? '+' : '') + fmt(p.beloeb) + '</span></div>';
       }).join('') + '</div>' : '<div class="empty">Ingen aktivitet endnu.</div>') +
       '</section>';
@@ -988,7 +989,7 @@
       '<small class="faint">Kun synlig for admin. Ved lighed vinder den, der fik sin første stemme først.</small></section>' +
       '<section class="card"><div class="card-head"><h2 class="card-title">Tidligere vindere</h2></div>' +
       (m.historik.length ? '<div class="mini-list">' + m.historik.map(function (h) {
-        return '<div class="mini"><div class="t"><b>' + esc(h.vinder.navn) + '</b><small>' + esc(maanedLabel(h.maaned)) + '</small></div><span class="muted num">' + h.vinder.stemmer + ' af ' + h.stemmer + ' stemmer</span></div>';
+        return '<div class="mini">' + pAvatar(h.vinder.initialer, h.vinder.initialer, 'mini-av md') + '<div class="t"><b>' + esc(h.vinder.navn) + '</b><small>' + esc(maanedLabel(h.maaned)) + '</small></div><span class="muted num">' + h.vinder.stemmer + ' af ' + h.stemmer + ' stemmer</span></div>';
       }).join('') + '</div>' : '<div class="empty">Ingen vindere endnu.</div>') + '</section></div>';
   }
 
@@ -1008,7 +1009,7 @@
       '<div class="muted num" style="font-size:13px;margin-bottom:8px">' + rows.length + ' posteringer · sum ' + wc(sum) + (rows.length > vist.length ? ' · viser de nyeste ' + vist.length : '') + '</div>' +
       (vist.length ? '<div class="table-wrap"><table><thead><tr><th>Tid</th><th>Person</th><th>Type</th><th>Tekst</th><th class="r">Beløb</th></tr></thead><tbody>' +
         vist.map(function (p) {
-          return '<tr><td class="faint">' + dato(p.tid) + '</td><td>' + esc(p.navn) + '</td><td><span class="tag">' + esc(TYPER[p.type] || p.type) + '</span></td><td>' + esc(p.tekst) + '</td><td class="r">' + beloebCell(p.beloeb) + '</td></tr>';
+          return '<tr><td class="faint">' + dato(p.tid) + '</td><td class="nowrap">' + pAvatar(p.initialer, p.initialer, 'mini-av') + esc(p.navn) + '</td><td><span class="tag">' + esc(TYPER[p.type] || p.type) + '</span></td><td>' + esc(p.tekst) + '</td><td class="r">' + beloebCell(p.beloeb) + '</td></tr>';
         }).join('') + '</tbody></table></div>' +
         (rows.length > vist.length ? '<div class="vis-flere"><button class="btn" data-act="post-flere">Vis flere</button></div>' : '') : '<div class="empty">Ingen posteringer.</div>') +
       '</section>';

@@ -735,9 +735,11 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 
 /* Tombola i tomgang: ruller langsomt i ring for at friste (pauser ved hover, slået fra ved "Reducer bevægelse") */
 /* Top contributors: beløbet tæt på navnet, men stadig i fast kolonne */
-.top3-list li { grid-template-columns: 24px 150px 110px; }
-.top-don, .top3-list { max-width: 300px; }
-.top10 .pop { width: 320px; }
+.top3-list li { grid-template-columns: 24px 190px 110px; }
+.top-don, .top3-list { max-width: 340px; }
+.top10 .pop { width: 400px; padding: 18px 22px; }
+.top10 .pop .top3-list { gap: 9px; max-width: none; }
+.t3-navn .mini-av { width: 22px; height: 22px; }
 .split .s4, .legend i.s4 { background: #8b97ab; }
 .fb-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; padding: 16px 24px; }
 .fb-card b { font-size: 15px; }
@@ -778,6 +780,9 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .adm-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
 .adm-row:first-child { border-top: 0; padding-top: 2px; }
 .adm-main { min-width: 0; }
+.adm-who { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.mini-av.md { width: 34px; height: 34px; font-size: 10px; margin-right: 0; }
+.nowrap { white-space: nowrap; }
 .adm-main small { display: block; margin-top: 2px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .adm-ev { padding: 8px 0; }
 .adm-ev-top { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; margin-bottom: 6px; }
