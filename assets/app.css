@@ -214,9 +214,8 @@ a { color: inherit; }
 .rule:first-of-type { border-top: 0; }
 .rule b { text-align: right; }
 .maaned-hoved { margin-top: 56px; padding-top: 32px; border-top: 1px solid var(--line-2); text-align: center; }
-.maaned-hoved h2 { margin: 0; font-size: 30px; font-weight: 900; letter-spacing: -0.02em; }
-.maaned-hoved-m { margin-top: 6px; font-size: 18px; font-weight: 700; color: var(--brand); }
-:root[data-theme="dark"] .maaned-hoved-m { color: var(--text); }
+.maaned-hoved h2 { margin: 12px 0 0; font-size: 30px; font-weight: 900; letter-spacing: -0.02em; }
+.maaned-pill { display: inline-block; padding: 6px 16px; border-radius: 99px; background: var(--brand); color: #fff; font-size: 14px; font-weight: 700; }
 .maaned-hoved + .block { margin-top: 28px; }
 .maal-liste { padding-top: 6px; padding-bottom: 6px; }
 .maal-sub { font-size: 15px; font-weight: 800; margin: 22px 0 10px; color: var(--muted); }

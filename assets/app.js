@@ -436,7 +436,7 @@
   // Stor overskrift over det, der gælder for indeværende måned (Månedens Webkollega + Fælles mål)
   function maanedHoved() {
     var nu = new Date(S.nu);
-    return '<div class="maaned-hoved"><h2>Månedlige konkurrencer og mål</h2><div class="maaned-hoved-m">' + cap(MAANEDER[nu.getMonth()]) + ' ' + nu.getFullYear() + '</div></div>';
+    return '<div class="maaned-hoved"><span class="maaned-pill">' + cap(MAANEDER[nu.getMonth()]) + ' ' + nu.getFullYear() + '</span><h2>Månedlige konkurrencer og mål</h2></div>';
   }
 
   // Fælles mål (fanen Maal) – "Fælles mål | Se status" i regel-boksen scroller hertil.
