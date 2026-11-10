@@ -129,6 +129,13 @@ t('stemmer er hemmelige for brugere', function () {
   eq(m.minStemme, null);
   eq(JSON.stringify(m).indexOf('stemmer'), -1);
 });
+t('admin ser hvem der har stemt på hvem', function () {
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var st = Core.handle(db, adm, 'admin_state', {}, env).mdk.stilling;
+  eq(st[0].initialer, 'BBB');
+  eq(st[0].fra[0].initialer, 'AAA');
+  eq(st[0].fra[0].begrundelse, 'test');
+});
 t('tie-breaker: første stemme vinder', function () {
   data.Stemmer.push({ id: 's1', tid: '2026-10-05T09:00:00.000Z', maaned: '2026-10', fra: 'CCC', til: 'BBB', begrundelse: 'x' });
   data.Stemmer.push({ id: 's2', tid: '2026-10-04T09:00:00.000Z', maaned: '2026-10', fra: 'BBB', til: 'AAA', begrundelse: 'y' });

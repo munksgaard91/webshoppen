@@ -344,9 +344,11 @@ var Core = (function () {
     db.all('Stemmer').forEach(function (v) {
       if (str(v.maaned) !== mk) return;
       var t = ini(v.til);
-      var o = m[t] = m[t] || { initialer: t, navn: navne[t] || t, stemmer: 0, foerste: str(v.tid), begrundelser: [] };
+      var o = m[t] = m[t] || { initialer: t, navn: navne[t] || t, stemmer: 0, foerste: str(v.tid), fra: [] };
       o.stemmer++;
-      if (str(v.begrundelse).trim()) o.begrundelser.push(str(v.begrundelse).trim());
+      // Hvem der har stemt (kun til admin – state sender kun vinderens navn videre til brugerne)
+      var f = ini(v.fra);
+      o.fra.push({ initialer: f, navn: navne[f] || f, begrundelse: str(v.begrundelse).trim(), tid: str(v.tid) });
       if (str(v.tid) < o.foerste) o.foerste = str(v.tid);
     });
     return Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, b) {
