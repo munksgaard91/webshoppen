@@ -5,7 +5,7 @@ Sidst opdateret: **2026-11-10** (arbejds-Mac). Seneste kodegennemgang: **2026-11
 
 ## Status
 
-**Live-backend sat op 2026-11-10** på https://munksgaard91.github.io/webshoppen/: arket "Webshoppen DB" (rmu's Drive, ikke delt), Apps Script-projektet "Webshoppen" (web app v1, kør som rmu, adgang alle), OAuth-client i Google Cloud-projektet "Webshoppen" (intern, oprindelser github.io + localhost:8765). `Brugere` udfyldt med de 13 kolleger, `SIDE_URL` = github.io-adressen indtil subdomænet er valgt. Admin-login testet lokalt. Mangler: kilder (`Kilder`), teambudget, Chat-webhook, trigger. Demoen kører nu kun lokalt med tom `API_URL`.
+**Live-backend sat op 2026-11-10** på **https://webshoppen.leksione.dk** (CNAME hos Curanet → munksgaard91.github.io, `CNAME`-fil i repoet; github.io-adressen sender videre): arket "Webshoppen DB" (rmu's Drive, ikke delt), Apps Script-projektet "Webshoppen" (web app v1, kør som rmu, adgang alle), OAuth-client i Google Cloud-projektet "Webshoppen" (intern, oprindelser github.io + localhost:8765). `Brugere` udfyldt med de 13 kolleger, `SIDE_URL` = https://webshoppen.leksione.dk. OAuth-oprindelser: subdomænet, github.io og localhost:8765. Admin-login testet lokalt. Mangler: kilder (`Kilder`), teambudget, Chat-webhook, trigger. Demoen kører nu kun lokalt med tom `API_URL`.
 
 ### Medarbejder – Overblik (`#/`)
 Rækkefølge (se også CLAUDE.md):
@@ -38,7 +38,6 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 - Kilder, teambudget, Chat-webhook og timer-trigger er ikke sat op endnu.
 - **Pladsholdere** der skal regnes igennem: varepriser og kostpriser, lykkehjulets præmier/vægte/pris (de tre sidste i `shared/sortiment.js`).
 - Kilder (faktureringsark, anmeldelser) og teambudget-arket er ikke koblet på.
-- Subdomæne ikke valgt (`xxx.leksione.dk`); `SIDE_URL` står som `webshoppen.leksione.dk`. Ingen `CNAME`-fil endnu.
 - Events tæller ikke med i Opgørelse (kun bestillinger/gevinster) – donationer er Webcoins, ikke kr.
 - **Varer vises med emoji** (🥤 Sodavand, ⚡ Hvid Monster, 🍫 Candybar). Produktbillederne er fjernet igen efter ønske (de var ophavsretligt beskyttede fotos i et offentligt repo). Feltet `billede` i `shared/sortiment.js` og `tools/udskaer.py` virker stadig, hvis der skal bruges egne billeder senere.
 - Rigtigt Google-login er ikke testet (kræver backend + Client ID).
@@ -105,7 +104,6 @@ Demo-tricks: `?lukket=fravaer` / `?lukket=tid` viser lukket shop. "Nulstil demod
 ## Næste skridt
 1. Skriv resultaterne for november i fanen `Maal` (kolonne `nu`) den 1. december, og læg decembers mål ind.
 2. Evt. baggrundsbilleder.
-3. Vælg subdomæne → `CNAME`-fil + CNAME hos Curanet → `munksgaard91.github.io`.
 4. Sæt backend op (tjekliste ovenfor) og kobl faktureringsark, anmeldelser og teambudget på.
 5. Regn økonomien igennem: optjening pr. gruppe vs. varepriser vs. lykkehjulets forventede værdi.
 6. Test med 2–3 kolleger, før alle får adgang.
