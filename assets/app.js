@@ -11,7 +11,7 @@
   var S = null;       // brugerens state
   var A = null;       // admin-state (hentes kun når admin åbner admin-sider)
   var session = null; // { token } eller { email } i demo
-  var ui = { profilFane: 'aktivitet', bestFilter: 'ny', postType: 'alle', postPerson: '' };
+  var ui = { profilFane: 'bestillinger', bestFilter: 'ny', postType: 'alle', postPerson: '' };
 
   var MAANEDER = ['januar', 'februar', 'marts', 'april', 'maj', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'december'];
   var TYPER = {
@@ -718,7 +718,7 @@
   function pageProfil() {
     var me = S.me, st = S.stats, nu = new Date(S.nu);
     var mNavn = MAANEDER[nu.getMonth()];
-    var fane = ui.profilFane || 'aktivitet';
+    var fane = ui.profilFane || 'bestillinger';
 
     var head = '<section class="profile-card"><span class="saldo-deco" aria-hidden="true">' + bMark() + '</span>' + avatar(me, true) +
       '<div class="pc-who">' + (me.gruppe ? '<span>' + esc(me.gruppe) + '</span>' : '') + '<h1>' + esc(me.navn) + '</h1></div>' +
@@ -739,7 +739,7 @@
       '<small class="num">' + st.gaverModtaget + ' modtaget</small></div>' +
       '</div>';
 
-    var faner = { aktivitet: 'Aktivitet', optjening: 'Optjening', bestillinger: 'Bestillinger' };
+    var faner = { bestillinger: 'Bestillinger', optjening: 'Optjening', aktivitet: 'Aktivitet' };
     var tabs = '<nav class="ptabs">' + Object.keys(faner).map(function (k) {
       return '<button class="' + (fane === k ? 'on' : '') + '" data-act="pfane" data-f="' + k + '">' + faner[k] + '</button>';
     }).join('') + '</nav>';
