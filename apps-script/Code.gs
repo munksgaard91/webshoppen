@@ -33,8 +33,9 @@ function doPost(e) {
     if (req.action === 'login') {
       // Kun et Google-login kan give en ny nøgle – ellers kunne en nøgle fornyes i det uendelige
       if (String(req.token).indexOf('ws1.') === 0) throw Core.err('TOKEN_EXPIRED', 'Log ind med Google.');
-      // Google-login tjekkes én gang (ovenfor) – derefter bruger browseren Webshoppens egen nøgle i 30 dage
-      data = { token: udstedNoegle_(profil) };
+      // Google-login tjekkes én gang (ovenfor) – derefter bruger browseren Webshoppens egen nøgle i 30 dage.
+      // Forsiden sendes med, så login kun koster ét kald.
+      data = { token: udstedNoegle_(profil), boot: Core.handle(SheetDB, me, 'boot', {}, env_()) };
     } else if (Core.skriver(req.action)) {
       var lock = LockService.getScriptLock();
       lock.waitLock(20000);

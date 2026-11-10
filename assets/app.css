@@ -160,6 +160,13 @@ a { color: inherit; }
 .nav a { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 12px; text-decoration: none; color: var(--muted); font-weight: 600; font-size: 14px; }
 .nav a:hover { color: var(--text); background: var(--card-2); }
 .nav a.on { color: var(--brand); background: var(--brand-soft); font-weight: 700; }
+.nav a.nav-vis { cursor: pointer; margin-top: 16px; position: relative; white-space: nowrap; }
+.nav a.nav-vis::before { content: ''; position: absolute; left: 12px; right: 12px; top: -9px; border-top: 1px solid var(--line); }
+/* Banner øverst, mens admin ser siden som en medarbejder */
+.vis-som-bar { position: relative; z-index: 21; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 9px 16px; background: var(--brand); color: #fff; font-size: 14px; white-space: nowrap; }
+.vis-som-bar svg { width: 18px; height: 18px; flex: none; }
+.vis-som-bar span { overflow: hidden; text-overflow: ellipsis; }
+.vis-som-bar .btn { background: #fff; color: var(--brand); border-color: #fff; }
 :root[data-theme="dark"] .nav a.on { color: var(--brand-2); }
 .nav svg { width: 18px; height: 18px; flex: none; }
 .nav .badge { margin-left: auto; }

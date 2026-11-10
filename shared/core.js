@@ -902,7 +902,22 @@ var Core = (function () {
     return { nye: nye, rettede: rettede };
   }
 
+  // Forsiden i ét kald: state + admin-data for admin. Hvert kald til Apps Script koster ca. 3 sek. i opstart.
+  function boot(db, me, data, env) {
+    return { state: state(db, me, data, env), admin: me.admin ? adminState(db, me, data, env) : null };
+  }
+
+  // Admin ser forsiden som en medarbejder (kun visning – browseren blokerer alle handlinger imens)
+  function adminVisSom(db, me, data, env) {
+    kraevAdmin(me);
+    var u = findBruger(db, ini(data.initialer));
+    var vis = { email: str(u.email).toLowerCase(), navn: str(u.navn), billede: '', initialer: ini(u.initialer), gruppe: str(u.gruppe), admin: false };
+    return state(db, vis, {}, env);
+  }
+
   var HANDLINGER = {
+    boot: boot,
+    admin_vis_som: adminVisSom,
     state: state,
     bestil: bestil,
     indskyd: indskyd,

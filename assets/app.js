@@ -123,6 +123,7 @@
   var IKON = {
     home: '<path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6z"/>',
+    eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="3"/>',
     book: '<path d="M5 4h10a4 4 0 0 1 4 4v12H9a4 4 0 0 1-4-4z"/>',
     cart: '<path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 7H6.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="9" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/>',
     users: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5z"/><circle cx="17" cy="9" r="2.8"/><path d="M16.5 14.2c3 .2 5.5 2 5.5 5.3h-4"/>',
@@ -157,6 +158,11 @@
 
   function api(action, data) {
     var p;
+    // "Vis som medarbejder" er kun visning: intet må gemmes som den medarbejder
+    if (ui.visSom && action !== 'admin_vis_som') {
+      var stop = new Error('Kun visning – intet bliver gemt.'); stop.code = 'VIS_SOM';
+      return Promise.reject(stop);
+    }
     if (DEMO) {
       p = window.Mock.call(session.email, action, data);
     } else {
@@ -176,22 +182,46 @@
     });
   }
 
+  // Forsiden i ét kald (state + admin-data). Svarer backend "Ukendt handling" (ikke opdateret endnu), bruges de gamle kald.
+  function hentBoot() {
+    return api('boot').catch(function (e) {
+      if (e.code !== 'BAD') throw e;
+      return api('state').then(function (s) {
+        return s.me.admin ? api('admin_state').then(function (a) { return { state: s, admin: a }; }) : { state: s, admin: null };
+      });
+    });
+  }
+
+  // Sidste forside gemmes i browseren, så siden vises med det samme ved næste besøg og opdateres, når backend svarer
+  function gemCache() {
+    if (!DEMO && session && S && !ui.visSom) store('webshoppen-cache', JSON.stringify({ noegle: session.token, state: S, admin: A }));
+  }
+  function laesCache() {
+    if (DEMO || !session) return null;
+    try {
+      var c = JSON.parse(store('webshoppen-cache') || 'null');
+      return c && c.noegle === session.token && c.state ? c : null;
+    } catch (e) { return null; }
+  }
+
   function refresh() {
-    var jobs = [api('state').then(function (s) { S = s; })];
-    if (A && S && S.me.admin) jobs.push(api('admin_state').then(function (a) { A = a; }));
-    return Promise.all(jobs).then(render);
+    var p = A && S && S.me.admin ? hentBoot() : api('state').then(function (s) { return { state: s, admin: null }; });
+    return p.then(function (b) { S = b.state; if (b.admin) A = b.admin; gemCache(); render(); });
   }
 
   // ---------- Login ----------
 
-  function start() {
-    app.innerHTML = '<div class="boot"><span class="spinner"></span></div>';
-    api('state').then(function (s) {
-      S = s;
-      if (S.me.admin) return api('admin_state').then(function (a) { A = a; render(); });
+  function start(klar) {
+    var cache = !klar && laesCache();
+    if (cache) { S = cache.state; A = cache.admin; render(); }
+    else if (!klar) app.innerHTML = '<div class="boot"><span class="spinner"></span></div>';
+    (klar ? Promise.resolve(klar) : hentBoot()).then(function (b) {
+      S = b.state; A = b.admin;
+      gemCache();
       render();
-      visGaver();
+      if (!S.me.admin) visGaver();
     }).catch(function (e) {
+      if (cache) { if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Kunne ikke opdatere', e.message, true); return; }
       if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') {
         app.innerHTML = '<div class="center-screen"><div class="login-card">' + boLogo('logo-login') + '<h1>Hov</h1><p>' + esc(e.message) + '</p><button class="btn primary" data-act="reload">Prøv igen</button></div></div>';
       }
@@ -249,15 +279,16 @@
     api('login').then(function (res) {
       session = { token: res.token };
       store('webshoppen-session', JSON.stringify(session));
-      start();
+      start(res.boot);
     }).catch(function (e) {
       if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Login fejlede', e.message, true);
     });
   }
 
   function logout(besked) {
-    session = null; S = null; A = null;
+    session = null; S = null; A = null; ui.visSom = null;
     store('webshoppen-session', null);
+    store('webshoppen-cache', null);
     if (!DEMO && window.google && google.accounts) google.accounts.id.disableAutoSelect();
     closeModal();
     renderLogin(besked);
@@ -312,7 +343,9 @@
   // Medarbejder: slank topmenu, intet sidepanel.
   function brugerShell(indhold) {
     var me = S.me;
-    return '<header class="top"><div class="top-in">' + logo() +
+    var bar = ui.visSom ? '<div class="vis-som-bar">' + ico('eye') + '<span>Du ser siden som <b>' + esc(me.navn) + '</b> · ' + esc(me.gruppe) + ' · kun visning</span>' +
+      '<button class="btn sm" data-act="vis-som-slut">Tilbage til admin</button></div>' : '';
+    return bar + '<header class="top"><div class="top-in">' + logo() +
       '<nav class="tabs">' + navLink('', '', 'Overblik') + navLink('profil', '', 'Min profil') + '</nav>' +
       '<div class="top-r">' +
       '<button class="icon-btn" data-act="theme" title="Skift tema" aria-label="Skift tema">' + ico('sun') + '</button>' +
@@ -339,7 +372,8 @@
       navLink('admin/brugere', 'users', 'Brugere') +
       navLink('admin/konkurrencer', 'star', 'Konkurrencer') +
       navLink('admin/regler', 'book', 'Regler') +
-      navLink('admin/posteringer', 'list', 'Posteringer') + '</nav>' +
+      navLink('admin/posteringer', 'list', 'Posteringer') +
+      '<a role="button" tabindex="0" class="nav-vis" data-act="vis-som" title="Vis som medarbejder">' + ico('eye') + '<span>Vis som medarbejder</span></a></nav>' +
       '<div class="side-foot">' +
       '<div class="me">' + avatar(me) + '<div class="who"><b>' + esc(fornavn(me.navn)) + '</b><small>Admin</small></div>' +
       '<button class="icon-btn" data-act="theme" title="Skift tema" aria-label="Skift tema">' + ico('sun') + '</button>' +
@@ -1203,6 +1237,34 @@
         break;
       }
       case 'me-menu': t.parentNode.classList.toggle('open'); break;
+      case 'vis-som':
+        openModal('<h2>Vis som medarbejder</h2>' +
+          '<div class="field"><label for="vis-ini">Kollega</label><select class="input" id="vis-ini">' +
+          A.brugere.filter(function (u) { return u.aktiv; }).map(function (u) { return '<option value="' + esc(u.initialer) + '">' + esc(u.navn) + ' · ' + esc(u.gruppe || '—') + '</option>'; }).join('') +
+          '</select></div>' +
+          '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="vis-som-ok">Vis siden</button></div>');
+        break;
+      case 'vis-som-ok': {
+        var visIni = document.getElementById('vis-ini').value;
+        t.disabled = true;
+        api('admin_vis_som', { initialer: visIni }).then(function (st) {
+          ui.visSom = { adminS: S };
+          S = st;
+          closeModal();
+          location.hash = '#/';
+          render();
+          window.scrollTo(0, 0);
+        }).catch(function (e) { t.disabled = false; toast('Fejl', e.message, true); });
+        break;
+      }
+      case 'vis-som-slut':
+        S = ui.visSom.adminS;
+        ui.visSom = null;
+        ui.lukketSet = false;
+        closeModal();
+        location.hash = '#/';
+        render();
+        break;
       case 'demo-login':
         session = { email: t.dataset.email };
         store('webshoppen-session', JSON.stringify(session));

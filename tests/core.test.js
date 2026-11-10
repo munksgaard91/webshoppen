@@ -325,4 +325,11 @@ t('afslør: en glemt måned kan stadig afsløres (ældste først)', function () 
   eq(Core.handle(db, adm, 'admin_mdk_afsloer', {}, env).maaned, '2026-09');
   eq(/september 2026/.test(Core.maanedsrapport(db, env).tekst), false);
 });
+t('boot: forside + admin-data i ét kald', function () {
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var bb = Core.handle(db, B, 'boot', {}, env);
+  eq(bb.admin, null, 'medarbejder får ingen admin-data');
+  eq(bb.state.stats.saldo, Core.handle(db, B, 'state', {}, env).stats.saldo);
+  eq(Core.handle(db, adm, 'boot', {}, env).admin.brugere.length > 0, true, 'admin får admin-data');
+});
 print('OK: ' + ok + '  FEJL: ' + fejl);
