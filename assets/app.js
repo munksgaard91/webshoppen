@@ -1240,7 +1240,7 @@
       (k.gave ? '<div class="field"><label for="koeb-til">Kollega</label><select class="input" id="koeb-til" data-act="koeb-til"><option value="">Vælg …</option>' + kollegaer + '</select></div>' : '') +
       '<div class="sum"><span class="muted">Pris</span><b class="num">' + wc(v.pris) + '</b></div>' +
       '<div class="sum"><span class="muted">Saldo efter</span><b class="num ' + (efter < 0 ? 'minus' : '') + '">' + wc(efter) + '</b></div>' +
-      '<p class="note" style="margin:6px 0 0">' + (forud ? 'Shoppen har lukket. Den leveres, når shoppen åbner.' : 'Personlig levering, forvent lidt ventetid.') + '</p>' +
+      '<p class="note" style="margin:6px 0 0">' + (forud ? 'Shoppen har lukket. Leveres når shoppen åbner igen.' : 'Personlig levering, forvent lidt ventetid.') + '</p>' +
       '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="koeb-ok"' + (efter < 0 || mangler || (k.gave && !k.til) ? ' disabled' : '') + '>' + (forud ? (k.gave ? 'Forudbestil donation' : 'Forudbestil') : (k.gave ? 'Donér' : 'Bestil')) + '</button></div>');
   }
 
@@ -1428,7 +1428,7 @@
         var forud = S.shop && !S.shop.aaben;
         submit(t, 'bestil', { vareId: k.vare.id, variant: k.variant, oenske: val('koeb-oenske'), til: k.gave ? k.til : '' },
           forud ? (k.gave ? 'Din donation er forudbestilt 🎁' : k.vare.navn + ' er forudbestilt') : (k.gave ? 'Din donation er sendt 🎁' : k.vare.navn + ' er bestilt'),
-          forud ? 'Den leveres, når shoppen åbner.' : 'Personlig levering, forvent lidt ventetid.');
+          forud ? 'Leveres når shoppen åbner igen.' : 'Personlig levering, forvent lidt ventetid.');
         break;
       }
 
