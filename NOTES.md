@@ -44,6 +44,9 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 - Rigtigt Google-login er ikke testet (kræver backend + Client ID).
 
 ## Beslutninger
+- **Udsolgt** (2026-11-10): Admin → Bestillinger har et **Lager**-kort øverst: "Udsolgt" / "På lager igen" pr. vare (Config `UDSOLGT` = vare-id'er, handling `admin_udsolgt`). Udsolgte varer står med et rødt "Udsolgt"-mærke, knapperne er slået fra, og backend afviser bestillinger (også forudbestillinger). Hjulgevinster og admin-gaver påvirkes ikke.
+- **Månedsmail** (2026-11-10): den 1. kl. 7–8 sender Apps Script en mail til `NOTIFIKATION_MAIL` (ellers første admin) med opgørelsen for sidste måned til RAB (antal, Webcoins, kr pr. vare), Webcoins i omløb, ikke-udleverede bestillinger og en tjekliste: afslør Månedens Webkollega, vælg ny præmie, skriv fælles mål-resultater, læg nye mål ind, markér som sendt til RAB. Teksten bygges i `Core.maanedsrapport`. Trigger sættes med "Slå automatisk hentning til"; "Send månedsmail nu (test)" i arkets menu.
+- **Fravalgt** (2026-11-10): "Nyt siden sidst"-popup ved login og refusion af event-donationer ved lukning (ret saldoen i hånden, hvis det sker).
 - **Gave-popup ved login** (2026-11-10): gaver modtaget siden sidst – vare fra en kollega, vare fra admin eller Webcoins fra admin (ref `admingave`) – vises som popup med konfetti, når man åbner shoppen (afsender med billede, hvad, evt. besked). "Tak! 🎉" gemmer tidspunktet i ny kolonne `gaver_set` i `Brugere` (handling `gaver_set`), så de ikke vises igen. Annullerede gaver vises ikke. Demo: Demo Hjemmeside har en Candybar fra Demo Redaktør.
 - **Profilbilleder** (2026-11-10): Config `BILLEDE_URL` = `https://leksione.dk/avatar/{ini}.png` (`{ini}` små, `{INI}` store bogstaver). Bruges overalt, hvor en person vises: eget badge (admin bruger mailens første del, `rmu`), Min profil, Månedens Webkollega (vinder + din stemme), top contributors (inkl. top 10), og i admin: nye bestillinger, Månedens Webkollega-kortet, seneste aktivitet, Bestillinger, Brugere, Konkurrencer (stilling + tidligere vindere) og Posteringer. Ikke i rullelister (native select kan ikke vise billeder). Billedet ligger over initialerne og fjernes ved fejl, så initialerne vises. **Ikke i demoen** – demoen er offentlig og bruger rigtige initialer på "Demo"-brugere, så URL'en står kun i arkets Config (sat automatisk af Opsæt faner).
 - **Afslør Månedens Webkollega** (2026-11-10): vinderen regnes ud automatisk, men vises og udbetales **først når admin trykker "🏆 Afslør vinder"** (admin-overblik og Konkurrencer) – det sker til briefingen. Indtil da ser medarbejderne "🥁 Afsløres snart", og vinderen står ikke i admins historik. Afslør: bekræftelse → stort resultat med konfetti; præmie i Webcoins ("50 Webcoins") lægges på saldoen (type `gevinst`, ref `mdk:<YYYY-MM>`), andre præmier gives manuelt. Ny fane `Webkollega` (maaned, praemie, vinder, afsloeret) husker præmien pr. måned, så sidste måneds præmie gælder, selv om en ny er sat før afsløringen. Demoen har stemmer fra sidste måned, så Afslør kan prøves.
@@ -70,7 +73,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 ## Faner i "Webshoppen DB"
 `Config` · `Brugere` · `Posteringer` · `Bestillinger` (… status, forud, oenske) · `Stemmer` (id, tid, maaned, fra, til, begrundelse) · `Spil` (id, tid, initialer, status, resultat) · `Kilder` · `Regler` (gruppe, kilde, sats, tekst, navn, fra – `navn` er teksten i regel-boksen, fx "Per sag"; tom = kildens navn. `fra` > 0 = klub-bonus: fast `sats`, når månedens tal ≥ `fra`) · `Afregning` (maaned, sendt ja/nej, tid – hvilke måneder er sendt til RAB) · `Maal` (fælles mål pr. måned – se Beslutninger).
 
-Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHAT_WEBHOOK`, `NOTIFIKATION_MAIL`, `AABNER`, `LUKKER`, `AABNE_DAGE`, `LUK_VED_FRAVAER`, `KALENDER_ID`, `OPTJENING_FRA`, `TEAMBUDGET_ARK_ID`, `TEAMBUDGET_BUDGET_CELLE`, `TEAMBUDGET_BRUGT_CELLE`, `TEAMBUDGET_SAESON`, `MDK_PRAEMIE`, `MDK_PRAEMIE_MAANED` (YYYY-MM, sættes af admin ved Gem), `BILLEDE_URL` (profilbilleder, `{ini}`).
+Config-nøgler: `UDSOLGT`, `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHAT_WEBHOOK`, `NOTIFIKATION_MAIL`, `AABNER`, `LUKKER`, `AABNE_DAGE`, `LUK_VED_FRAVAER`, `KALENDER_ID`, `OPTJENING_FRA`, `TEAMBUDGET_ARK_ID`, `TEAMBUDGET_BUDGET_CELLE`, `TEAMBUDGET_BRUGT_CELLE`, `TEAMBUDGET_SAESON`, `MDK_PRAEMIE`, `MDK_PRAEMIE_MAANED` (YYYY-MM, sættes af admin ved Gem), `BILLEDE_URL` (profilbilleder, `{ini}`).
 
 ## Sådan sættes backend op
 1. Opret et nyt Google Sheet "Webshoppen DB" på din best-one.dk-konto.
@@ -79,10 +82,10 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 4. Google Cloud Console → APIs & Services → Credentials → **OAuth client ID** (Web application). Authorized JavaScript origins: `https://<subdomæne>.leksione.dk`, `https://munksgaard91.github.io` og `http://localhost:8765`. Client ID → Config `CLIENT_ID` og `assets/config.js` `GOOGLE_CLIENT_ID`.
 5. Apps Script → Implementér → Ny implementering → Webapp (kør som: mig, adgang: alle). URL → `assets/config.js` `API_URL`.
 6. Udfyld `Brugere` (eller via admin-siden), `Kilder` (ark-ID, fane, kolonnebogstaver; tom `kol_vaerdi` = tæl rækker) og evt. `CHAT_WEBHOOK`, `NOTIFIKATION_MAIL`, `TEAMBUDGET_*`.
-7. **Webshoppen → Slå automatisk hentning til**.
+7. **Webshoppen → Slå automatisk hentning til** (hentning hver time + månedsmail den 1.). Prøv mailen med **Send månedsmail nu (test)**.
 
 Ændringer i `shared/core.js`, `shared/sortiment.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=172`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=173`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test

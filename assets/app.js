@@ -433,10 +433,10 @@
         // Billigst først; "Andet?" (kommer snart) altid til sidst
         return (a.snart - b.snart) || (a.pris - b.pris);
       }).map(function (v) {
-        var raad = st.saldo >= v.pris && kanKoebe && !v.snart;
+        var raad = st.saldo >= v.pris && kanKoebe && !v.snart && !v.udsolgt;
         if (v.snart) return forslagRaekke(vareBillede(v), v.navn, '', 'vare', kanKoebe);
-        return '<div class="row">' + vareBillede(v) +
-          '<div class="row-main"><b>' + esc(v.navn) + '</b></div>' +
+        return '<div class="row' + (v.udsolgt ? ' udsolgt' : '') + '">' + vareBillede(v) +
+          '<div class="row-main"><b>' + esc(v.navn) + '</b>' + (v.udsolgt ? ' <span class="tag annulleret">Udsolgt</span>' : '') + '</div>' +
           '<div class="row-price num">' + (v.snart ? '<span class="tag">Kommer snart</span>' : '<span class="amt">' + fmt(v.pris) + '</span><span class="unit">' + enhed(v.pris) + '</span>' + coin()) + '</div>' +
           '<div class="row-acts">' +
           '<button class="btn sm" data-act="giv" data-id="' + esc(v.id) + '"' + (raad && S.kolleger.length ? '' : ' disabled') + '>' + ico('gift') + 'Donér til en kollega</button>' +
@@ -862,7 +862,13 @@
   function pageAdminBestillinger() {
     var filtre = { ny: 'Nye', udleveret: 'Udleveret', annulleret: 'Annulleret', alle: 'Alle' };
     var rows = A.bestillinger.filter(function (b) { return ui.bestFilter === 'alle' || b.status === ui.bestFilter; });
-    return adminHead('Bestillinger') +
+    // Lager: markér en vare som udsolgt, så den ikke kan bestilles (Config UDSOLGT)
+    var lager = '<section class="card lager"><div class="card-head"><h2 class="card-title">Lager</h2></div><div class="lager-liste">' +
+      S.menu.filter(function (v) { return !v.snart; }).map(function (v) {
+        return '<div class="lager-item' + (v.udsolgt ? ' ud' : '') + '"><span>' + esc(v.ikon) + ' <b>' + esc(v.navn) + '</b></span>' +
+          '<button class="btn sm' + (v.udsolgt ? ' primary' : '') + '" data-act="udsolgt" data-id="' + esc(v.id) + '" data-u="' + (v.udsolgt ? '0' : '1') + '">' + (v.udsolgt ? 'På lager igen' : 'Udsolgt') + '</button></div>';
+      }).join('') + '</div></section>';
+    return adminHead('Bestillinger') + lager +
       '<section class="card"><div class="card-head"><div class="chips">' +
       Object.keys(filtre).map(function (k) {
         var n = k === 'alle' ? A.bestillinger.length : A.bestillinger.filter(function (b) { return b.status === k; }).length;
@@ -1289,6 +1295,7 @@
         submit(t, 'admin_bruger', { origEmail: val('b-orig'), navn: val('b-navn'), initialer: val('b-ini'), gruppe: val('b-gruppe'), email: val('b-email'), aktiv: checked('b-aktiv') }, 'Bruger gemt');
         break;
       case 'gaver-ok': closeModal(); api('gaver_set', {}).then(function () { S.gaver = []; }).catch(function () {}); break;
+      case 'udsolgt': submit(t, 'admin_udsolgt', { vareId: t.dataset.id, udsolgt: t.dataset.u === '1' }, t.dataset.u === '1' ? 'Markeret som udsolgt' : 'På lager igen'); break;
       case 'gave': openGave(t.dataset.ini); break;
       case 'gave-mode': gaveState.vare = t.dataset.v === '1'; renderGave(); break;
       case 'gave-forslag':

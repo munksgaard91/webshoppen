@@ -204,6 +204,21 @@ t('gave-popup: nye gaver vises, til de er set', function () {
   Core.handle(db, B, 'gaver_set', {}, { now: function () { return new Date(2026, 10, 15, 14, 0); }, uuid: env.uuid });
   eq(Core.handle(db, B, 'state', {}, senere).gaver.length, 0);
 });
+t('udsolgt: kan ikke bestilles, før den er på lager igen', function () {
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var id = data.Menu[0].id;
+  Core.handle(db, adm, 'admin_udsolgt', { vareId: id, udsolgt: true }, env);
+  eq(Core.handle(db, B, 'state', {}, env).menu[0].udsolgt, true);
+  kaster(function () { Core.handle(db, B, 'bestil', { vareId: id, variant: 'Pepsi Max' }, env); }, 'udsolgt');
+  Core.handle(db, adm, 'admin_udsolgt', { vareId: id, udsolgt: false }, env);
+  eq(Core.handle(db, B, 'state', {}, env).menu[0].udsolgt, false);
+});
+t('månedsrapport: opgørelse for sidste måned + påmindelser', function () {
+  var r = Core.maanedsrapport(db, env);
+  eq(/oktober 2026/.test(r.emne), true);
+  eq(/Husk:/.test(r.tekst), true);
+  eq(/fanen Maal/.test(r.tekst), true);
+});
 t('tie-breaker: første stemme vinder', function () {
   data.Stemmer.push({ id: 's1', tid: '2026-10-05T09:00:00.000Z', maaned: '2026-10', fra: 'CCC', til: 'BBB', begrundelse: 'x' });
   data.Stemmer.push({ id: 's2', tid: '2026-10-04T09:00:00.000Z', maaned: '2026-10', fra: 'BBB', til: 'AAA', begrundelse: 'y' });

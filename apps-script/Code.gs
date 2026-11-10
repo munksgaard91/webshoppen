@@ -11,7 +11,8 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('Webshoppen')
     .addItem('Opsæt faner (første gang)', 'opsaet')
     .addItem('Hent optjening nu', 'syncOptjening')
-    .addItem('Slå automatisk hentning til (hver time)', 'installerTrigger')
+    .addItem('Slå automatisk hentning til (hver time + månedsmail)', 'installerTrigger')
+    .addItem('Send månedsmail nu (test)', 'maanedsmail')
     .addToUi();
 }
 
@@ -251,10 +252,21 @@ function syncOptjening() {
 
 function installerTrigger() {
   ScriptApp.getProjectTriggers().forEach(function (t) {
-    if (t.getHandlerFunction() === 'syncOptjening') ScriptApp.deleteTrigger(t);
+    if (['syncOptjening', 'maanedsmail'].indexOf(t.getHandlerFunction()) >= 0) ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger('syncOptjening').timeBased().everyHours(1).create();
-  SpreadsheetApp.getActive().toast('Optjening hentes nu automatisk hver time.');
+  ScriptApp.newTrigger('maanedsmail').timeBased().onMonthDay(1).atHour(7).create();
+  SpreadsheetApp.getActive().toast('Optjening hentes hver time, og månedsmailen sendes den 1. kl. 7–8.');
+}
+
+// Månedsmail til admin den 1.: opgørelse til RAB + påmindelser (fælles mål, præmie, Afslør). Til NOTIFIKATION_MAIL eller første admin.
+function maanedsmail() {
+  SheetDB.nulstil();
+  var conf = cfg_();
+  var til = conf.NOTIFIKATION_MAIL || liste_(conf.ADMIN_EMAILS)[0];
+  if (!til) return;
+  var r = Core.maanedsrapport(SheetDB, env_());
+  MailApp.sendEmail(til, 'Webshoppen · ' + r.emne, r.tekst + (conf.SIDE_URL ? '\n\n' + conf.SIDE_URL : ''));
 }
 
 // "C" -> 2, "AA" -> 26
@@ -365,6 +377,8 @@ function opsaet() {
     { noegle: 'TEAMBUDGET_BRUGT_CELLE', vaerdi: '' },
     { noegle: 'TEAMBUDGET_SAESON', vaerdi: '' },
     // Profilbilleder: {ini} = initialer med små bogstaver, {INI} = store. Mangler et billede, vises initialer.
+    // Udsolgte varer (id'er fra sortiment.js) – sættes fra Admin → Bestillinger
+    { noegle: 'UDSOLGT', vaerdi: '' },
     { noegle: 'BILLEDE_URL', vaerdi: 'https://leksione.dk/avatar/{ini}.png' },
     { noegle: 'MDK_PRAEMIE', vaerdi: '50 Webcoins' },
     { noegle: 'MDK_PRAEMIE_MAANED', vaerdi: Core.maanedKey(new Date()) }

@@ -170,10 +170,25 @@ var Core = (function () {
     });
   }
 
+  // Udsolgte varer (sat af admin, Config UDSOLGT = "monster, sodavand") kan ikke bestilles, før de er på lager igen
+  function udsolgte(db) {
+    return str(cfgVal(db, 'UDSOLGT', '')).split(/[,;\s]+/).filter(String);
+  }
   function menu(db, alle) {
+    var ud = udsolgte(db);
     return sortiment().menu.filter(function (v) { return alle || til(v.aktiv); }).map(function (v) {
-      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), billede: str(v.billede), pris: num(v.pris), kostpris: num(v.kostpris), varianter: varianter(v), oenskeFelt: ja(v.oenske), snart: ja(v.snart), aktiv: til(v.aktiv) };
+      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), billede: str(v.billede), pris: num(v.pris), kostpris: num(v.kostpris), varianter: varianter(v), oenskeFelt: ja(v.oenske), snart: ja(v.snart), aktiv: til(v.aktiv), udsolgt: ud.indexOf(str(v.id)) >= 0 };
     });
+  }
+
+  function adminUdsolgt(db, me, data, env) {
+    kraevAdmin(me);
+    var id = str(data.vareId);
+    if (!sortiment().menu.some(function (v) { return str(v.id) === id; })) throw err('BAD', 'Varen findes ikke.');
+    var ud = udsolgte(db).filter(function (x) { return x !== id; });
+    if (data.udsolgt) ud.push(id);
+    saetCfg(db, 'UDSOLGT', ud.join(', '));
+    return { ok: true };
   }
 
   // "Pepsi Max, Faxe Kondi" -> ['Pepsi Max', 'Faxe Kondi']
@@ -349,6 +364,7 @@ var Core = (function () {
     sortiment().menu.forEach(function (v) { if (str(v.id) === str(data.vareId) && til(v.aktiv)) vare = v; });
     if (!vare) throw err('BAD', 'Varen findes ikke længere.');
     if (ja(vare.snart)) throw err('BAD', 'Varen kommer snart.');
+    if (udsolgte(db).indexOf(str(vare.id)) >= 0) throw err('BAD', str(vare.navn) + ' er udsolgt lige nu.');
     var valg = varianter(vare);
     var variant = '';
     if (valg.length) {
@@ -625,6 +641,36 @@ var Core = (function () {
     });
   }
 
+  // Månedsmail til admin den 1.: opgørelse til RAB for sidste måned + påmindelser. Sendes af Code.gs (trigger).
+  function maanedsrapport(db, env) {
+    var nu = env.now(), mk = maanedKey(nu), sidst = forrigeMaaned(mk);
+    var sNavn = maanedNavn(sidst), nNavn = maanedNavn(mk).split(' ')[0];
+    var o = opgoerelse(db).filter(function (x) { return x.maaned === sidst; })[0];
+    var omloeb = 0;
+    aktiveBrugere(db).forEach(function (u) { omloeb += Math.max(0, saldoFor(db.all('Posteringer'), ini(u.initialer))); });
+    var aabne = db.all('Bestillinger').filter(function (b) { return str(b.status) === 'ny'; }).length;
+    var linjer = ['Opgørelse for ' + sNavn + ' (sendes til RAB):'];
+    if (o) {
+      linjer.push('• ' + o.antal + (o.antal === 1 ? ' bestilling' : ' bestillinger') + ' · ' + o.wc + ' Webcoins brugt');
+      linjer.push('• Kr i alt (kostpris): kr ' + o.kr.toFixed(0));
+      o.varer.forEach(function (v) { linjer.push('   – ' + v.navn + ': ' + v.antal + ' stk. · kr ' + v.kr.toFixed(0)); });
+    } else linjer.push('• Ingen bestillinger.');
+    linjer.push('', 'Webcoins i omløb: ' + omloeb + ' Webcoins ≈ kr ' + Math.round(omloeb / 2));
+    if (aabne) linjer.push('Bestillinger der ikke er udleveret: ' + aabne);
+    var husk = [];
+    var row = mdkRaekke(db, sidst);
+    if (mdkStilling(db, sidst).length && !(row && str(row.afsloeret).trim())) husk.push('Afslør Månedens Webkollega for ' + sNavn.split(' ')[0] + ' til briefingen (vinderen er klar).');
+    if (!mdkPraemie(db, mk)) husk.push('Vælg præmie til Månedens Webkollega i ' + nNavn + '.');
+    var maal = faellesMaal(db, sidst);
+    var mangler = maal.filter(function (m) { return m.nu === null; });
+    if (mangler.length) husk.push('Skriv resultaterne for ' + sNavn.split(' ')[0] + ' i fanen Maal: ' + mangler.map(function (m) { return m.navn; }).join(', ') + '.');
+    if (!faellesMaal(db, mk).length) husk.push('Læg fælles mål for ' + nNavn + ' ind i fanen Maal.');
+    husk.push('Markér ' + sNavn.split(' ')[0] + ' som sendt til RAB på admin-overblikket, når beløbet er sendt.');
+    linjer.push('', 'Husk:');
+    husk.forEach(function (h) { linjer.push('☐ ' + h); });
+    return { emne: 'Månedsafslutning ' + sNavn + (o ? ' · kr ' + o.kr.toFixed(0) + ' til RAB' : ''), tekst: linjer.join('\n') };
+  }
+
   function adminState(db, me, data, env) {
     kraevAdmin(me);
     var nu = env.now();
@@ -855,11 +901,12 @@ var Core = (function () {
     admin_bruger: adminBruger,
     admin_justering: adminJustering,
     admin_saldo: adminSaldo,
+    admin_udsolgt: adminUdsolgt,
     gaver_set: gaverSet,
     admin_gave: adminGave,
     admin_sync: function (db, me, data, env) { kraevAdmin(me); return env.sync(); }
   };
-  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, gaver_set: 1, admin_gave: 1, admin_sync: 1 };
+  var SKRIVER = { bestil: 1, indskyd: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_udsolgt: 1, gaver_set: 1, admin_gave: 1, admin_sync: 1 };
 
   function handle(db, me, action, data, env) {
     var fn = HANDLINGER[action];
@@ -879,6 +926,7 @@ var Core = (function () {
     handle: handle,
     skriver: function (action) { return !!SKRIVER[action]; },
     applyEarnings: applyEarnings,
+    maanedsrapport: maanedsrapport,
     aabningstider: aabningstider
   };
 })();
