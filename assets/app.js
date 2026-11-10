@@ -374,7 +374,7 @@
     var saldo = '<section class="saldo-card"><span class="saldo-deco" aria-hidden="true">' + bMark() + '</span>' +
       '<div class="saldo-top"><span class="hello">' + hilsen() + ', ' + esc(fornavn(me.navn)) + ' 👋</span>' +
       (me.gruppe ? '<span class="info"><button class="info-link" data-act="regler-boks"><span class="info-txt">Hvordan optjener jeg?</span><span class="info-btn">' + ico('info') + '</span></button>' +
-        '<span class="pop" role="tooltip"><b class="pop-title">' + esc(me.gruppe) + '</b>' + mineRegler() + '</span></span>' : '') +
+        '<span class="pop pop-regler" role="tooltip"><b class="pop-title">' + esc(me.gruppe) + '</b>' + mineRegler() + '</span></span>' : '') +
       '</div>' +
       (kanKoebe
         ? '<div class="saldo-big num">' + coin('coin-lg') + '<span>' + fmt(st.saldo) + '</span><small>' + enhed(st.saldo) + '</small></div>'
