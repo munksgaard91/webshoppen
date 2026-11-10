@@ -430,7 +430,13 @@
       }).join('') + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et event?', 'projekt', kanKoebe) + '</div>' : '<div class="card list">' + forslagRaekke('<span class="thumb">💡</span>', 'Andet?', 'Har du en idé til et event?', 'projekt', kanKoebe) + '</div>') + '</section>';
 
     var banner = lukket && me.admin ? '<div class="banner">Shoppen er lukket for medarbejderne lige nu' + (shop.grund === 'fravaer' ? ' (du er ikke til stede)' : '') + '. ' + esc(shop.tekst || '') + '</div>' : '';
-    return banner + top + menu + lucky(kanKoebe) + projekter + kollega(kanKoebe) + faellesMaal();
+    return banner + top + menu + lucky(kanKoebe) + projekter + maanedHoved() + kollega(kanKoebe) + faellesMaal();
+  }
+
+  // Stor overskrift over det, der gælder for indeværende måned (Månedens Webkollega + Fælles mål)
+  function maanedHoved() {
+    var nu = new Date(S.nu);
+    return '<div class="maaned-hoved"><span class="eyebrow">Denne måned</span><h2>' + cap(MAANEDER[nu.getMonth()]) + ' ' + nu.getFullYear() + '</h2></div>';
   }
 
   // Fælles mål (fanen Maal) – "Fælles mål | Se status" i regel-boksen scroller hertil.
@@ -453,7 +459,7 @@
     var mNavn = MAANEDER[nu.getMonth()], naeste = MAANEDER[(nu.getMonth() + 1) % 12];
     var denne = f.maal.map(function (m) { return maalRaekke(m, false); }).join('');
     var sidste = f.sidste.maal.map(function (m) { return maalRaekke(m, true); }).join('');
-    return '<section class="block" id="faelles-maal"><div class="block-head"><h2 class="block-title">Fælles mål</h2><span class="tag">' + cap(mNavn) + '</span><span class="note">Afgøres 1. ' + naeste + '</span></div>' +
+    return '<section class="block" id="faelles-maal"><div class="block-head"><h2 class="block-title">Fælles mål</h2><span class="note">Afgøres 1. ' + naeste + '</span></div>' +
       '<div class="card maal-liste">' + (denne || '<p class="faint" style="margin:0">Ingen mål for ' + mNavn + ' endnu.</p>') + '</div>' +
       (sidste ? '<h3 class="maal-sub">Resultat for ' + MAANEDER[(nu.getMonth() + 11) % 12] + '</h3><div class="card maal-liste">' + sidste + '</div>' : '') + '</section>';
   }

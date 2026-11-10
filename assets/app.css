@@ -213,6 +213,9 @@ a { color: inherit; }
 .rule { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; }
 .rule:first-of-type { border-top: 0; }
 .rule b { text-align: right; }
+.maaned-hoved { margin-top: 56px; padding-top: 28px; border-top: 1px solid var(--line-2); }
+.maaned-hoved h2 { margin: 4px 0 0; font-size: 30px; font-weight: 900; letter-spacing: -0.02em; }
+.maaned-hoved + .block { margin-top: 18px; }
 .maal-liste { padding-top: 6px; padding-bottom: 6px; }
 .maal-sub { font-size: 15px; font-weight: 800; margin: 22px 0 10px; color: var(--muted); }
 .maal-row { display: grid; grid-template-columns: 260px minmax(0, 1fr); align-items: center; gap: 20px; padding: 14px 0; border-top: 1px solid var(--line); }
