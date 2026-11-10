@@ -313,6 +313,11 @@ t('forslag sendes til admin', function () {
   eq(f[0].navn, 'Bo B');
   eq(f[0].type, 'feedback');
   eq(Core.handle(db, B, 'state', {}, env).forslag, undefined, 'kun admin ser feedback');
+  kaster(function () { Core.handle(db, B, 'admin_forslag_laest', { id: f[0].id, laest: true }, env); }, 'admin');
+  Core.handle(db, adm, 'admin_forslag_laest', { id: f[0].id, laest: true }, env);
+  eq(!!Core.handle(db, adm, 'admin_state', {}, env).forslag[0].laest, true, 'læst = arkiveret');
+  Core.handle(db, adm, 'admin_forslag_laest', { id: f[0].id, laest: false }, env);
+  eq(Core.handle(db, adm, 'admin_state', {}, env).forslag[0].laest, '', 'kan gendannes');
 });
 t('saldoen kan aldrig gå i minus', function () {
   data.Brugere.push({ email: 'f@best-one.dk', initialer: 'FFF', navn: 'Fattig F', gruppe: 'Support', aktiv: 'ja' });

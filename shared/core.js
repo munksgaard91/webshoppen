@@ -28,7 +28,7 @@ var Core = (function () {
     // Månedens Webkollega pr. måned: præmien (sat af admin) og vinderen (sat, når admin trykker Afslør)
     Webkollega: ['maaned', 'praemie', 'vinder', 'afsloeret', 'ikon'],
     // Feedback og forslag fra medarbejderne (type feedback / vare / praemie) – vises under Admin → Feedback
-    Forslag: ['id', 'tid', 'initialer', 'type', 'tekst']
+    Forslag: ['id', 'tid', 'initialer', 'type', 'tekst', 'laest']
   };
 
   function err(code, msg) {
@@ -167,6 +167,16 @@ var Core = (function () {
   // "Luk shoppen" (Config VEDLIGEHOLD = ja): medarbejderne ser "Shoppen opdateres", og alt der gemmer noget afvises.
   // Ligger i arket, så det overlever en ny version af Apps Script.
   function vedligehold(db) { return ja(cfgVal(db, 'VEDLIGEHOLD', '')); }
+  // Feedback: "Læst" arkiverer beskeden (tidspunkt i kolonnen laest); tom = ulæst igen
+  function adminForslagLaest(db, me, data, env) {
+    kraevAdmin(me);
+    var row = null;
+    db.all('Forslag').forEach(function (f) { if (str(f.id) === str(data.id)) row = f; });
+    if (!row) throw err('BAD', 'Beskeden findes ikke.');
+    db.update('Forslag', row, { laest: data.laest ? env.now().toISOString() : '' });
+    return { ok: true };
+  }
+
   function adminVedligehold(db, me, data) {
     kraevAdmin(me);
     saetCfg(db, 'VEDLIGEHOLD', data.lukket ? 'ja' : '');
@@ -758,7 +768,7 @@ var Core = (function () {
         var rows = [];
         try { rows = db.all('Forslag'); } catch (e) { rows = []; }
         return rows.slice().sort(nyesteFoerst).slice(0, 300).map(function (f) {
-          return { id: str(f.id), tid: str(f.tid), initialer: ini(f.initialer), navn: navne[ini(f.initialer)] || ini(f.initialer), type: str(f.type) || 'feedback', tekst: str(f.tekst) };
+          return { id: str(f.id), tid: str(f.tid), initialer: ini(f.initialer), navn: navne[ini(f.initialer)] || ini(f.initialer), type: str(f.type) || 'feedback', tekst: str(f.tekst), laest: str(f.laest) };
         });
       })(),
       posteringer: poster.slice().sort(nyesteFoerst).slice(0, 2000).map(function (p) {
@@ -993,11 +1003,12 @@ var Core = (function () {
     admin_saldo: adminSaldo,
     admin_udsolgt: adminUdsolgt,
     admin_vedligehold: adminVedligehold,
+    admin_forslag_laest: adminForslagLaest,
     gaver_set: gaverSet,
     admin_gave: adminGave,
     admin_sync: function (db, me, data, env) { kraevAdmin(me); return env.sync(); }
   };
-  var SKRIVER = { forslag: 1, bestil: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_maal_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_udsolgt: 1, admin_vedligehold: 1, gaver_set: 1, admin_gave: 1, admin_sync: 1 };
+  var SKRIVER = { forslag: 1, bestil: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_maal_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_udsolgt: 1, admin_vedligehold: 1, admin_forslag_laest: 1, gaver_set: 1, admin_gave: 1, admin_sync: 1 };
 
   function handle(db, me, action, data, env) {
     var fn = HANDLINGER[action];

@@ -390,6 +390,7 @@
   function adminShell(indhold) {
     var me = S.me;
     var nyeBest = A ? A.bestillinger.filter(function (b) { return b.status === 'ny'; }).length : 0;
+    var nyFb = A ? (A.forslag || []).filter(function (f) { return !f.laest; }).length : 0;
     return '<div class="shell' + (sideFoldet() ? ' foldet' : '') + '" id="shell">' +
       '<div class="scrim" data-act="close-nav"></div>' +
       '<aside class="side">' +
@@ -400,7 +401,7 @@
       navLink('admin/konkurrencer', 'star', 'Konkurrencer') +
       navLink('admin/regler', 'book', 'Regler') +
       navLink('admin/posteringer', 'list', 'Posteringer') +
-      navLink('admin/feedback', 'chat', 'Feedback') +
+      navLink('admin/feedback', 'chat', 'Feedback', nyFb ? '<span class="badge">' + nyFb + '</span>' : '') +
       '<a role="button" tabindex="0" class="nav-vis" data-act="vis-som" title="Vis som medarbejder">' + ico('eye') + '<span>Vis som medarbejder</span></a></nav>' +
       '<div class="side-foot">' +
       '<div class="me">' + avatar(me) + '<div class="who"><b>' + esc(fornavn(me.navn)) + '</b><small>Admin</small></div>' +
@@ -1098,17 +1099,24 @@
 
   // Feedback: alt hvad medarbejderne har sendt via "Giv feedback" og "Send forslag" (fanen Forslag), nyeste først
   var FORSLAG_TYPE = { feedback: '💬 Feedback', vare: '💡 Forslag til menuen', praemie: '🎁 Idé til belønning' };
+  function fbBoks(f) {
+    return '<article class="fb-boks' + (f.laest ? ' laest' : '') + '"><div class="fb-top">' + pAvatar(f.initialer, f.initialer, 'avatar sm') +
+      '<b class="fb-navn">' + esc(f.navn) + '</b><small class="faint">' + dato(f.tid) + '</small>' +
+      '<span class="fb-type" title="' + esc((FORSLAG_TYPE[f.type] || f.type).replace(/^\S+ /, '')) + '">' + (FORSLAG_TYPE[f.type] || esc(f.type)) + '</span>' +
+      (f.laest ? '<button class="btn sm" data-act="fb-laest" data-id="' + esc(f.id) + '" data-l="0">Gendan</button>'
+        : '<button class="btn sm" data-act="fb-laest" data-id="' + esc(f.id) + '" data-l="1">✓ Læst</button>') +
+      '</div><p class="fb-tekst">' + esc(f.tekst) + '</p></article>';
+  }
   function pageAdminFeedback() {
     var liste = A.forslag || [];
-    return adminHead('Feedback', '<span class="tag">' + liste.length + (liste.length === 1 ? ' besked' : ' beskeder') + '</span>') +
-      (liste.length ? '<div class="fb-grid">' + liste.map(function (f) {
-        return '<article class="card fb-boks"><div class="fb-top">' + pAvatar(f.initialer, f.initialer, 'avatar') +
-          '<div class="fb-hvem"><b>' + esc(f.navn) + '</b><small class="faint">' + dato(f.tid) + '</small></div>' +
-          '<span class="tag">' + (FORSLAG_TYPE[f.type] || esc(f.type)) + '</span></div>' +
-          '<p class="fb-tekst">' + esc(f.tekst) + '</p></article>';
-      }).join('') + '</div>'
-        : '<section class="card"><div class="empty">Ingen feedback endnu. Det, kollegerne sender via "Giv feedback" og "Send forslag", vises her.</div></section>');
+    var nye = liste.filter(function (f) { return !f.laest; }), arkiv = liste.filter(function (f) { return f.laest; });
+    return adminHead('Feedback', '<span class="tag">' + nye.length + ' ulæste</span>') +
+      (nye.length ? '<section class="card fb-liste">' + nye.map(fbBoks).join('') + '</section>'
+        : '<section class="card"><div class="empty">Ingen ulæste beskeder. Det, kollegerne sender via "Giv feedback" og "Send forslag", vises her.</div></section>') +
+      (arkiv.length ? '<details class="fb-arkiv"' + (ui.fbArkiv ? ' open' : '') + '><summary data-act="fb-arkiv">Arkiv (' + arkiv.length + ')</summary>' +
+        '<section class="card fb-liste">' + arkiv.map(fbBoks).join('') + '</section></details>' : '');
   }
+
 
   function pageAdminPosteringer() {
     var typer = ['alle'].concat(Object.keys(TYPER));
@@ -1458,6 +1466,17 @@
           if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true);
         });
         break;
+      case 'fb-laest': {
+        // Med det samme i listen; gemmes i baggrunden (rulles tilbage, hvis det fejler)
+        var fb = (A.forslag || []).filter(function (x) { return x.id === t.dataset.id; })[0];
+        if (!fb) break;
+        var foer = fb.laest;
+        fb.laest = t.dataset.l === '1' ? new Date().toISOString() : '';
+        render();
+        api('admin_forslag_laest', { id: fb.id, laest: t.dataset.l === '1' }).then(gemCache).catch(function (e) { fb.laest = foer; render(); toast('Det gik ikke', e.message, true); });
+        break;
+      }
+      case 'fb-arkiv': ui.fbArkiv = !ui.fbArkiv; break;
       case 'ikon-vaelg':
         ui.ikonFelt = t.dataset.felt;
         openModal('<h2>Vælg ikon</h2><div class="ikon-grid">' + IKON_VALG.map(function (k) {
