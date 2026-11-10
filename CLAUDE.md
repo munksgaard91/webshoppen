@@ -34,7 +34,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs" +
 |---|---|
 | `index.html` | Skal for hele appen |
 | `assets/config.js` | `API_URL` (Apps Script web app-URL) og `GOOGLE_CLIENT_ID`. Tom `API_URL` = demo-tilstand |
-| `assets/app.js` | Al UI-logik (vanilla JS, hash-routing `#/`, `#/profil`, `#/admin/bestillinger`, `…/brugere`, `…/kollega`, `…/regler`, `…/posteringer`) |
+| `assets/app.js` | Al UI-logik (vanilla JS, hash-routing `#/`, `#/profil`, `#/admin/bestillinger`, `…/brugere`, `…/konkurrencer`, `…/regler`, `…/posteringer`) |
 | `assets/app.css` | Design (lyst shop-look med blå + guld, mørkt tema som valg) |
 | `assets/mock.js` | Demo-backend i browseren (localStorage), bruger `shared/core.js` |
 | `shared/sortiment.js` | **Sortimentet**: menu, lykkehjul (præmier/vægte/pris) og events. Rettes kun her i koden – ingen Sortiment-side i admin, ingen faner i arket |
@@ -59,7 +59,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs" +
 - Min profil: topkort (gruppe, navn, saldo uden ordet "Saldo"), tre visuelle nøgletal (Optjent, Brugt, Donationer) og faner Aktivitet / Optjening / Bestillinger. Ingen initialer i toppen.
 - "Donationer" = gaver givet til kolleger; events bruger knappen "Donér".
 - **"Projekter" hedder "Events" i hele UI'et.** I koden hedder det stadig `projekt`/`projekter` (posteringstype, funktioner); eventene selv står i `SORTIMENT.events` – det ændres ikke, så eksisterende data virker.
-- **Admin (rmu) deltager ikke**: står kun i `ADMIN_EMAILS`, ikke i `Brugere`. Ingen bestilling, hjul, donation, stemme eller profil – kun moderering. Admin-sider: Overblik, Bestillinger, Brugere, Månedens Webkollega, Regler, Posteringer (ingen Sortiment – det rettes i `shared/sortiment.js`).
+- **Admin (rmu) deltager ikke**: står kun i `ADMIN_EMAILS`, ikke i `Brugere`. Ingen bestilling, hjul, donation, stemme eller profil – kun moderering. Admin-sider: Overblik, Bestillinger, Brugere, Konkurrencer (Månedens Webkollega + kommende konkurrencer), Regler, Posteringer (ingen Sortiment – det rettes i `shared/sortiment.js`).
 - **Demobrugere bruger opdigtede mails** (`demo.<ini>@best-one.dk`, `ade@…` osv.) – aldrig kollegernes rigtige adresser.
 - **Demo-saldo er altid 67 Webcoins** for alle testbrugere (justering til sidst i seed i `mock.js`). Ændres demo-data, skal saldoen stadig ende på 67 – og bump `KEY` i mock.js, så demoen nulstilles.
 - **Ingen rigtige navne/mails i repoet** (det er offentligt). Rigtig brugerliste ligger i `brugere.local.csv` (gitignored). Demo bruger "Demo …"-navne.

@@ -235,7 +235,7 @@
     'profil': { titel: 'Min profil', fn: pageProfil },
     'admin/bestillinger': { titel: 'Bestillinger', fn: pageAdminBestillinger, admin: true },
     'admin/brugere': { titel: 'Brugere', fn: pageAdminBrugere, admin: true },
-    'admin/kollega': { titel: 'Månedens Webkollega', fn: pageAdminKollega, admin: true },
+    'admin/konkurrencer': { titel: 'Konkurrencer', fn: pageAdminKonkurrencer, admin: true },
     'admin/regler': { titel: 'Regler', fn: pageRegler, admin: true },
     'admin/posteringer': { titel: 'Posteringer', fn: pageAdminPosteringer, admin: true }
   };
@@ -292,7 +292,7 @@
       '<nav class="nav">' + navLink('', 'home', 'Overblik') +
       navLink('admin/bestillinger', 'cart', 'Bestillinger', nyeBest ? '<span class="badge">' + nyeBest + '</span>' : '') +
       navLink('admin/brugere', 'users', 'Brugere') +
-      navLink('admin/kollega', 'star', 'Månedens Webkollega') +
+      navLink('admin/konkurrencer', 'star', 'Konkurrencer') +
       navLink('admin/regler', 'book', 'Regler') +
       navLink('admin/posteringer', 'list', 'Posteringer') + '</nav>' +
       '<div class="side-foot">' +
@@ -504,7 +504,7 @@
         '<textarea class="input vote-why" id="mdk-hvorfor" rows="2" maxlength="500" placeholder="Hvorfor?"></textarea>' +
         '<div class="mdk-send"><button class="btn primary" data-act="stem">Stem</button><span class="mdk-fine">Én stemme i ' + mNavn + ' · stemmerne er hemmelige</span></div>';
     } else {
-      hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3>' + fakta + '<p class="mdk-why">Medarbejderne stemmer her. Du kan se stillingen under Admin → Månedens Webkollega.</p>';
+      hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3>' + fakta + '<p class="mdk-why">Medarbejderne stemmer her. Du kan se stillingen under Admin → Konkurrencer.</p>';
     }
 
     return '<section class="block"><h2 class="block-title">Månedens Webkollega</h2><div class="card mdk2">' + spot + '<div class="mdk-vote">' + hoejre + '</div></div></section>';
@@ -837,8 +837,8 @@
       '</section>';
 
     var top = m.stilling.slice(0, 3);
-    var kollega = '<section class="card"><div class="card-head"><h2 class="card-title">Månedens Webkollega</h2><a class="link" href="#/admin/kollega">Åbn</a></div>' +
-      '<div class="rule"><span>Præmie i ' + mNavn + '</span>' + (m.praemie ? '<b>' + esc(m.praemie) + '</b>' : '<a class="link" href="#/admin/kollega">Coming soon – vælg præmie</a>') + '</div>' +
+    var kollega = '<section class="card"><div class="card-head"><h2 class="card-title">Månedens Webkollega</h2><a class="link" href="#/admin/konkurrencer">Åbn</a></div>' +
+      '<div class="rule"><span>Præmie i ' + mNavn + '</span>' + (m.praemie ? '<b>' + esc(m.praemie) + '</b>' : '<a class="link" href="#/admin/konkurrencer">Coming soon – vælg præmie</a>') + '</div>' +
       '<div class="rule"><span>Stemmer</span><b class="num">' + m.afgivet + '</b></div>' +
       (top.length ? top.map(function (x, i) { return '<div class="rule"><span>' + ['🥇', '🥈', '🥉'][i] + ' ' + esc(x.navn) + '</span><b class="num">' + x.stemmer + '</b></div>'; }).join('') : '') +
       (m.historik.length ? '<small class="faint">Sidste vinder: ' + esc(m.historik[0].vinder.navn) + ' (' + esc(maanedLabel(m.historik[0].maaned)) + ')</small>' : '') +
@@ -903,10 +903,12 @@
       }).join('') + '</tbody></table></div></section>';
   }
 
-  function pageAdminKollega() {
+  // Konkurrencer: én blok pr. konkurrence. Indtil videre kun Månedens Webkollega – nye lægges ind under den.
+  function pageAdminKonkurrencer() {
     var m = A.mdk;
     var mNavn = MAANEDER[Number(m.maaned.slice(5)) - 1];
-    return adminHead('Månedens Webkollega') +
+    return adminHead('Konkurrencer') +
+      '<h2 class="block-title">Månedens Webkollega</h2>' +
       '<section class="card" style="margin-bottom:20px"><div class="card-head"><h2 class="card-title">Præmie</h2></div>' +
       '<div class="vote-form"><input class="input" id="mdk-praemie" value="' + esc(m.praemie) + '" placeholder="fx 50 Webcoins"><button class="btn primary" data-act="mdk-praemie-ok">Gem</button></div>' +
       '<small class="faint">' + (m.praemie ? 'Gælder ' + mNavn + '.' : 'Ingen præmie for ' + mNavn + ' endnu – medarbejderne ser "Coming soon".') + ' Præmien nulstilles hver måned og gives manuelt (Brugere → Justér).</small></section>' +
