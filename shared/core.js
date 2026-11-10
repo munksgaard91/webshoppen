@@ -464,11 +464,13 @@ var Core = (function () {
 
     var id = env.uuid();
     var tid = env.now().toISOString();
-    db.insert('Bestillinger', { id: id, tid: tid, fra: me.initialer, til: modtager.initialer, vare: vareNavn, pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '', oenske: oenske });
+    // Pengene trækkes først: fejler Sheets mellem de to skrivninger, er der i værste fald betalt uden en bestilling
+    // (kan ses og refunderes), aldrig en bestilling uden betaling.
     db.insert('Posteringer', {
       id: env.uuid(), tid: tid, initialer: me.initialer, type: gave ? 'gave' : 'koeb', beloeb: -pris,
       tekst: gave ? vareNavn + ' til ' + modtager.navn : vareNavn, ref: id
     });
+    db.insert('Bestillinger', { id: id, tid: tid, fra: me.initialer, til: modtager.initialer, vare: vareNavn, pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '', oenske: oenske });
     if (gave) {
       db.insert('Posteringer', {
         id: env.uuid(), tid: tid, initialer: modtager.initialer, type: 'gave_modtaget', beloeb: 0,
@@ -564,6 +566,10 @@ var Core = (function () {
     var tekst = str(data.tekst).trim().slice(0, 1000);
     if (tekst.length < 5) throw err('BAD', 'Skriv dit forslag.');
     var type = str(data.type) === 'feedback' ? 'feedback' : str(data.type) === 'praemie' ? 'praemie' : 'vare';
+    // Højst 5 pr. kollega pr. dag – hver giver en mail, og Googles daglige mailkvote skal række til bestillingerne
+    var idag = env.now().toDateString(), iDag = 0;
+    try { db.all('Forslag').forEach(function (f) { if (ini(f.initialer) === me.initialer && new Date(str(f.tid)).toDateString() === idag) iDag++; }); } catch (e) { /* fanen mangler */ }
+    if (iDag >= 5) throw err('BAD', 'Du har sendt mange forslag i dag – prøv igen i morgen.');
     // Gemmes i fanen Forslag (Admin → Feedback). Mangler fanen i et ældre ark, sendes beskeden stadig som mail.
     try { db.insert('Forslag', { id: env.uuid(), tid: env.now().toISOString(), initialer: me.initialer, type: type, tekst: tekst }); } catch (e) { /* fanen mangler */ }
     if (type === 'feedback') {
@@ -642,6 +648,9 @@ var Core = (function () {
     var v = { praemie: praemie, vinder: vinder.initialer, afsloeret: tid };
     if (row) db.update('Webkollega', row, v); else db.insert('Webkollega', { maaned: mk, praemie: praemie, vinder: vinder.initialer, afsloeret: tid });
     var beloeb = mdkWebcoins(praemie);
+    // Præmien udbetales aldrig to gange for samme måned (heller ikke hvis "afsloeret" ikke kunne gemmes)
+    var udbetalt = db.all('Posteringer').some(function (p) { return str(p.ref) === 'mdk:' + mk; });
+    if (udbetalt) beloeb = 0;
     if (beloeb > 0) {
       db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: vinder.initialer, type: 'gevinst', beloeb: beloeb, tekst: 'Månedens Webkollega · ' + maanedNavn(mk), ref: 'mdk:' + mk });
     }
@@ -746,8 +755,8 @@ var Core = (function () {
     var linjer = ['Opgørelse for ' + sNavn + ' (sendes til RAB):'];
     if (o) {
       linjer.push('• ' + o.antal + (o.antal === 1 ? ' bestilling' : ' bestillinger') + ' · ' + o.wc + ' Webcoins brugt');
-      linjer.push('• Til RAB: kr ' + o.kr.toFixed(0) + ' (kun varer købt af firmaet – teamkassens varer er betalt på forhånd)');
-      o.varer.forEach(function (v) { if (v.kr > 0) linjer.push('   – ' + v.navn + ': ' + v.antal + ' stk. · kr ' + v.kr.toFixed(0)); });
+      linjer.push('• Til RAB: kr ' + Math.ceil(o.kr - 1e-9) + ' (kun varer købt af firmaet – teamkassens varer er betalt på forhånd)');
+      o.varer.forEach(function (v) { if (v.kr > 0) linjer.push('   – ' + v.navn + ': ' + v.antal + ' stk. · kr ' + Math.ceil(v.kr - 1e-9)); });
     } else linjer.push('• Ingen bestillinger.');
     linjer.push('', 'Webcoins i omløb: ' + omloeb + ' Webcoins ≈ kr ' + Math.round(omloeb / 2));
     if (aabne) linjer.push('Bestillinger der ikke er udleveret: ' + aabne);
@@ -766,7 +775,7 @@ var Core = (function () {
     husk.push('Markér ' + sNavn.split(' ')[0] + ' som sendt til RAB på admin-overblikket, når beløbet er sendt.');
     linjer.push('', 'Husk:');
     husk.forEach(function (h) { linjer.push('☐ ' + h); });
-    return { emne: 'Månedsafslutning ' + sNavn + (o ? ' · kr ' + o.kr.toFixed(0) + ' til RAB' : ''), tekst: linjer.join('\n') };
+    return { emne: 'Månedsafslutning ' + sNavn + (o ? ' · kr ' + Math.ceil(o.kr - 1e-9) + ' til RAB' : ''), tekst: linjer.join('\n') };
   }
 
   function adminState(db, me, data, env) {
@@ -825,10 +834,15 @@ var Core = (function () {
     var status = str(data.status);
     if (['ny', 'udleveret', 'annulleret'].indexOf(status) < 0) throw err('BAD', 'Ukendt status.');
     if (str(b.status) === 'annulleret' && status !== 'annulleret') throw err('BAD', 'En annulleret bestilling kan ikke genåbnes.');
-    if (status === 'annulleret' && str(b.status) !== 'annulleret') {
+    var refunder = status === 'annulleret' && str(b.status) !== 'annulleret';
+    // Status først, så en fejl midt i aldrig efterlader en bestilling, der kan annulleres (og refunderes) igen
+    db.update('Bestillinger', b, { status: status });
+    // Kun refusion, hvis der blev betalt (hjulgevinster og gaver fra admin koster 0 – ingen "0 Webcoins tilbage"),
+    // og kun én gang pr. bestilling
+    var harRefusion = db.all('Posteringer').some(function (p) { return p.type === 'refusion' && str(p.ref) === str(b.id); });
+    if (refunder && num(b.pris) > 0 && !harRefusion) {
       db.insert('Posteringer', { id: env.uuid(), tid: env.now().toISOString(), initialer: str(b.fra), type: 'refusion', beloeb: num(b.pris), tekst: 'Refusion: ' + str(b.vare), ref: str(b.id) });
     }
-    db.update('Bestillinger', b, { status: status });
     return { ok: true };
   }
 
@@ -851,6 +865,8 @@ var Core = (function () {
       if (str(r.email).trim().toLowerCase() === email) throw err('BAD', 'Mailen er allerede oprettet.');
       if (ini(r.initialer) === i) throw err('BAD', 'Initialerne ' + i + ' er allerede i brug.');
     });
+    // Initialer sættes kun ved oprettelse – alt (Webcoins, bestillinger, stemmer) hænger på dem
+    if (row && ini(row.initialer) && ini(row.initialer) !== i) throw err('BAD', 'Initialer kan ikke ændres.');
     var obj = { email: email, initialer: i, navn: str(data.navn).trim(), gruppe: str(data.gruppe), aktiv: data.aktiv === false ? 'nej' : 'ja' };
     if (row) db.update('Brugere', row, obj); else db.insert('Brugere', obj);
     giveStart(db, env);
@@ -1002,7 +1018,7 @@ var Core = (function () {
           if (ny === num(p.beloeb)) return;
         }
         db.update('Posteringer', p, { beloeb: ny, tekst: o.tekst }); rettede++;
-      } else if (o.beloeb !== 0) {
+      } else if (o.beloeb !== 0 && ref.split(':')[2] >= laastFoer) { // låste måneder får heller ikke ny optjening
         db.insert('Posteringer', { id: env.uuid(), tid: env.now().toISOString(), initialer: o.initialer, type: 'optjent', beloeb: o.beloeb, tekst: o.tekst, ref: ref });
         nye++;
       }
@@ -1051,10 +1067,10 @@ var Core = (function () {
   var SKRIVER = { forslag: 1, bestil: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_maal_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_udsolgt: 1, admin_vedligehold: 1, admin_forslag_laest: 1, gaver_set: 1, admin_gave: 1, admin_sync: 1 };
 
   function handle(db, me, action, data, env) {
-    var fn = HANDLINGER[action];
-    if (!fn) throw err('BAD', 'Ukendt handling: ' + action);
+    var fn = Object.prototype.hasOwnProperty.call(HANDLINGER, action) ? HANDLINGER[action] : null;
+    if (typeof fn !== 'function') throw err('BAD', 'Ukendt handling.');
     // Lukket for opdatering: kun admin kan gemme noget
-    if (SKRIVER[action] && !(me && me.admin) && vedligehold(db)) throw err('VEDLIGEHOLD', 'Shoppen opdateres. Vi åbner snart igen.');
+    if (Object.prototype.hasOwnProperty.call(SKRIVER, action) && !(me && me.admin) && vedligehold(db)) throw err('VEDLIGEHOLD', 'Shoppen opdateres. Vi åbner snart igen.');
     return fn(db, me, data || {}, env);
   }
 
@@ -1070,7 +1086,7 @@ var Core = (function () {
     maanedNavn: maanedNavn,
     resolveUser: resolveUser,
     handle: handle,
-    skriver: function (action) { return !!SKRIVER[action]; },
+    skriver: function (action) { return Object.prototype.hasOwnProperty.call(SKRIVER, action); },
     applyEarnings: applyEarnings,
     maanedsrapport: maanedsrapport,
     aabningstider: aabningstider

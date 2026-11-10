@@ -26,7 +26,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs" +
 - **Tilfældighed og afstemninger afgøres altid i backend** (`spin` og `stem` i core.js) – aldrig i browseren. Chancerne pr. præmie vises åbent (i-ikon) – vægtene står i `shared/sortiment.js`. Stemmetal sendes kun til admin.
 - **Optjening er idempotent:** én postering pr. `optjent:<kilde>:<YYYY-MM>:<initialer>` (feltet `ref`), som opdateres ved hver synk – men **kun opad**: tjente Webcoins tages aldrig fra nogen, regler gælder kun fremad, og afsluttede måneder er låst fra den 4. i næste måned.
 - **Økonomi: 1 kr = 2 Webcoins.** Priser, gevinster, præmier og optjeningsregler er sat efter det (kostpris i kr er uændret). **Kostpris = det der sendes til RAB** – kun varer firmaet har købt (Sodavand, Monster). Varer købt for teamkassen har `kostpris: 0`.
-- Personer identificeres **altid med initialer** (JST, DSI …) i kildeark.
+- Personer identificeres **altid med initialer** (JST, DSI …) i kildeark. **Initialer kan aldrig ændres**, når en bruger er oprettet (alt hænger på dem).
 
 ## Filer
 
@@ -77,7 +77,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs" +
 - Månedens Webkollega: begrundelse frivillig (alt godtages, også tomt); præmien er "Coming soon" ved ny måned, indtil admin vælger en (`MDK_PRAEMIE_MAANED`); tekst: "Stem på en kollega, der har hjulpet dig, gjort noget ekstra eller løftet stemningen. Det handler om mennesker, ikke salgstal."
 - Røde tal = brugt/minus, grønne = optjent/plus. **Fælles mål:** fyldet i progressbaren går fra lyseblå (0 %) til Best One-blå (99 %) (`maalFarve()` → CSS-variablen `--p`, `color-mix`), **dyb grøn** (#1f8a55) når målet er nået, og ✓ (grøn) / ✕ (rød) / – (ingen status) til højre. Ellers kun blå, hvid, grå og mørk.
 
-- Escape altid brugerdata med `esc()` i app.js før det sættes ind i HTML.
+- Escape altid brugerdata med `esc()` i app.js før det sættes ind i HTML. Tekst til arket neutraliseres i `SheetDB` (= + - @ foran → ren tekst), så fritekst aldrig bliver en formel.
 - Danske Google Sheets bruger `;` i formler.
 - Hemmeligheder (webhook-URL'er m.m.) ligger i fanen `Config` i arket — aldrig i repoet.
 
@@ -86,7 +86,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs" +
 ```bash
 cd ~/code/webshoppen && python3 -m http.server 8765
 ```
-Åbn http://localhost:8765 — den kører mod den rigtige backend (localhost:8765 er godkendt i Google-login). Til demo-tilstand med testbrugere: tøm `API_URL` i `assets/config.js` midlertidigt og sæt den tilbage før commit. Port 8080 er optaget af qBittorrent på den private Mac.
+Åbn http://localhost:8765 — den kører mod den rigtige backend (localhost:8765 er godkendt i Google-login). Til demo-tilstand med testbrugere: åbn http://localhost:8765/?demo (`?demo` virker kun på localhost) eller tøm `API_URL` i `assets/config.js` midlertidigt og sæt den tilbage før commit. Port 8080 er optaget af qBittorrent på den private Mac.
 
 Test af kernen (ingen Node nødvendig):
 ```bash

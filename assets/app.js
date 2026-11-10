@@ -4,7 +4,9 @@
   'use strict';
 
   var C = window.WEBSHOP_CONFIG || {};
-  var DEMO = !C.API_URL || /[?&]demo\b/.test(location.search);
+  // ?demo virker kun lokalt – på live-siden ville det logge en rigtig bruger ud
+  var LOKAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  var DEMO = !C.API_URL || (LOKAL && /[?&]demo\b/.test(location.search));
   var app = document.getElementById('app');
   var modalRoot = document.getElementById('modal-root');
 
@@ -34,7 +36,8 @@
     });
   }
   function fmt(n) { return Math.round(Number(n) || 0).toLocaleString('da-DK'); }
-  function kr(n) { return 'kr ' + fmt(n); }
+  // Kr rundes altid op til hele kroner (beløb til RAB)
+  function kr(n) { return 'kr ' + fmt(Math.ceil(Number(n) - 1e-9)); }
   // Webcoins skrives altid helt ud.
   function enhed(n) { return Math.abs(Math.round(Number(n) || 0)) === 1 ? 'Webcoin' : 'Webcoins'; }
   function wc(n) { return fmt(n) + ' ' + enhed(n); }
@@ -171,7 +174,12 @@
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ token: session.token, action: action, data: data || {} })
-      }).then(function (r) { return r.json(); }).then(function (j) {
+      }).then(function (r) {
+        // Apps Script svarer en sjælden gang med en HTML-fejlside i stedet for JSON
+        return r.text().then(function (t) {
+          try { return JSON.parse(t); } catch (x) { var e = new Error('Forbindelsen fejlede – prøv igen om lidt.'); e.code = 'NET'; throw e; }
+        });
+      }).then(function (j) {
         if (!j.ok) { var e = new Error(j.error); e.code = j.code; throw e; }
         return j.data;
       });
@@ -576,6 +584,13 @@
     var mNavn = MAANEDER[nu.getMonth()], naeste = MAANEDER[(nu.getMonth() + 1) % 12];
     var denne = f.maal.map(function (m) { return maalRaekke(m, false); }).join('');
     var sidste = f.sidste.maal.map(function (m) { return maalRaekke(m, true); }).join('');
+    var forrige = MAANEDER[(nu.getMonth() + 11) % 12];
+    var ide = '<div class="maal-ide"><span>💡 Har du en idé til hvad vi skal lave næste gang?</span><button class="btn sm" data-act="forslag" data-type="praemie">' + ico('send') + 'Send forslag</button></div>';
+    // Ny måned uden mål endnu: sidste måneds mål bliver stående (med resultat), indtil de nye er lagt ind
+    if (!denne && sidste) {
+      return '<section class="block" id="faelles-maal"><div class="block-head"><h2 class="block-title">Fælles mål</h2><span class="note">Resultat for ' + forrige + ' · nye mål på vej</span></div>' +
+        '<div class="card maal-liste">' + maalPraemie(f.sidste.praemie, true) + sidste + ide + '</div></section>';
+    }
     return '<section class="block" id="faelles-maal"><div class="block-head"><h2 class="block-title">Fælles mål</h2><span class="note">Afgøres 1. ' + naeste + '</span></div>' +
       '<div class="card maal-liste">' + (denne ? maalPraemie(f.praemie, false, mNavn) + denne : '<p class="faint" style="margin:0">Ingen mål for ' + mNavn + ' endnu.</p>') +
       '<div class="maal-ide"><span>💡 Har du en idé til hvad vi skal lave næste gang?</span><button class="btn sm" data-act="forslag" data-type="praemie">' + ico('send') + 'Send forslag</button></div></div>' +
@@ -1234,7 +1249,7 @@
     openModal('<h2>' + (email ? 'Rediger bruger' : 'Ny bruger') + '</h2>' +
       '<input type="hidden" id="b-orig" value="' + esc(email || '') + '">' +
       '<div class="field"><label for="b-navn">Navn</label><input class="input" id="b-navn" value="' + esc(u.navn) + '"></div>' +
-      '<div class="row-2"><div class="field"><label for="b-ini">Initialer</label><input class="input" id="b-ini" maxlength="5" value="' + esc(u.initialer) + '" style="text-transform:uppercase"></div>' +
+      '<div class="row-2"><div class="field"><label for="b-ini">Initialer</label><input class="input" id="b-ini" maxlength="5" value="' + esc(u.initialer) + '" style="text-transform:uppercase"' + (email ? ' disabled title="Initialer kan ikke ændres"' : '') + '></div>' +
       '<div class="field"><label for="b-gruppe">Gruppe</label><select class="input" id="b-gruppe"><option value="">Ingen</option>' + A.grupper.map(function (g) { return '<option' + (u.gruppe === g ? ' selected' : '') + '>' + esc(g) + '</option>'; }).join('') + '</select></div></div>' +
       '<div class="field"><label for="b-email">Google-mail</label><input class="input" id="b-email" type="email" value="' + esc(u.email) + '" placeholder="navn@best-one.dk"></div>' +
       '<label class="check"><input type="checkbox" id="b-aktiv"' + (u.aktiv ? ' checked' : '') + '> Aktiv</label>' +
@@ -1420,10 +1435,25 @@
       case 'pfane': ui.profilFane = t.dataset.f; render(); break;
       case 'bfilter': ui.bestFilter = t.dataset.f; render(); break;
       case 'ptype': ui.postType = t.dataset.f; ui.postVis = 25; render(); break;
-      case 'bstatus':
+      case 'bstatus': {
+        // Annullering i en måned, der allerede er sendt til RAB, skal bekræftes
+        if (t.dataset.s === 'annulleret' && !t.dataset.ok) {
+          var bb = A.bestillinger.filter(function (x) { return x.id === t.dataset.id; })[0];
+          var bd = bb ? new Date(bb.tid) : null;
+          var bmk = bd ? bd.getFullYear() + '-' + ('0' + (bd.getMonth() + 1)).slice(-2) : '';
+          var sendt = (A.opgoerelse || []).filter(function (o) { return o.maaned === bmk && o.sendt; })[0];
+          if (sendt) {
+            openModal('<h2>' + cap(MAANEDER[bd.getMonth()]) + ' er allerede sendt til RAB</h2>' +
+              '<p class="muted" style="margin:-8px 0 14px">Annullér alligevel? Beløbet for ' + MAANEDER[bd.getMonth()] + ' ændres.</p>' +
+              '<div class="modal-acts"><button class="btn grow" data-act="close">Fortryd</button><button class="btn primary grow" data-act="bstatus" data-ok="1" data-id="' + esc(t.dataset.id) + '" data-s="annulleret">Annullér alligevel</button></div>');
+            break;
+          }
+        }
+        if (t.dataset.ok) closeModal();
         busy(t, true);
         api('admin_bestilling', { id: t.dataset.id, status: t.dataset.s }).then(refresh).catch(function (e) { busy(t, false); toast('Det gik ikke', e.message, true); });
         break;
+      }
       case 'ny-bruger': openBruger(''); break;
       case 'ret-bruger': openBruger(t.dataset.email); break;
       case 'bruger-ok':

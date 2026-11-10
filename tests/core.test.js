@@ -130,7 +130,7 @@ t('stemmer er hemmelige for brugere', function () {
   eq(JSON.stringify(m).indexOf('stemmer'), -1);
 });
 t('admin ser hvem der har stemt på hvem', function () {
-  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   var st = Core.handle(db, adm, 'admin_state', {}, env).mdk.stilling;
   eq(st[0].initialer, 'BBB');
   eq(st[0].fra[0].initialer, 'AAA');
@@ -181,7 +181,7 @@ t('optjening: tjente Webcoins tages aldrig fra nogen, afsluttede måneder er lå
   data.Regler.push({ gruppe: 'Support', kilde: 'gammel', sats: 4, navn: '', fra: 0 }); // højere sats
   Core.applyEarnings(db, { gammel: { 'BBB|2026-11': 5, 'BBB|2026-10': 5 } }, env);
   eq(post('2026-11').beloeb, 20); // indeværende måned stiger
-  eq(post('2026-10').beloeb, 10); // oktober er låst (d. 15. november)
+  eq(post('2026-10'), undefined); // oktober er låst (d. 15. november) – heller ingen ny optjening
   data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'gammel'; });
   data.Regler.push({ gruppe: 'Support', kilde: 'gammel', sats: 3, navn: '', fra: 0 }); // sat for højt → rettes ned
   Core.applyEarnings(db, { gammel: { 'BBB|2026-11': 5 } }, env);
@@ -189,6 +189,21 @@ t('optjening: tjente Webcoins tages aldrig fra nogen, afsluttede måneder er lå
   Core.applyEarnings(db, { gammel: { 'BBB|2026-11': 5 } }, env, null, { genberegn: true });
   eq(post('2026-11').beloeb, 15); // genberegn gør
   data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'gammel'; });
+});
+t('audit: initialer låst, ingen 0-refusion, forslag højst 5 om dagen, ukendt handling', function () {
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
+  var bb = data.Brugere.filter(function (u) { return u.initialer === 'BBB'; })[0];
+  kaster(function () { Core.handle(db, adm, 'admin_bruger', { origEmail: bb.email, email: bb.email, initialer: 'BBX', navn: bb.navn, gruppe: bb.gruppe }, env); }, 'Initialer kan ikke');
+  data.Bestillinger.push({ id: 'gratis1', tid: env.now().toISOString(), fra: 'BBB', til: 'BBB', vare: 'Hjulgevinst: Sodavand', pris: 0, kostpris: 10, status: 'ny' });
+  Core.handle(db, adm, 'admin_bestilling', { id: 'gratis1', status: 'annulleret' }, env);
+  eq(data.Posteringer.filter(function (p) { return p.ref === 'gratis1'; }).length, 0);
+  var B2 = Core.resolveUser(db, { email: bb.email }, []);
+  data.Forslag = (data.Forslag || []).filter(function (f) { return f.initialer !== 'BBB'; });
+  for (var k = 0; k < 5; k++) Core.handle(db, B2, 'forslag', { type: 'vare', tekst: 'Forslag nummer ' + k }, env);
+  kaster(function () { Core.handle(db, B2, 'forslag', { type: 'vare', tekst: 'Et forslag mere' }, env); }, 'mange forslag');
+  kaster(function () { Core.handle(db, B2, 'constructor', {}, env); }, 'Ukendt');
+  eq(Core.skriver('toString'), false);
+  data.Forslag = data.Forslag.filter(function (f) { return f.initialer !== 'BBB'; });
 });
 t('startbeløb: 5 Webcoins én gang pr. bruger', function () {
   var start = function () { return data.Posteringer.filter(function (p) { return p.ref === 'start:BBB'; }); };
@@ -198,7 +213,7 @@ t('startbeløb: 5 Webcoins én gang pr. bruger', function () {
   eq(start()[0].beloeb, 5);
 });
 t('admin: ret saldo direkte og giv gave (Webcoins eller vare)', function () {
-  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   var saldo = function () { return data.Posteringer.filter(function (p) { return p.initialer === 'BBB'; }).reduce(function (s, p) { return s + Number(p.beloeb); }, 0); };
   Core.handle(db, adm, 'admin_saldo', { initialer: 'BBB', saldo: 80 }, env);
   eq(saldo(), 80);
@@ -213,7 +228,7 @@ t('admin: ret saldo direkte og giv gave (Webcoins eller vare)', function () {
   kaster(function () { Core.handle(db, B, 'admin_gave', { initialer: 'BBB', beloeb: 20 }, env); }, 'admin');
 });
 t('gave-popup: nye gaver vises, til de er set', function () {
-  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   Core.handle(db, B, 'gaver_set', {}, env);
   eq(Core.handle(db, B, 'state', {}, env).gaver.length, 0);
   var senere = { now: function () { return new Date(2026, 10, 15, 13, 0); }, uuid: env.uuid, notify: env.notify, shop: env.shop };
@@ -227,7 +242,7 @@ t('gave-popup: nye gaver vises, til de er set', function () {
   eq(Core.handle(db, B, 'state', {}, senere).gaver.length, 0);
 });
 t('annulleret bestilling vises i popuppen, til den er set', function () {
-  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   var kl = function (t, m) { return { now: function () { return new Date(2026, 10, 15, t, m); }, uuid: env.uuid, notify: env.notify, shop: env.shop }; };
   Core.handle(db, B, 'gaver_set', {}, kl(15, 0));
   Core.handle(db, B, 'bestil', { vareId: 'mon' }, kl(15, 10));
@@ -242,7 +257,7 @@ t('annulleret bestilling vises i popuppen, til den er set', function () {
   eq(Core.handle(db, B, 'state', {}, kl(15, 50)).annulleret.length, 0, 'vises kun én gang');
 });
 t('udsolgt: kan ikke bestilles, før den er på lager igen', function () {
-  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   var id = data.Menu[0].id;
   Core.handle(db, adm, 'admin_udsolgt', { vareId: id, udsolgt: true }, env);
   eq(Core.handle(db, B, 'state', {}, env).menu[0].udsolgt, true);
@@ -251,7 +266,7 @@ t('udsolgt: kan ikke bestilles, før den er på lager igen', function () {
   eq(Core.handle(db, B, 'state', {}, env).menu[0].udsolgt, false);
 });
 t('luk shoppen: medarbejdere kan ikke gemme noget, admin kan', function () {
-  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   kaster(function () { Core.handle(db, B, 'admin_vedligehold', { lukket: true }, env); }, 'admin');
   Core.handle(db, adm, 'admin_vedligehold', { lukket: true }, env);
   eq(Core.handle(db, B, 'state', {}, env).vedligehold, true);
@@ -270,7 +285,7 @@ t('månedsrapport: opgørelse for sidste måned + påmindelser', function () {
 t('tie-breaker: første stemme vinder', function () {
   data.Stemmer.push({ id: 's1', tid: '2026-10-05T09:00:00.000Z', maaned: '2026-10', fra: 'CCC', til: 'BBB', begrundelse: 'x' });
   data.Stemmer.push({ id: 's2', tid: '2026-10-04T09:00:00.000Z', maaned: '2026-10', fra: 'BBB', til: 'AAA', begrundelse: 'y' });
-  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   // Før Afslør: vinderen er skjult for brugerne
   eq(Core.handle(db, B, 'state', {}, env).mdk.sidste, null);
   eq(Core.handle(db, B, 'state', {}, env).mdk.afventer, '2026-10');
@@ -281,7 +296,7 @@ t('tie-breaker: første stemme vinder', function () {
 });
 t('præmie: Coming soon ved ny måned, indtil admin vælger', function () {
   eq(Core.handle(db, B, 'state', {}, env).mdk.praemie, '');
-  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   Core.handle(db, adm, 'admin_mdk_praemie', { praemie: '25 Webcoins' }, env);
   eq(Core.handle(db, B, 'state', {}, env).mdk.praemie, '25 Webcoins');
   data.Config.forEach(function (r) { if (r.noegle === 'MDK_PRAEMIE_MAANED') r.vaerdi = '2026-10'; });
@@ -289,7 +304,7 @@ t('præmie: Coming soon ved ny måned, indtil admin vælger', function () {
   eq(Core.handle(db, B, 'state', {}, env).mdk.praemie, '');
 });
 t('afslør: præmien i Webcoins udbetales én gang og huskes, selv om ny præmie er sat', function () {
-  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   var okt = { now: function () { return new Date(2026, 9, 20, 12, 0); }, uuid: env.uuid, notify: env.notify };
   Core.handle(db, adm, 'admin_mdk_praemie', { praemie: '50 Webcoins' }, okt); // sat i oktober
   data.Stemmer.push({ id: 's3', tid: '2026-10-06T09:00:00.000Z', maaned: '2026-10', fra: 'AAA', til: 'BBB', begrundelse: '' });
@@ -301,7 +316,7 @@ t('afslør: præmien i Webcoins udbetales én gang og huskes, selv om ny præmie
   eq(data.Posteringer.filter(function (p) { return p.ref === 'mdk:2026-10'; }).length, 1);
 });
 t('afregning: admin krydser måned af som sendt til RAB', function () {
-  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   var mk = Core.maanedKey(env.now());
   var opg = function () { return Core.handle(db, adm, 'admin_state', {}, env).opgoerelse.filter(function (o) { return o.maaned === mk; })[0]; };
   eq(opg().sendt, false);
@@ -325,7 +340,7 @@ t('åbningstider', function () {
   eq(Core.aabningstider(new Date(2026, 10, 15, 12, 0)).tekst, 'Åbner i morgen kl. 08:00');
 });
 t('ren admin deltager ikke, men kan moderere', function () {
-  var R = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var R = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   eq(R.admin, true); eq(R.initialer, '');
   kaster(function () { Core.handle(db, R, 'bestil', { vareId: 'mon' }, env); }, 'initialer');
   kaster(function () { Core.handle(db, R, 'spin', {}, env); }, 'initialer');
@@ -344,7 +359,7 @@ t('forslag sendes til admin', function () {
   eq(sidsteBesked.side, 'feedback');
   eq(beskeder[beskeder.length - 1], 'Feedback på Webshoppen fra Bo B');
   // Gemmes også, så admin kan se det under Feedback (nyeste først, med navn)
-  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   var f = Core.handle(db, adm, 'admin_state', {}, env).forslag;
   eq(f[0].tekst, 'Mørkt tema er fedt');
   eq(f[0].navn, 'Bo B');
@@ -370,14 +385,14 @@ t('saldoen kan aldrig gå i minus', function () {
   eq(Core.handle(db, F, 'state', {}, env).stats.saldo, 0);
 });
 t('afslør: en glemt måned kan stadig afsløres (ældste først)', function () {
-  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   data.Stemmer.push({ id: 's-sep', tid: '2026-09-10T09:00:00.000Z', maaned: '2026-09', fra: 'AAA', til: 'BBB', begrundelse: '' });
   eq(Core.handle(db, adm, 'admin_state', {}, env).mdk.afsloer.maaned, '2026-09');
   eq(Core.handle(db, adm, 'admin_mdk_afsloer', {}, env).maaned, '2026-09');
   eq(/september 2026/.test(Core.maanedsrapport(db, env).tekst), false);
 });
 t('boot: forside + admin-data i ét kald', function () {
-  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   var bb = Core.handle(db, B, 'boot', {}, env);
   eq(bb.admin, null, 'medarbejder får ingen admin-data');
   eq(bb.state.stats.saldo, Core.handle(db, B, 'state', {}, env).stats.saldo);
@@ -421,7 +436,7 @@ t('fælles mål: Tid ÷ Antal fra Web/Tekst, holdtotaler tæller ikke', function
   eq(Core.maalTid(tekst, '2026-11', kendte, ['tekster']), Math.round(15 / 33 * 100) / 100);
 });
 t('fælles mål: belønning (3 af 4) sættes af admin og tælles op', function () {
-  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   data.Maal = [
     { maaned: '2026-11', navn: 'A', retning: 'under', graense: 6.5, nu: 6 },
     { maaned: '2026-11', navn: 'B', retning: 'under', graense: 70, nu: 65 },
@@ -443,7 +458,7 @@ t('fælles mål: belønning (3 af 4) sættes af admin og tælles op', function (
   eq(data.MaalPraemie.length, 1, 'samme måned opdateres');
 });
 t('ikon til præmier: emoji eller Webcoin-mønt, alt andet afvises', function () {
-  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   Core.handle(db, adm, 'admin_maal_praemie', { praemie: 'Pizza', antal: 3, ikon: '🍕' }, env);
   eq(Core.handle(db, B, 'state', {}, env).faellesMaal.praemie.ikon, '🍕');
   Core.handle(db, adm, 'admin_maal_praemie', { praemie: 'Pizza', antal: 3, ikon: '<img src=x>' }, env);

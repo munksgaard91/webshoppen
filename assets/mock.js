@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v54';
+  var KEY = 'webshoppen-demo-v55';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -20,7 +20,7 @@ window.Mock = (function () {
     { email: 'ide@best-one.dk', initialer: 'IDE', navn: 'Ida Demo', gruppe: 'Support', aktiv: 'ja', ekstra: true }
   ];
 
-  var DEMO_ALLE = [{ email: 'demo.admin@best-one.dk', initialer: 'RMU', navn: 'Demo Admin', gruppe: '' }].concat(BRUGERE.filter(function (b) { return !b.ekstra; }), [{ email: 'ukendt@best-one.dk', initialer: '?', navn: 'Ikke registreret', gruppe: '' }]);
+  var DEMO_ALLE = [{ email: 'demo.admin@best-one.dk', initialer: 'ADM', navn: 'Demo Admin', gruppe: '' }].concat(BRUGERE.filter(function (b) { return !b.ekstra; }), [{ email: 'ukendt@best-one.dk', initialer: '?', navn: 'Ikke registreret', gruppe: '' }]);
 
   function seed() {
     return {
@@ -64,7 +64,7 @@ window.Mock = (function () {
         { gruppe: 'Fotograf', kilde: 'sessioner', sats: 15, tekst: '15 Webcoins', navn: 'Klub 25', fra: 25 },
         { gruppe: 'Fotograf', kilde: 'sessioner', sats: 20, tekst: '20 Webcoins', navn: 'Klub 30', fra: 30 },
         { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
-        { gruppe: 'Support', kilde: 'anmeldelser', sats: 30, tekst: '30 Webcoins' },
+        { gruppe: 'Support', kilde: 'anmeldelser', sats: 25, tekst: '25 Webcoins' },
         { gruppe: 'Alle', kilde: 'faelles_maal', sats: 0, tekst: 'Se status' },
         { gruppe: 'Alle', kilde: 'konkurrencer', sats: 0, tekst: '?' }
       ]

@@ -39,7 +39,7 @@ function doPost(e) {
       data = { token: udstedNoegle_(profil), boot: Core.handle(SheetDB, me, 'boot', {}, env_()) };
     } else if (Core.skriver(req.action)) {
       var lock = LockService.getScriptLock();
-      lock.waitLock(20000);
+      try { lock.waitLock(20000); } catch (e) { throw Core.err('BUSY', 'Shoppen er travl lige nu – prøv igen om lidt.'); }
       try {
         SheetDB.nulstil();
         data = Core.handle(SheetDB, me, req.action, req.data, env_());
@@ -52,7 +52,10 @@ function doPost(e) {
     }
     out = { ok: true, data: data };
   } catch (err) {
-    out = { ok: false, code: err.code || 'ERROR', error: String(err.message || err) };
+    // Fejl fra core (med kode) er beskeder til brugeren. Andre fejl er interne: fuld tekst i loggen og til admin,
+    // en kort dansk besked til medarbejdere (ingen fanenavne m.m.)
+    var erAdmin = !!(typeof me !== 'undefined' && me && me.admin);
+    out = { ok: false, code: err.code || 'ERROR', error: err.code || erAdmin ? String(err.message || err) : 'Noget gik galt – prøv igen.' };
     if (!err.code) console.error(err);
   }
   return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
@@ -271,16 +274,15 @@ function genberegnOptjening() {
 
 function syncOptjening(opts) {
   var genberegn = !!(opts && opts.genberegn === true); // timer-triggeren sender et event-objekt uden genberegn
-  var fejl = [], res;
-  var lock = LockService.getScriptLock();
-  lock.waitLock(30000);
+  var fejl = [], res, raa = {};
   try {
+    // Kildearkene læses FØR låsen (det kan tage op til 20 sek.), så bestillinger ikke venter imens
     SheetDB.nulstil();
     // OPTJENING_FRA er en måned (2026-11) eller en dato (2026-11-17 / 17-11-2026 = lanceringsdagen). Rækker før tælles ikke.
     var fraV = String(cfg_().OPTJENING_FRA || '').trim();
     var fraDato = dato_(fraV);
     var fraMaaned = fraDato ? Core.maanedKey(fraDato) : fraV;
-    var kilder = {}, raa = {}, fejlede = {};
+    var kilder = {}, fejlede = {};
     SheetDB.all('Kilder').forEach(function (k) {
       var id = String(k.kilde).trim();
       if (!id || !k.sheet_id) return;
@@ -308,20 +310,25 @@ function syncOptjening(opts) {
         fejl.push('Kilde ' + id + (k.fane ? ' (' + k.fane + ')' : '') + ': ' + (e.message || e));
       }
     });
-    // En kilde, der fejlede, tages helt ud – så dens optjeninger hverken rettes eller nulstilles på et halvt datasæt
-    Object.keys(fejlede).forEach(function (id) { delete kilder[id]; });
-    res = Core.applyEarnings(SheetDB, kilder, env_(), fraMaaned, { genberegn: genberegn });
-    SpreadsheetApp.flush();
+    // En kilde, der fejlede, tages helt ud – både af optjeningen og af fælles mål (de beholder deres gamle tal)
+    Object.keys(fejlede).forEach(function (id) { delete kilder[id]; delete raa[id]; });
+    var lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); } catch (e) { throw new Error('Shoppen var optaget – prøver igen ved næste hentning'); }
+    try {
+      SheetDB.nulstil();
+      res = Core.applyEarnings(SheetDB, kilder, env_(), fraMaaned, { genberegn: genberegn });
+      SpreadsheetApp.flush();
+    } finally {
+      lock.releaseLock();
+    }
   } catch (e) {
     fejl.push('Optjening: ' + (e.message || e));
     console.error('Optjening fejlede', e);
-  } finally {
-    lock.releaseLock();
   }
   // Fælles mål efter låsen: ClickUp og målarket kan tage tid, og kun synken skriver i fanen Maal,
   // så bestillinger skal ikke vente på dem. En fejl her stopper ikke optjeningen.
   try {
-    opdaterMaal_(raa || {}, fejl);
+    opdaterMaal_(raa, fejl);
     SpreadsheetApp.flush();
   } catch (e) {
     console.error('Fælles mål kunne ikke opdateres: ' + e);
@@ -363,6 +370,8 @@ function opdaterMaal_(raa, fejl) {
       if (d[0] === 'tid') {
         v = Core.maalTid(fane(d[1]), mk, kendte, String(d[2] || '').split('+').map(function (x) { return x.trim().toLowerCase(); }));
       } else if (d[0] === 'anmeldelser') {
+        // Kunne kilden ikke hentes, beholder målet sit gamle tal (ellers ville det vise 0 og "Ikke nået")
+        if (!raa.anmeldelser) throw new Error('kilden "anmeldelser" kunne ikke hentes – det gamle tal beholdes');
         v = 0;
         Object.keys(raa.anmeldelser || {}).forEach(function (key) {
           var p = key.split('|');
@@ -466,10 +475,17 @@ var SheetDB = (function () {
     cache[navn] = { headers: headers, rows: rows, sh: sh };
     return rows;
   }
+  // Tekst, der starter med = + - @, ville Sheets regne ud som en formel (fx "=Config!B18" i en begrundelse).
+  // Et ' foran gør den til ren tekst; det gemmes ikke i cellen og kommer ikke med ud igen.
+  function sikker(v) { return typeof v === 'string' && /^[=+\-@]/.test(v) ? "'" + v : v; }
+  function mangler(navn, k) { return new Error('Kolonnen "' + k + '" mangler i fanen ' + navn + '. Kør Webshoppen → Opsæt faner.'); }
   function insert(navn, obj) {
     all(navn);
     var c = cache[navn];
-    c.sh.appendRow(c.headers.map(function (h) { return obj[h] === undefined ? '' : obj[h]; }));
+    Object.keys(obj).forEach(function (k) {
+      if (c.headers.indexOf(k) < 0 && obj[k] !== undefined && obj[k] !== '') throw mangler(navn, k);
+    });
+    c.sh.appendRow(c.headers.map(function (h) { return obj[h] === undefined ? '' : sikker(obj[h]); }));
     var row = { _row: c.sh.getLastRow() };
     c.headers.forEach(function (h) { row[h] = obj[h] === undefined ? '' : obj[h]; });
     c.rows.push(row);
@@ -480,8 +496,8 @@ var SheetDB = (function () {
     var c = cache[navn];
     Object.keys(patch).forEach(function (k) {
       var col = c.headers.indexOf(k);
-      if (col < 0) return;
-      c.sh.getRange(row._row, col + 1).setValue(patch[k]);
+      if (col < 0) throw mangler(navn, k);
+      c.sh.getRange(row._row, col + 1).setValue(sikker(patch[k]));
       row[k] = patch[k];
     });
   }
@@ -573,7 +589,7 @@ function opsaet() {
     { gruppe: 'Fotograf', kilde: 'sessioner', sats: 15, tekst: '15 Webcoins', navn: 'Klub 25', fra: 25 },
     { gruppe: 'Fotograf', kilde: 'sessioner', sats: 20, tekst: '20 Webcoins', navn: 'Klub 30', fra: 30 },
     { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
-    { gruppe: 'Support', kilde: 'anmeldelser', sats: 30, tekst: '30 Webcoins' },
+    { gruppe: 'Support', kilde: 'anmeldelser', sats: 25, tekst: '25 Webcoins' },
     { gruppe: 'Alle', kilde: 'faelles_maal', sats: 0, tekst: 'Se status' },
     { gruppe: 'Alle', kilde: 'konkurrencer', sats: 0, tekst: '?' }
   ]);
