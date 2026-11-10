@@ -167,7 +167,7 @@ function teambudget_() {
     // Viser arket allerede, hvad der er tilbage (fx "Balance"), bruges TEAMBUDGET_REST_CELLE i stedet for budget − brugt
     var rest = conf.TEAMBUDGET_REST_CELLE ? celle(conf.TEAMBUDGET_REST_CELLE) : celle(conf.TEAMBUDGET_BUDGET_CELLE) - brugt;
     var tb = { budget: rest + brugt, brugt: brugt, rest: rest, saeson: conf.TEAMBUDGET_SAESON || '' };
-    cache.put('teambudget', JSON.stringify(tb), 600);
+    cache.put('teambudget', JSON.stringify(tb), 300);
     return tb;
   } catch (e) {
     console.error('Teambudget kunne ikke læses', e);
