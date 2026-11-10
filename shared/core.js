@@ -162,6 +162,15 @@ var Core = (function () {
     });
   }
 
+  // "Luk shoppen" (Config VEDLIGEHOLD = ja): medarbejderne ser "Shoppen opdateres", og alt der gemmer noget afvises.
+  // Ligger i arket, så det overlever en ny version af Apps Script.
+  function vedligehold(db) { return ja(cfgVal(db, 'VEDLIGEHOLD', '')); }
+  function adminVedligehold(db, me, data) {
+    kraevAdmin(me);
+    saetCfg(db, 'VEDLIGEHOLD', data.lukket ? 'ja' : '');
+    return { ok: true, lukket: !!data.lukket };
+  }
+
   function adminUdsolgt(db, me, data, env) {
     kraevAdmin(me);
     var id = str(data.vareId);
@@ -328,6 +337,7 @@ var Core = (function () {
       billedeUrl: str(cfgVal(db, 'BILLEDE_URL', '')).trim(),
       faellesMaal: Object.assign(faellesMaalState(db, maanedKey(nu)), { sidste: faellesMaalState(db, forrigeMaaned(maanedKey(nu))) }),
       shop: env.shop ? env.shop() : { aaben: true },
+      vedligehold: vedligehold(db),
       mdk: (function () {
         var mk = maanedKey(nu), sidst = forrigeMaaned(mk);
         var min = null, minHvorfor = '';
@@ -956,15 +966,18 @@ var Core = (function () {
     admin_justering: adminJustering,
     admin_saldo: adminSaldo,
     admin_udsolgt: adminUdsolgt,
+    admin_vedligehold: adminVedligehold,
     gaver_set: gaverSet,
     admin_gave: adminGave,
     admin_sync: function (db, me, data, env) { kraevAdmin(me); return env.sync(); }
   };
-  var SKRIVER = { bestil: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_maal_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_udsolgt: 1, gaver_set: 1, admin_gave: 1, admin_sync: 1 };
+  var SKRIVER = { bestil: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_maal_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_udsolgt: 1, admin_vedligehold: 1, gaver_set: 1, admin_gave: 1, admin_sync: 1 };
 
   function handle(db, me, action, data, env) {
     var fn = HANDLINGER[action];
     if (!fn) throw err('BAD', 'Ukendt handling: ' + action);
+    // Lukket for opdatering: kun admin kan gemme noget
+    if (SKRIVER[action] && !(me && me.admin) && vedligehold(db)) throw err('VEDLIGEHOLD', 'Shoppen opdateres. Vi åbner snart igen.');
     return fn(db, me, data || {}, env);
   }
 

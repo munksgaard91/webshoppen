@@ -838,3 +838,9 @@ tr.afregnet td { color: var(--muted); }
 .regel-liste ul { list-style: none; margin: 0; padding: 0; }
 .regel-liste li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; }
 .regel-liste p { margin: 0 0 4px; font-size: 14px; }
+
+/* Luk shoppen: overlay hos medarbejdere og banner hos admin */
+.vedl-card h1 { margin: 6px 0 8px; }
+.vedl-card p { color: var(--muted); margin: 0; font-size: 17px; }
+.vedl-ico { font-size: 44px; line-height: 1; }
+.vedl-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: var(--brand-soft); color: var(--text); border-radius: 14px; padding: 10px 14px; margin-bottom: 18px; font-size: 14px; }

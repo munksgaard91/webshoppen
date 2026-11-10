@@ -215,6 +215,17 @@ t('udsolgt: kan ikke bestilles, før den er på lager igen', function () {
   Core.handle(db, adm, 'admin_udsolgt', { vareId: id, udsolgt: false }, env);
   eq(Core.handle(db, B, 'state', {}, env).menu[0].udsolgt, false);
 });
+t('luk shoppen: medarbejdere kan ikke gemme noget, admin kan', function () {
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  kaster(function () { Core.handle(db, B, 'admin_vedligehold', { lukket: true }, env); }, 'admin');
+  Core.handle(db, adm, 'admin_vedligehold', { lukket: true }, env);
+  eq(Core.handle(db, B, 'state', {}, env).vedligehold, true);
+  kaster(function () { Core.handle(db, B, 'bestil', { vareId: data.Menu[1].id }, env); }, 'opdateres');
+  kaster(function () { Core.handle(db, B, 'koeb_drej', {}, env); }, 'opdateres');
+  Core.handle(db, adm, 'admin_udsolgt', { vareId: data.Menu[0].id, udsolgt: false }, env); // admin kan stadig gemme
+  Core.handle(db, adm, 'admin_vedligehold', { lukket: false }, env);
+  eq(Core.handle(db, B, 'state', {}, env).vedligehold, false);
+});
 t('månedsrapport: opgørelse for sidste måned + påmindelser', function () {
   var r = Core.maanedsrapport(db, env);
   eq(/oktober 2026/.test(r.emne), true);

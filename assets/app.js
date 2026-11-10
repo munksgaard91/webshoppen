@@ -178,6 +178,7 @@
     return p.catch(function (e) {
       if (e.code === 'TOKEN_EXPIRED') { logout(e.message); }
       else if (e.code === 'NOT_REGISTERED') { renderNotReg(); }
+      else if (e.code === 'VEDLIGEHOLD' && S && !S.me.admin) { S.vedligehold = true; closeModal(); render(); }
       throw e;
     });
   }
@@ -236,7 +237,7 @@
   // Gaver modtaget siden sidst (fra admin eller en kollega) vises som popup ved login, indtil man trykker Tak
   function visGaver() {
     var g = S.gaver || [];
-    if (!g.length) return;
+    if (!g.length || S.vedligehold) return; // gaverne vises, når shoppen er åben igen
     openModal('<div class="gave-pop"><div class="gave-ikon">🎁</div><h2>' + (g.length === 1 ? 'Du har fået en gave!' : 'Du har fået ' + g.length + ' gaver!') + '</h2>' +
       '<div class="gave-liste">' + g.map(function (x) {
         var hvad = x.beloeb ? '<b class="num">' + wc(x.beloeb) + '</b> ' + coin() : '<b>' + esc(x.hvad) + '</b>';
@@ -299,6 +300,23 @@
     renderLogin(besked);
   }
 
+  // "Luk shoppen" fra admin: overlay uden luk-knap. Tjekker hvert 30. sek., om shoppen er åben igen.
+  function renderVedligehold() {
+    app.innerHTML = '<div class="center-screen"><div class="login-card vedl-card">' +
+      '<div class="vedl-ico" aria-hidden="true">🛠️</div>' +
+      '<h1>Shoppen opdateres</h1>' +
+      '<p>Vi åbner snart igen</p>' +
+      '</div></div>';
+    document.title = 'Shoppen opdateres · Webshoppen';
+    if (!ui.vedlTjek) ui.vedlTjek = setInterval(function () {
+      api('state').then(function (st) {
+        if (st.vedligehold) return;
+        clearInterval(ui.vedlTjek); ui.vedlTjek = null;
+        S = st; gemCache(); render(); visGaver();
+      }).catch(function () {});
+    }, 30000);
+  }
+
   function renderNotReg() {
     store('webshoppen-cache', null);
     app.innerHTML = '<div class="center-screen"><div class="login-card">' +
@@ -329,6 +347,7 @@
 
   function render() {
     if (!S) return;
+    if (S.vedligehold && !S.me.admin && !ui.visSom) { renderVedligehold(); return; }
     var r = route();
     var side = SIDER[r] || SIDER[''];
     if (side.admin && !S.me.admin) side = SIDER[''];
@@ -387,7 +406,9 @@
       '</div></aside>' +
       '<div class="shell-main">' +
       '<header class="top top-admin"><div class="top-in"><button class="icon-btn" data-act="open-nav" aria-label="Menu">' + ico('burger') + '</button>' + logo() + '</div></header>' +
-      '<main class="main"><div class="wrap">' + indhold + '</div></main>' +
+      '<main class="main"><div class="wrap">' +
+      (S.vedligehold ? '<div class="vedl-bar"><span>🛠️ <b>Shoppen er lukket</b> – medarbejderne ser "Shoppen opdateres".</span><button class="btn primary sm" data-act="vedl" data-l="0">Åbn shoppen</button></div>' : '') +
+      indhold + '</div></main>' +
       '</div></div>';
   }
 
@@ -979,7 +1000,7 @@
       '</section>';
 
     // Rækkefølge: det der skal klares (nye bestillinger) øverst, så økonomi, derefter resten
-    return adminHead('Overblik') + '<div class="adm-first">' + best + '</div>' + stats +
+    return adminHead('Overblik', S.vedligehold ? '' : '<button class="btn" data-act="vedl-spoerg">🛠️ Luk shoppen</button>') + '<div class="adm-first">' + best + '</div>' + stats +
       '<div class="grid-2 top0 lige">' + ev + kollega + '</div>' +
       '<div class="adm-stak">' + opg + akt + '</div>';
   }
@@ -1340,6 +1361,14 @@
         submit(t, 'admin_bruger', { origEmail: val('b-orig'), navn: val('b-navn'), initialer: val('b-ini'), gruppe: val('b-gruppe'), email: val('b-email'), aktiv: checked('b-aktiv') }, 'Bruger gemt');
         break;
       case 'gaver-ok': closeModal(); api('gaver_set', { seneste: (S.gaver[S.gaver.length - 1] || {}).tid }).then(function () { S.gaver = []; }).catch(function () {}); break;
+      case 'vedl-spoerg':
+        openModal('<h2><span class="ico">🛠️</span>Luk shoppen?</h2>' +
+          '<p class="muted" style="margin:-8px 0 16px">Medarbejderne ser "Shoppen opdateres" og kan ikke bestille, før du åbner igen.</p>' +
+          '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="vedl" data-l="1">Luk shoppen</button></div>');
+        break;
+      case 'vedl':
+        submit(t, 'admin_vedligehold', { lukket: t.dataset.l === '1' }, t.dataset.l === '1' ? 'Shoppen er lukket' : 'Shoppen er åben igen');
+        break;
       case 'udsolgt': submit(t, 'admin_udsolgt', { vareId: t.dataset.id, udsolgt: t.dataset.u === '1' }, t.dataset.u === '1' ? 'Markeret som udsolgt' : 'På lager igen'); break;
       case 'gave': openGave(t.dataset.ini); break;
       case 'gave-mode': gaveState.vare = t.dataset.v === '1'; renderGave(); break;

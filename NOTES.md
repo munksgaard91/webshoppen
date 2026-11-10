@@ -44,6 +44,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 - Login for andre end admin er ikke testet endnu (test med 2–3 kolleger).
 
 ## Beslutninger
+- **Luk shoppen** (2026-11-10): knappen "🛠️ Luk shoppen" øverst på admin-overblikket (bekræftelse først) sætter Config `VEDLIGEHOLD` = ja (`admin_vedligehold`). Medarbejderne ser så kun et overlay uden luk-knap: **"Shoppen opdateres" / "Vi åbner snart igen"** (`renderVedligehold`), og backend afviser alt, der gemmer noget, for alle undtagen admin (fejlkode `VEDLIGEHOLD` – har nogen siden åben, skifter den til overlayet ved næste klik). Admin ser et blåt banner på alle admin-sider med "Åbn shoppen". Overlayet tjekker hvert 30. sek. og åbner selv igen; gave-popuppen venter, til shoppen er åben. Ligger i arket, så det overlever en ny version af Apps Script. "Vis som medarbejder" viser shoppen som normalt.
 - **Events fjernet → belønning for fælles mål** (2026-11-10): Events (donationer) er fjernet fra forside og admin-overblik. I stedet: "Når vi X af Y mål: <belønning>" pr. måned (fanen `MaalPraemie`: maaned, antal, praemie; `admin_maal_praemie`; uden række er kravet alle mål på nær ét og belønningen "Coming soon"). Månedsmailen viser sidste måneds resultat og minder om at vælge belønning. Progressbarerne under Fælles mål er farvede (rød < 50 % → grøn, `maalFarve()`), helt grønne ved nået, med ✓/✕ til højre – en aftalt undtagelse fra blå/hvid/grå.
 - **Live-opsætning** (2026-11-10): se Status øverst. Apps Script-filer kopieres med `LC_ALL=en_US.UTF-8 pbcopy` (ellers bliver æøå/emojis forvanskede – skete én gang og ramte også de seedede faner).
 - **Udsolgt** (2026-11-10): Admin → Bestillinger har et **Lager**-kort øverst: "Udsolgt" / "På lager igen" pr. vare (Config `UDSOLGT` = vare-id'er, handling `admin_udsolgt`). Udsolgte varer står med et rødt "Udsolgt"-mærke, knapperne er slået fra, og backend afviser bestillinger (også forudbestillinger). Hjulgevinster og admin-gaver påvirkes ikke.
@@ -77,7 +78,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 ## Faner i "Webshoppen DB"
 `Config` · `Brugere` · `Posteringer` · `Bestillinger` (… status, forud, oenske) · `Stemmer` (id, tid, maaned, fra, til, begrundelse) · `Spil` (id, tid, initialer, status, resultat) · `Kilder` · `Regler` (gruppe, kilde, sats, tekst, navn, fra – `navn` er teksten i regel-boksen, fx "Per sag"; tom = kildens navn. `fra` > 0 = klub-bonus: fast `sats`, når månedens tal ≥ `fra`) · `Afregning` (maaned, sendt ja/nej, tid – hvilke måneder er sendt til RAB) · `Maal` (fælles mål pr. måned + `kilde` til automatisk status – se Beslutninger) · `MaalPraemie` (maaned, antal, praemie – belønningen for fælles mål, sat i admin) · `Webkollega` (maaned, praemie, vinder, afsloeret).
 
-Config-nøgler: `UDSOLGT`, `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHAT_WEBHOOK`, `NOTIFIKATION_MAIL`, `AABNER`, `LUKKER`, `AABNE_DAGE`, `LUK_VED_FRAVAER`, `KALENDER_ID`, `OPTJENING_FRA`, `TEAMBUDGET_ARK_ID`, `TEAMBUDGET_BUDGET_CELLE`, `TEAMBUDGET_BRUGT_CELLE`, `TEAMBUDGET_REST_CELLE` (bruges i stedet for budget − brugt, når arket selv viser resten), `MAAL_ARK_ID` (arket med tal til fælles mål), `CLICKUP_TOKEN` (personlig ClickUp-nøgle, hemmelig), `TEAMBUDGET_SAESON`, `MDK_PRAEMIE`, `MDK_PRAEMIE_MAANED` (YYYY-MM, sættes af admin ved Gem), `BILLEDE_URL` (profilbilleder, `{ini}`).
+Config-nøgler: `VEDLIGEHOLD` (ja = "Shoppen opdateres"), `UDSOLGT`, `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHAT_WEBHOOK`, `NOTIFIKATION_MAIL`, `AABNER`, `LUKKER`, `AABNE_DAGE`, `LUK_VED_FRAVAER`, `KALENDER_ID`, `OPTJENING_FRA`, `TEAMBUDGET_ARK_ID`, `TEAMBUDGET_BUDGET_CELLE`, `TEAMBUDGET_BRUGT_CELLE`, `TEAMBUDGET_REST_CELLE` (bruges i stedet for budget − brugt, når arket selv viser resten), `MAAL_ARK_ID` (arket med tal til fælles mål), `CLICKUP_TOKEN` (personlig ClickUp-nøgle, hemmelig), `TEAMBUDGET_SAESON`, `MDK_PRAEMIE`, `MDK_PRAEMIE_MAANED` (YYYY-MM, sættes af admin ved Gem), `BILLEDE_URL` (profilbilleder, `{ini}`).
 
 ## Sådan sættes backend op
 1. Opret et nyt Google Sheet "Webshoppen DB" på din best-one.dk-konto.
@@ -89,14 +90,14 @@ Config-nøgler: `UDSOLGT`, `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE
 7. **Webshoppen → Slå automatisk hentning til** (hentning hver time + månedsmail den 1.). Prøv mailen med **Send månedsmail nu (test)**.
 
 Ændringer i `shared/core.js`, `shared/sortiment.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=175`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=184`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test
 ```bash
 cd ~/code/webshoppen && /System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc shared/core.js tests/core.test.js
 ```
-Dækker: ren admin uden deltagelse, forslag, login-afvisning, varianter, ønske-felt, kommer snart, gave + refusion, admin-rettigheder, forudbestilling, saldo-tjek, lykkehjul (alle tre typer), stemmeregler (frivillig begrundelse), hemmelige stemmer (admin ser afsender), tie-breaker, Afslør (skjult indtil afsløret, præmie udbetales én gang og huskes pr. måned), "Coming soon"-præmie ved ny måned, afregning til RAB, idempotent optjening, klub-bonus (kun højeste), startbeløb, fælles mål (under/over, procent, Tid ÷ Antal fra Web/Tekst, belønning X af Y), boot (state + admin i ét kald), ret saldo, gaver fra admin, gave-popup, udsolgt, månedsrapport, åbningstider. Testen har sit eget `SORTIMENT` og indlæser ikke `shared/sortiment.js`.
+Dækker: ren admin uden deltagelse, forslag, login-afvisning, varianter, ønske-felt, kommer snart, gave + refusion, admin-rettigheder, forudbestilling, saldo-tjek, lykkehjul (alle tre typer), stemmeregler (frivillig begrundelse), hemmelige stemmer (admin ser afsender), tie-breaker, Afslør (skjult indtil afsløret, præmie udbetales én gang og huskes pr. måned), "Coming soon"-præmie ved ny måned, afregning til RAB, idempotent optjening, klub-bonus (kun højeste), startbeløb, fælles mål (under/over, procent, Tid ÷ Antal fra Web/Tekst, belønning X af Y), boot (state + admin i ét kald), ret saldo, gaver fra admin, gave-popup, udsolgt, luk shoppen (vedligehold), månedsrapport, åbningstider. Testen har sit eget `SORTIMENT` og indlæser ikke `shared/sortiment.js`.
 Demo-tricks: `?lukket=fravaer` / `?lukket=tid` viser lukket shop. "Nulstil demodata" på login-siden.
 
 ## Før go-live (kendte svagheder)
