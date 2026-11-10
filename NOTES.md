@@ -46,7 +46,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 ## Beslutninger
 - **Til RAB = kostpris på varer** (2026-11-10): "Kr i alt" i Opgørelse er kostprisen på alle ikke-annullerede bestillinger – købte varer, gaver og **varer vundet i hjulet** (fx Sodavand 10 kr, Monster 15 kr). Alle varer følger 1 kr = 2 Webcoins (Candybar 10/5 kr, Sodavand 20/10 kr, Hvid Monster 30/15 kr). Webcoins vundet i hjulet lægges kun på saldoen og tæller ikke med. Events køres i virkeligheden – i shoppen holdes kun styr på donationsbeløbene.
 - **Sortiment i koden** (2026-11-09): menu, lykkehjul (præmier, vægte, pris) og events ligger i `shared/sortiment.js` – ikke i arket og ikke i admin. Ret filen, kopiér den ind som `Sortiment.gs` i Apps Script, og deploy. Event-id'er må aldrig skiftes (donationer peger på dem). Fanerne `Menu`, `Hjul`, `Projekter` og Config-nøglen `HJUL_PRIS` bruges ikke længere.
-- **1 kr = 2 Webcoins** (2026-11-09): for at gøre tallene sjovere er alle Webcoins-tal ganget med 2 i forhold til før – menu (Sodavand 20, Candybar 10, Hvid Monster 30), lykkehjul (pris 30; gevinster 10/20/30/40/100 Webcoins, samme vægte), Månedens kollega-præmie 50 Webcoins, donation-hurtigvalg 10 · 20 · 30 · 40 · 50 · 100, demo-events (3.000 / 1.600 / 400) og **optjeningsreglerne** (Hjemmeside 2 Webcoins pr. 1.000 kr nyfak, Support 4 pr. 1.000 kr genfak, 30 pr. anmeldelse, Redaktør 8 pr. leverance, Fotograf 12 pr. optagelse). Kostpriser (kr) og teambudget er uændrede. Demo-saldoen er stadig 67.
+- **1 kr = 2 Webcoins** (2026-11-09): for at gøre tallene sjovere er alle Webcoins-tal ganget med 2 i forhold til før – menu (Sodavand 20, Candybar 10, Hvid Monster 30), lykkehjul (pris 30; gevinster 10/20/30/40/100 Webcoins, samme vægte), Månedens kollega-præmie 50 Webcoins, donation-hurtigvalg 10 · 20 · 30 · 40 · 50 · 100, demo-events (3.000 / 1.600 / 400) og **optjeningsreglerne** (Hjemmeside 2 Webcoins pr. 1.000 kr nyfak, Support 4 pr. 1.000 kr genfak, 20 pr. 5-stjernet anmeldelse (2026-11-10, fælles for alle grupper), Redaktør 8 pr. leverance, Fotograf 12 pr. optagelse). Kostpriser (kr) og teambudget er uændrede. Demo-saldoen er stadig 67.
 - **Apps Script + Google Sheet som backend** (ikke Cloudflare): datakilderne er Google Sheets, mail/Chat er indbygget, DNS styres via GitHub Pages + Curanet, og der er ingen Node på den private Mac.
 - **Saldoen kan aldrig gå i minus:** bestil/donér til kollega, køb af drej og donation til projekt afvises i backend, hvis man ikke har råd (og knapperne er slået fra i UI). Admins "Justér saldo" afvises også, hvis den ville sende nogen under 0. (Undtagelse: hvis en optjening rettes ned efter synk, kan saldoen i princippet blive negativ – det er en datarettelse, ikke et køb.)
 - **Saldo = sum af posteringer.** Admin kan rette direkte i arket.
@@ -74,7 +74,7 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 7. **Webshoppen → Slå automatisk hentning til**.
 
 Ændringer i `shared/core.js`, `shared/sortiment.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=140`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=141`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test

@@ -347,13 +347,13 @@ function opsaet() {
   // Pladsholder-regler – skal regnes igennem før lancering.
   seed('Regler', [
     { gruppe: 'Hjemmeside', kilde: 'nyfak', sats: 0.002, tekst: '2 Webcoins pr. 1.000 kr' },
-    { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 30, tekst: '30 Webcoins pr. anmeldelse' },
+    { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins pr. 5-stjernet anmeldelse' },
     { gruppe: 'Redaktør', kilde: 'leverancer', sats: 8, tekst: '8 Webcoins pr. leverance' },
-    { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 30, tekst: '30 Webcoins pr. anmeldelse' },
+    { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins pr. 5-stjernet anmeldelse' },
     { gruppe: 'Fotograf', kilde: 'leverancer', sats: 12, tekst: '12 Webcoins pr. optagelse' },
-    { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 30, tekst: '30 Webcoins pr. anmeldelse' },
+    { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins pr. 5-stjernet anmeldelse' },
     { gruppe: 'Support', kilde: 'genfak', sats: 0.004, tekst: '4 Webcoins pr. 1.000 kr' },
-    { gruppe: 'Support', kilde: 'anmeldelser', sats: 30, tekst: '30 Webcoins pr. anmeldelse' }
+    { gruppe: 'Support', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins pr. 5-stjernet anmeldelse' }
   ]);
   var standard = ss.getSheetByName('Ark1') || ss.getSheetByName('Sheet1');
   if (standard && standard.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(standard);
