@@ -154,6 +154,20 @@ t('fælles mål: denne måned + sidste måneds resultat (under/over)', function 
   eq(f.sidste.maal[1].pct, 100);
   eq(f.sidste.maal[2].pct, 0);
 });
+t('klub-bonus: kun højeste klub, rykker op når tallet stiger', function () {
+  data.Regler.push({ gruppe: 'Support', kilde: 'sager', sats: 15, navn: 'Klub 15', fra: 15 });
+  data.Regler.push({ gruppe: 'Support', kilde: 'sager', sats: 20, navn: 'Klub 20', fra: 20 });
+  var bonus = function () { return data.Posteringer.filter(function (p) { return p.ref === 'optjent:sager-klub:2026-11:BBB'; }); };
+  Core.applyEarnings(db, { sager: { 'BBB|2026-11': 14 } }, env);
+  eq(bonus().length, 0);
+  Core.applyEarnings(db, { sager: { 'BBB|2026-11': 16 } }, env);
+  eq(bonus()[0].beloeb, 15);
+  Core.applyEarnings(db, { sager: { 'BBB|2026-11': 22 } }, env);
+  eq(bonus().length, 1);
+  eq(bonus()[0].beloeb, 20);
+  eq(bonus()[0].tekst, 'Klub 20 · november 2026');
+  data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'sager'; });
+});
 t('tie-breaker: første stemme vinder', function () {
   data.Stemmer.push({ id: 's1', tid: '2026-10-05T09:00:00.000Z', maaned: '2026-10', fra: 'CCC', til: 'BBB', begrundelse: 'x' });
   data.Stemmer.push({ id: 's2', tid: '2026-10-04T09:00:00.000Z', maaned: '2026-10', fra: 'BBB', til: 'AAA', begrundelse: 'y' });

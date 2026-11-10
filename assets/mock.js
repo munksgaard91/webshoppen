@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v45';
+  var KEY = 'webshoppen-demo-v46';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -46,10 +46,18 @@ window.Mock = (function () {
       ],
       Regler: [
         { gruppe: 'Hjemmeside', kilde: 'sager', sats: 1, tekst: '1 Webcoin', navn: 'Per sag' },
+        { gruppe: 'Hjemmeside', kilde: 'sager', sats: 15, tekst: '15 Webcoins', navn: 'Klub 15', fra: 15 },
+        { gruppe: 'Hjemmeside', kilde: 'sager', sats: 20, tekst: '20 Webcoins', navn: 'Klub 20', fra: 20 },
+        { gruppe: 'Hjemmeside', kilde: 'sager', sats: 25, tekst: '25 Webcoins', navn: 'Klub 25', fra: 25 },
         { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
         { gruppe: 'Redaktør', kilde: 'tekster', sats: 0.1, tekst: '1 Webcoin', navn: 'Per 10. tekst' },
+        { gruppe: 'Redaktør', kilde: 'tekster', sats: 15, tekst: '15 Webcoins', navn: 'Klub 150', fra: 150 },
+        { gruppe: 'Redaktør', kilde: 'tekster', sats: 20, tekst: '20 Webcoins', navn: 'Klub 200', fra: 200 },
+        { gruppe: 'Redaktør', kilde: 'tekster', sats: 25, tekst: '25 Webcoins', navn: 'Klub 250', fra: 250 },
         { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
         { gruppe: 'Fotograf', kilde: 'sessioner', sats: 1, tekst: '1 Webcoin', navn: 'Per session' },
+        { gruppe: 'Fotograf', kilde: 'sessioner', sats: 15, tekst: '15 Webcoins', navn: 'Klub 25', fra: 25 },
+        { gruppe: 'Fotograf', kilde: 'sessioner', sats: 20, tekst: '20 Webcoins', navn: 'Klub 30', fra: 30 },
         { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
         { gruppe: 'Support', kilde: 'anmeldelser', sats: 25, tekst: '25 Webcoins' },
         { gruppe: 'Alle', kilde: 'faelles_maal', sats: 0, tekst: 'Se status' },

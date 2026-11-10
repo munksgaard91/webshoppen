@@ -20,7 +20,7 @@ var Core = (function () {
     Posteringer: ['id', 'tid', 'initialer', 'type', 'beloeb', 'tekst', 'ref'],
     Bestillinger: ['id', 'tid', 'fra', 'til', 'vare', 'pris', 'kostpris', 'status', 'forud', 'oenske'],
     Kilder: ['kilde', 'navn', 'sheet_id', 'fane', 'kol_initialer', 'kol_vaerdi', 'kol_dato', 'start_raekke'],
-    Regler: ['gruppe', 'kilde', 'sats', 'tekst', 'navn'],
+    Regler: ['gruppe', 'kilde', 'sats', 'tekst', 'navn', 'fra'],
     Afregning: ['maaned', 'sendt', 'tid'],
     Maal: ['maaned', 'navn', 'tekst', 'retning', 'graense', 'nu', 'enhed']
   };
@@ -216,7 +216,7 @@ var Core = (function () {
     db.all('Kilder').forEach(function (k) { kilder[str(k.kilde)] = str(k.navn) || str(k.kilde); });
     return db.all('Regler').map(function (r) {
       // navn = teksten i regel-boksen (fx "Per sag"); tom = kildens navn
-      return { gruppe: str(r.gruppe), kilde: str(r.kilde), navn: str(r.navn) || kilder[str(r.kilde)] || str(r.kilde), sats: num(r.sats), tekst: str(r.tekst) };
+      return { gruppe: str(r.gruppe), kilde: str(r.kilde), navn: str(r.navn) || kilder[str(r.kilde)] || str(r.kilde), sats: num(r.sats), tekst: str(r.tekst), fra: num(r.fra) };
     });
   }
 
@@ -646,7 +646,7 @@ var Core = (function () {
     aktiveBrugere(db).forEach(function (u) {
       var i = ini(u.initialer);
       regelListe.forEach(function (r) {
-        if (str(r.gruppe) !== str(u.gruppe)) return;
+        if (str(r.gruppe) !== str(u.gruppe) || num(r.fra) > 0) return;
         var data = kilder[str(r.kilde)] || {};
         Object.keys(data).forEach(function (key) {
           var dele = key.split('|');
@@ -654,6 +654,22 @@ var Core = (function () {
           var ref = 'optjent:' + str(r.kilde) + ':' + dele[1] + ':' + i;
           var beloeb = Math.floor(num(data[key]) * num(r.sats));
           oensket[ref] = { initialer: i, beloeb: (oensket[ref] ? oensket[ref].beloeb : 0) + beloeb, tekst: (navne[str(r.kilde)] || r.kilde) + ' · ' + maanedNavn(dele[1]) };
+        });
+      });
+      // Klub-bonus (regler med `fra`): fast beløb, når månedens tal når grænsen. Kun den højeste klub pr. kilde tæller,
+      // og den ligger på én fast ref, så den rykker op (Klub 15 → Klub 20), hvis tallet stiger.
+      var klubber = regelListe.filter(function (r) { return str(r.gruppe) === str(u.gruppe) && num(r.fra) > 0; });
+      klubber.forEach(function (r) {
+        var data = kilder[str(r.kilde)] || {};
+        Object.keys(data).forEach(function (key) {
+          var dele = key.split('|');
+          if (dele[0] !== i || dele[1] < fra) return;
+          var vaerdi = num(data[key]);
+          var bedst = klubber.filter(function (x) { return str(x.kilde) === str(r.kilde) && vaerdi >= num(x.fra); })
+            .sort(function (a, b) { return num(b.fra) - num(a.fra); })[0];
+          if (bedst !== r) return;
+          var ref = 'optjent:' + str(r.kilde) + '-klub:' + dele[1] + ':' + i;
+          oensket[ref] = { initialer: i, beloeb: Math.floor(num(r.sats)), tekst: (str(r.navn) || 'Klub ' + num(r.fra)) + ' · ' + maanedNavn(dele[1]) };
         });
       });
     });
@@ -664,7 +680,7 @@ var Core = (function () {
       var o = oensket[ref];
       var p = eksisterende[ref];
       if (p) {
-        if (num(p.beloeb) !== o.beloeb) { db.update('Posteringer', p, { beloeb: o.beloeb }); rettede++; }
+        if (num(p.beloeb) !== o.beloeb || str(p.tekst) !== o.tekst) { db.update('Posteringer', p, { beloeb: o.beloeb, tekst: o.tekst }); rettede++; }
       } else if (o.beloeb !== 0) {
         db.insert('Posteringer', { id: env.uuid(), tid: env.now().toISOString(), initialer: o.initialer, type: 'optjent', beloeb: o.beloeb, tekst: o.tekst, ref: ref });
         nye++;

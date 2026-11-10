@@ -44,6 +44,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 - Rigtigt Google-login er ikke testet (kræver backend + Client ID).
 
 ## Beslutninger
+- **Klub-bonusser** (2026-11-10): faste månedsbonusser, når man når en grænse (kolonne `fra` i `Regler`). Hjemmeside: Klub 15/20/25 sager = 15/20/25 Webcoins · Redaktør: Klub 150/200/250 tekster = 15/20/25 · Fotograf: Klub 25/30 sessioner = 15/20. **Kun den højeste klub tæller** (ikke lagt sammen); den ligger på én ref `optjent:<kilde>-klub:<YYYY-MM>:<ini>`, så den rykker op, hvis tallet stiger i løbet af måneden.
 - **Fælles mål** (2026-11-10): fanen `Maal` (maaned, navn, tekst, retning `under`/`over`, graense, nu, enhed). Vises nederst på Overblik med en **progressbar pr. mål**: `nu` er status og opdateres løbende i arket (tom = "Ingen status endnu"). Ved `over` = nu ÷ grænse ("14 af 20 anmeldelser"), ved `under` = grænse ÷ nu ("6,8 t · mål under 6,5 t"); baren bliver grøn, når status er på målet. Overskrift: måned + "Afgøres 1. <næste måned>". Målene **afgøres dagen efter månedens udgang**, når tallene er opgjort: skriv det endelige tal i `nu` – under **Resultat for <sidste måned>** står så Nået ✓ / Ikke nået. November 2026: Hjemmeside under 6,5 t produktionstid pr. sag · Afventer online under 70 kunder på listen · Redaktører under 0,7 t produktionstid pr. tekst · Support 20 anmeldelser eller flere.
 - **Optjening – bevidst stramt** (2026-11-10): fælles budget, så hellere starte stramt og løsne senere (kollegerne betaler i dag selv). Hjemmeside **1 Webcoin pr. sag** · Redaktør **1 Webcoin pr. 10 tekster** · Fotograf **1 Webcoin pr. session** · **20 Webcoins pr. 5-stjernet anmeldelse** (Support **25**, fordi de har færre muligheder) (en anmeldelse giver 100 kr til fælleskassen, så den må veje tungt; arket registrerer kun 5-stjernede). Bedste Hjemmeside-måned hidtil: 80 sager i alt (19/14/13/12/11/9/2). Peak: ca. 20 sager, 170–200 tekster, 25 sessioner pr. person. Priserne beholdes. Nyfak, leverancer og genfak er droppet som kilder. **Hos alle:** øverst **Månedens Webkollega | <månedens præmie> 🪙** (fra `MDK_PRAEMIE`, "Coming soon" uden præmie – står i koden, ikke i arket), og efter gruppens egne regler (gruppe `Alle` i fanen `Regler`): **Konkurrencer | ? 🪙** (Månedens Webkollega m.m., gives manuelt) og **Fælles mål | Se status** (knap der scroller til sektionen "Fælles mål" nederst på Overblik – indholdet kommer senere).
 - **Til RAB = kostpris på varer** (2026-11-10): "Kr i alt" i Opgørelse er kostprisen på alle ikke-annullerede bestillinger – købte varer, gaver og **varer vundet i hjulet** (fx Sodavand 10 kr, Monster 15 kr). Alle varer følger 1 kr = 2 Webcoins (Candybar 10/5 kr, Sodavand 20/10 kr, Hvid Monster 30/15 kr). Webcoins vundet i hjulet lægges kun på saldoen og tæller ikke med. Events køres i virkeligheden – i shoppen holdes kun styr på donationsbeløbene.
@@ -62,7 +63,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
 - **Repoet er offentligt** (gratis GitHub Pages) – kun frontend, ingen hemmeligheder.
 
 ## Faner i "Webshoppen DB"
-`Config` · `Brugere` · `Posteringer` · `Bestillinger` (… status, forud, oenske) · `Stemmer` (id, tid, maaned, fra, til, begrundelse) · `Spil` (id, tid, initialer, status, resultat) · `Kilder` · `Regler` (gruppe, kilde, sats, tekst, navn – `navn` er teksten i regel-boksen, fx "Per sag"; tom = kildens navn) · `Afregning` (maaned, sendt ja/nej, tid – hvilke måneder er sendt til RAB) · `Maal` (fælles mål pr. måned – se Beslutninger).
+`Config` · `Brugere` · `Posteringer` · `Bestillinger` (… status, forud, oenske) · `Stemmer` (id, tid, maaned, fra, til, begrundelse) · `Spil` (id, tid, initialer, status, resultat) · `Kilder` · `Regler` (gruppe, kilde, sats, tekst, navn, fra – `navn` er teksten i regel-boksen, fx "Per sag"; tom = kildens navn. `fra` > 0 = klub-bonus: fast `sats`, når månedens tal ≥ `fra`) · `Afregning` (maaned, sendt ja/nej, tid – hvilke måneder er sendt til RAB) · `Maal` (fælles mål pr. måned – se Beslutninger).
 
 Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHAT_WEBHOOK`, `NOTIFIKATION_MAIL`, `AABNER`, `LUKKER`, `AABNE_DAGE`, `LUK_VED_FRAVAER`, `KALENDER_ID`, `OPTJENING_FRA`, `TEAMBUDGET_ARK_ID`, `TEAMBUDGET_BUDGET_CELLE`, `TEAMBUDGET_BRUGT_CELLE`, `TEAMBUDGET_SAESON`, `MDK_PRAEMIE`, `MDK_PRAEMIE_MAANED` (YYYY-MM, sættes af admin ved Gem).
 
@@ -76,7 +77,7 @@ Config-nøgler: `CLIENT_ID`, `ADMIN_EMAILS`, `TILLADT_DOMAENE`, `SIDE_URL`, `CHA
 7. **Webshoppen → Slå automatisk hentning til**.
 
 Ændringer i `shared/core.js`, `shared/sortiment.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=157`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=158`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test

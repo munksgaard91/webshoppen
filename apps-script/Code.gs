@@ -351,10 +351,18 @@ function opsaet() {
   // Bevidst stramt (2026-11-10) – hellere løsne senere. Gruppe 'Alle' vises hos alle grupper.
   seed('Regler', [
     { gruppe: 'Hjemmeside', kilde: 'sager', sats: 1, tekst: '1 Webcoin', navn: 'Per sag' },
+    { gruppe: 'Hjemmeside', kilde: 'sager', sats: 15, tekst: '15 Webcoins', navn: 'Klub 15', fra: 15 },
+    { gruppe: 'Hjemmeside', kilde: 'sager', sats: 20, tekst: '20 Webcoins', navn: 'Klub 20', fra: 20 },
+    { gruppe: 'Hjemmeside', kilde: 'sager', sats: 25, tekst: '25 Webcoins', navn: 'Klub 25', fra: 25 },
     { gruppe: 'Hjemmeside', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
     { gruppe: 'Redaktør', kilde: 'tekster', sats: 0.1, tekst: '1 Webcoin', navn: 'Per 10. tekst' },
+    { gruppe: 'Redaktør', kilde: 'tekster', sats: 15, tekst: '15 Webcoins', navn: 'Klub 150', fra: 150 },
+    { gruppe: 'Redaktør', kilde: 'tekster', sats: 20, tekst: '20 Webcoins', navn: 'Klub 200', fra: 200 },
+    { gruppe: 'Redaktør', kilde: 'tekster', sats: 25, tekst: '25 Webcoins', navn: 'Klub 250', fra: 250 },
     { gruppe: 'Redaktør', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
     { gruppe: 'Fotograf', kilde: 'sessioner', sats: 1, tekst: '1 Webcoin', navn: 'Per session' },
+    { gruppe: 'Fotograf', kilde: 'sessioner', sats: 15, tekst: '15 Webcoins', navn: 'Klub 25', fra: 25 },
+    { gruppe: 'Fotograf', kilde: 'sessioner', sats: 20, tekst: '20 Webcoins', navn: 'Klub 30', fra: 30 },
     { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
     { gruppe: 'Support', kilde: 'anmeldelser', sats: 25, tekst: '25 Webcoins' },
     { gruppe: 'Alle', kilde: 'faelles_maal', sats: 0, tekst: 'Se status' },
