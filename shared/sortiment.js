@@ -30,14 +30,16 @@ var SORTIMENT = {
 
   hjul: [
     { id: 'h-100', navn: '100 Webcoins', ikon: '🏆', type: 'webcoins', beloeb: 100, vaegt: 30 },
-    { id: 'h-nitte', navn: 'Nitte', ikon: '❌', type: 'intet', vaegt: 100 },
-    { id: 'h-10', navn: '10 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 10, vaegt: 80 },
-    { id: 'h-sodavand', navn: 'Sodavand', ikon: '🥤', type: 'vare', kostpris: 10, vaegt: 120 },
-    { id: 'h-20', navn: '20 Webcoins', ikon: '💫', type: 'webcoins', beloeb: 20, vaegt: 180 },
-    { id: 'h-candybar', navn: 'Mini Candybar', ikon: '🍫', type: 'vare', kostpris: 0, vaegt: 80 }, // teamkassen
-    { id: 'h-30', navn: '30 Webcoins', ikon: '💎', type: 'webcoins', beloeb: 30, vaegt: 200 },
+    { id: 'h-nitte', navn: 'Nitte', ikon: '❌', type: 'intet', vaegt: 90 },
+    { id: 'h-10', navn: '10 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 10, vaegt: 70 },
+    { id: 'h-sodavand', navn: 'Sodavand', ikon: '🥤', type: 'vare', kostpris: 10, vaegt: 110 },
+    { id: 'h-20', navn: '20 Webcoins', ikon: '💫', type: 'webcoins', beloeb: 20, vaegt: 170 },
+    { id: 'h-candybar', navn: 'Mini Candybar', ikon: '🍫', type: 'vare', kostpris: 0, vaegt: 45 }, // teamkassen
+    { id: 'h-30', navn: '30 Webcoins', ikon: '💎', type: 'webcoins', beloeb: 30, vaegt: 180 },
+    { id: 'h-chips', navn: 'Mini Chipspose', ikon: '🥔', type: 'vare', kostpris: 0, vaegt: 45 }, // teamkassen
     { id: 'h-monster', navn: 'Hvid Monster', ikon: '⚡', type: 'vare', kostpris: 15, vaegt: 70 },
-    { id: 'h-40', navn: '40 Webcoins', ikon: '💰', type: 'webcoins', beloeb: 40, vaegt: 140 }
+    { id: 'h-slik', navn: 'Mini Slikpose', ikon: '🍬', type: 'vare', kostpris: 0, vaegt: 40 }, // teamkassen
+    { id: 'h-40', navn: '40 Webcoins', ikon: '💰', type: 'webcoins', beloeb: 40, vaegt: 150 }
   ],
 
   events: [
