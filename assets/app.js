@@ -132,6 +132,7 @@
     star: '<path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z"/>',
     down: '<path d="M17 7 7 17M7 9v8h8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
     heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+    chat: '<path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
     send: '<path d="M21 3 10 14M21 3l-7 18-4-7-7-4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>',
     lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/>',
     unlock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
@@ -337,7 +338,8 @@
     'admin/brugere': { titel: 'Brugere', fn: pageAdminBrugere, admin: true },
     'admin/konkurrencer': { titel: 'Konkurrencer', fn: pageAdminKonkurrencer, admin: true },
     'admin/regler': { titel: 'Regler', fn: pageRegler, admin: true },
-    'admin/posteringer': { titel: 'Posteringer', fn: pageAdminPosteringer, admin: true }
+    'admin/posteringer': { titel: 'Posteringer', fn: pageAdminPosteringer, admin: true },
+    'admin/feedback': { titel: 'Feedback', fn: pageAdminFeedback, admin: true }
   };
 
   function navLink(path, ikon, tekst, extra) {
@@ -398,6 +400,7 @@
       navLink('admin/konkurrencer', 'star', 'Konkurrencer') +
       navLink('admin/regler', 'book', 'Regler') +
       navLink('admin/posteringer', 'list', 'Posteringer') +
+      navLink('admin/feedback', 'chat', 'Feedback') +
       '<a role="button" tabindex="0" class="nav-vis" data-act="vis-som" title="Vis som medarbejder">' + ico('eye') + '<span>Vis som medarbejder</span></a></nav>' +
       '<div class="side-foot">' +
       '<div class="me">' + avatar(me) + '<div class="who"><b>' + esc(fornavn(me.navn)) + '</b><small>Admin</small></div>' +
@@ -563,7 +566,8 @@
     var denne = f.maal.map(function (m) { return maalRaekke(m, false); }).join('');
     var sidste = f.sidste.maal.map(function (m) { return maalRaekke(m, true); }).join('');
     return '<section class="block" id="faelles-maal"><div class="block-head"><h2 class="block-title">Fælles mål</h2><span class="note">Afgøres 1. ' + naeste + '</span></div>' +
-      '<div class="card maal-liste">' + (denne ? maalPraemie(f.praemie, false, mNavn) + denne : '<p class="faint" style="margin:0">Ingen mål for ' + mNavn + ' endnu.</p>') + '</div>' +
+      '<div class="card maal-liste">' + (denne ? maalPraemie(f.praemie, false, mNavn) + denne : '<p class="faint" style="margin:0">Ingen mål for ' + mNavn + ' endnu.</p>') +
+      '<div class="maal-ide"><span>💡 Har du en idé til en fremtidig belønning?</span><button class="btn sm" data-act="forslag" data-type="praemie">' + ico('send') + 'Send forslag</button></div></div>' +
       (sidste ? '<h3 class="maal-sub">Resultat for ' + MAANEDER[(nu.getMonth() + 11) % 12] + '</h3><div class="card maal-liste">' + maalPraemie(f.sidste.praemie, true) + sidste + '</div>' : '') + '</section>';
   }
 
@@ -1092,6 +1096,20 @@
       }).join('') + '</div>' : '<div class="empty">Ingen vindere endnu.</div>') + '</section></div>';
   }
 
+  // Feedback: alt hvad medarbejderne har sendt via "Giv feedback" og "Send forslag" (fanen Forslag), nyeste først
+  var FORSLAG_TYPE = { feedback: '💬 Feedback', vare: '💡 Forslag til menuen', praemie: '🎁 Idé til belønning' };
+  function pageAdminFeedback() {
+    var liste = A.forslag || [];
+    return adminHead('Feedback', '<span class="tag">' + liste.length + (liste.length === 1 ? ' besked' : ' beskeder') + '</span>') +
+      (liste.length ? '<div class="fb-grid">' + liste.map(function (f) {
+        return '<article class="card fb-boks"><div class="fb-top">' + pAvatar(f.initialer, f.initialer, 'avatar') +
+          '<div class="fb-hvem"><b>' + esc(f.navn) + '</b><small class="faint">' + dato(f.tid) + '</small></div>' +
+          '<span class="tag">' + (FORSLAG_TYPE[f.type] || esc(f.type)) + '</span></div>' +
+          '<p class="fb-tekst">' + esc(f.tekst) + '</p></article>';
+      }).join('') + '</div>'
+        : '<section class="card"><div class="empty">Ingen feedback endnu. Det, kollegerne sender via "Giv feedback" og "Send forslag", vises her.</div></section>');
+  }
+
   function pageAdminPosteringer() {
     var typer = ['alle'].concat(Object.keys(TYPER));
     var rows = A.posteringer.filter(function (p) {
@@ -1229,9 +1247,9 @@
 
     switch (act) {
       case 'forslag': {
-        var ftype = t.dataset.type || 'vare', fb = ftype === 'feedback';
-        openModal('<h2><span class="ico">' + (fb ? '💬' : '💡') + '</span>' + (fb ? 'Giv feedback' : 'Send forslag') + '</h2>' +
-          '<p class="muted" style="margin:-8px 0 14px">' + (fb ? 'Hvad kan gøres bedre i Webshoppen?' : 'Hvad mangler der i menuen?') + '</p>' +
+        var ftype = t.dataset.type || 'vare', fb = ftype === 'feedback', bel = ftype === 'praemie';
+        openModal('<h2><span class="ico">' + (fb ? '💬' : bel ? '🎁' : '💡') + '</span>' + (fb ? 'Giv feedback' : 'Send forslag') + '</h2>' +
+          '<p class="muted" style="margin:-8px 0 14px">' + (fb ? 'Hvad kan gøres bedre i Webshoppen?' : bel ? 'Hvad skal vi belønne os selv med, når vi når vores mål?' : 'Hvad mangler der i menuen?') + '</p>' +
           '<input type="hidden" id="f-type" value="' + ftype + '">' +
           '<textarea class="input" id="f-tekst" rows="4" maxlength="1000"></textarea>' +
           '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="forslag-ok">Send</button></div>');

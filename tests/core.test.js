@@ -306,6 +306,13 @@ t('forslag sendes til admin', function () {
   kaster(function () { Core.handle(db, B, 'forslag', { type: 'vare', tekst: 'hej' }, env); }, 'forslag');
   Core.handle(db, B, 'forslag', { type: 'feedback', tekst: 'Mørkt tema er fedt' }, env);
   eq(beskeder[beskeder.length - 1], 'Feedback på Webshoppen fra Bo B');
+  // Gemmes også, så admin kan se det under Feedback (nyeste først, med navn)
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Rasmus' }, ['demo.admin@best-one.dk']);
+  var f = Core.handle(db, adm, 'admin_state', {}, env).forslag;
+  eq(f[0].tekst, 'Mørkt tema er fedt');
+  eq(f[0].navn, 'Bo B');
+  eq(f[0].type, 'feedback');
+  eq(Core.handle(db, B, 'state', {}, env).forslag, undefined, 'kun admin ser feedback');
 });
 t('saldoen kan aldrig gå i minus', function () {
   data.Brugere.push({ email: 'f@best-one.dk', initialer: 'FFF', navn: 'Fattig F', gruppe: 'Support', aktiv: 'ja' });

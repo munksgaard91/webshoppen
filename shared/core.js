@@ -26,7 +26,9 @@ var Core = (function () {
     Maal: ['maaned', 'navn', 'tekst', 'retning', 'graense', 'nu', 'enhed', 'kilde'],
     MaalPraemie: ['maaned', 'antal', 'praemie', 'ikon'],
     // Månedens Webkollega pr. måned: præmien (sat af admin) og vinderen (sat, når admin trykker Afslør)
-    Webkollega: ['maaned', 'praemie', 'vinder', 'afsloeret', 'ikon']
+    Webkollega: ['maaned', 'praemie', 'vinder', 'afsloeret', 'ikon'],
+    // Feedback og forslag fra medarbejderne (type feedback / vare / praemie) – vises under Admin → Feedback
+    Forslag: ['id', 'tid', 'initialer', 'type', 'tekst']
   };
 
   function err(code, msg) {
@@ -531,11 +533,14 @@ var Core = (function () {
     kraevBruger(me);
     var tekst = str(data.tekst).trim().slice(0, 1000);
     if (tekst.length < 5) throw err('BAD', 'Skriv dit forslag.');
-    if (str(data.type) === 'feedback') {
+    var type = str(data.type) === 'feedback' ? 'feedback' : str(data.type) === 'praemie' ? 'praemie' : 'vare';
+    // Gemmes i fanen Forslag (Admin → Feedback). Mangler fanen i et ældre ark, sendes beskeden stadig som mail.
+    try { db.insert('Forslag', { id: env.uuid(), tid: env.now().toISOString(), initialer: me.initialer, type: type, tekst: tekst }); } catch (e) { /* fanen mangler */ }
+    if (type === 'feedback') {
       env.notify({ emne: 'Feedback på Webshoppen fra ' + me.navn, tekst: me.navn + ' (' + me.initialer + ') har feedback til Webshoppen:\n\n' + tekst });
       return { ok: true };
     }
-    var hvad = 'menuen';
+    var hvad = type === 'praemie' ? 'en belønning' : 'menuen';
     env.notify({ emne: 'Forslag til ' + hvad + ' fra ' + me.navn, tekst: me.navn + ' (' + me.initialer + ') foreslår til ' + hvad + ':\n\n' + tekst });
     return { ok: true };
   }
@@ -749,6 +754,13 @@ var Core = (function () {
         return { id: str(b.id), tid: str(b.tid), fra: str(b.fra), fraNavn: navne[b.fra] || b.fra, til: str(b.til), tilNavn: navne[b.til] || b.til, vare: str(b.vare), pris: num(b.pris), kostpris: num(b.kostpris), status: str(b.status), forud: str(b.forud) === 'ja', oenske: str(b.oenske) };
       }),
       opgoerelse: opgoerelse(db),
+      forslag: (function () {
+        var rows = [];
+        try { rows = db.all('Forslag'); } catch (e) { rows = []; }
+        return rows.slice().sort(nyesteFoerst).slice(0, 300).map(function (f) {
+          return { id: str(f.id), tid: str(f.tid), initialer: ini(f.initialer), navn: navne[ini(f.initialer)] || ini(f.initialer), type: str(f.type) || 'feedback', tekst: str(f.tekst) };
+        });
+      })(),
       posteringer: poster.slice().sort(nyesteFoerst).slice(0, 2000).map(function (p) {
         return { id: str(p.id), tid: str(p.tid), initialer: str(p.initialer), navn: navne[p.initialer] || p.initialer, type: str(p.type), beloeb: num(p.beloeb), tekst: str(p.tekst), maaned: postMaaned(p) };
       }),
@@ -985,7 +997,7 @@ var Core = (function () {
     admin_gave: adminGave,
     admin_sync: function (db, me, data, env) { kraevAdmin(me); return env.sync(); }
   };
-  var SKRIVER = { bestil: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_maal_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_udsolgt: 1, admin_vedligehold: 1, gaver_set: 1, admin_gave: 1, admin_sync: 1 };
+  var SKRIVER = { forslag: 1, bestil: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_maal_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_udsolgt: 1, admin_vedligehold: 1, gaver_set: 1, admin_gave: 1, admin_sync: 1 };
 
   function handle(db, me, action, data, env) {
     var fn = HANDLINGER[action];
