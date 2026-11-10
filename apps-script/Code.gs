@@ -156,15 +156,17 @@ function notify_(b) {
 
 function teambudget_() {
   var conf = cfg_();
-  if (!conf.TEAMBUDGET_ARK_ID || !conf.TEAMBUDGET_BUDGET_CELLE) return null;
+  if (!conf.TEAMBUDGET_ARK_ID || !(conf.TEAMBUDGET_BUDGET_CELLE || conf.TEAMBUDGET_REST_CELLE)) return null;
   var cache = CacheService.getScriptCache();
   var hit = cache.get('teambudget');
   if (hit) return JSON.parse(hit);
   try {
     var ark = SpreadsheetApp.openById(conf.TEAMBUDGET_ARK_ID);
-    var budget = Core.num(ark.getRange(conf.TEAMBUDGET_BUDGET_CELLE).getValue());
-    var brugt = conf.TEAMBUDGET_BRUGT_CELLE ? Core.num(ark.getRange(conf.TEAMBUDGET_BRUGT_CELLE).getValue()) : 0;
-    var tb = { budget: budget, brugt: brugt, rest: budget - brugt, saeson: conf.TEAMBUDGET_SAESON || '' };
+    var celle = function (c) { return c ? Core.num(ark.getRange(c).getValue()) : 0; };
+    var brugt = celle(conf.TEAMBUDGET_BRUGT_CELLE);
+    // Viser arket allerede, hvad der er tilbage (fx "Balance"), bruges TEAMBUDGET_REST_CELLE i stedet for budget − brugt
+    var rest = conf.TEAMBUDGET_REST_CELLE ? celle(conf.TEAMBUDGET_REST_CELLE) : celle(conf.TEAMBUDGET_BUDGET_CELLE) - brugt;
+    var tb = { budget: rest + brugt, brugt: brugt, rest: rest, saeson: conf.TEAMBUDGET_SAESON || '' };
     cache.put('teambudget', JSON.stringify(tb), 600);
     return tb;
   } catch (e) {
@@ -389,6 +391,7 @@ function opsaet() {
     { noegle: 'TEAMBUDGET_ARK_ID', vaerdi: '' },
     { noegle: 'TEAMBUDGET_BUDGET_CELLE', vaerdi: '' },
     { noegle: 'TEAMBUDGET_BRUGT_CELLE', vaerdi: '' },
+    { noegle: 'TEAMBUDGET_REST_CELLE', vaerdi: '' },
     { noegle: 'TEAMBUDGET_SAESON', vaerdi: '' },
     // Profilbilleder: {ini} = initialer med små bogstaver, {INI} = store. Mangler et billede, vises initialer.
     // Udsolgte varer (id'er fra sortiment.js) – sættes fra Admin → Bestillinger
