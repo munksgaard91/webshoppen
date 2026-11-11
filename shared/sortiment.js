@@ -21,10 +21,11 @@ var SORTIMENT = {
   menu: [
     { id: 'sodavand', navn: 'Sodavand', ikon: '🥤', pris: 20, kostpris: 10, oenske: true },
     { id: 'monster', navn: 'Hvid Monster', ikon: '⚡', pris: 30, kostpris: 15 },
-    // Teamkassen (kostpris 0 – ikke til RAB). Indkøb ca.: Celebrations 2,50 kr/stk, Lay's mini 5 kr, Haribo mini 4 kr
+    // Teamkassen (kostpris 0 – ikke til RAB). Indkøb (Nemlig 2026-11-11): Celebrations 419,25 kr / ca. 160 stk ≈ 2,62 kr,
+    // Lay's mini 16 kr / 6 poser ≈ 2,67 kr, Mini Mix Slikposer 49,95 kr / 17 poser ≈ 2,94 kr
     { id: 'candybar', navn: 'Mini Candybar', ikon: '🍫', pris: 5, kostpris: 0 },
-    { id: 'chips', navn: 'Mini Chipspose', ikon: '🥔', pris: 5, kostpris: 0 },
-    { id: 'slik', navn: 'Mini Slikpose', ikon: '🍬', pris: 5, kostpris: 0 },
+    { id: 'chips', navn: 'Mini Chipspose', ikon: '🥔', pris: 6, kostpris: 0 },
+    { id: 'slik', navn: 'Mini Slikpose', ikon: '🍬', pris: 6, kostpris: 0 },
     { id: 'andet', navn: 'Andet?', ikon: '💡', pris: 0, kostpris: 0, snart: true }
   ],
 
