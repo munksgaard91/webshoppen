@@ -173,6 +173,7 @@
     if (DEMO) {
       p = window.Mock.call(session.email, action, data);
     } else {
+      var t0 = Date.now();
       p = fetch(C.API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -183,8 +184,9 @@
           try { return JSON.parse(t); } catch (x) { var e = new Error('Forbindelsen fejlede – prøv igen om lidt.'); e.code = 'NET'; throw e; }
         });
       }).then(function (j) {
-        // Backend sender sit tidsforbrug med (ms: start/handling/boot/ialt) – ses i konsollen (filtrér på "webshoppen")
-        if (j.ms) console.info('[webshoppen] ' + action + ' · backend ' + j.ms.ialt + ' ms', j.ms);
+        // Samlet ventetid (klik → svar) og backends eget tidsforbrug (ms: start/handling/boot/ialt) – ses i konsollen
+        // (filtrér på "webshoppen"). Forskellen er Googles opstart af scriptet + netværk.
+        if (j.ms) console.info('[webshoppen] ' + action + ' · i alt ' + (Date.now() - t0) + ' ms · backend ' + j.ms.ialt + ' ms', j.ms);
         if (!j.ok) { var e = new Error(j.error); e.code = j.code; throw e; }
         if (j.boot) friskBoot = j.boot;
         return j.data;
