@@ -732,7 +732,7 @@ function opsaet() {
     { gruppe: 'Fotograf', kilde: 'sessioner', sats: 15, tekst: '15 Webcoins', navn: 'Klub 25', fra: 25 },
     { gruppe: 'Fotograf', kilde: 'sessioner', sats: 20, tekst: '20 Webcoins', navn: 'Klub 30', fra: 30 },
     { gruppe: 'Fotograf', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
-    { gruppe: 'Support', kilde: 'anmeldelser', sats: 25, tekst: '25 Webcoins' },
+    { gruppe: 'Support', kilde: 'anmeldelser', sats: 20, tekst: '20 Webcoins' },
     { gruppe: 'Alle', kilde: 'faelles_maal', sats: 0, tekst: 'Se status' },
     { gruppe: 'Alle', kilde: 'konkurrencer', sats: 0, tekst: '?' }
   ]);
