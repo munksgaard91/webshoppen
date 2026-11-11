@@ -479,7 +479,7 @@ var Core = (function () {
     }
     env.notify({
       ikon: gave ? '🎁' : '🛒', side: 'bestillinger', kunChat: true,
-      emne: (forud ? 'Forudbestilling · ' : '') + (gave ? 'Gave: ' + vareNavn + ' til ' + modtager.navn + ' fra ' + me.navn : 'Bestilling: ' + vareNavn + ' til ' + me.navn) + (vare.ikon ? ' ' + str(vare.ikon) : ''),
+      emne: (gave ? 'Gave: ' + vareNavn + ' til ' + modtager.navn + ' fra ' + me.navn : 'Bestilling: ' + vareNavn + ' til ' + me.navn) + (vare.ikon ? ' ' + str(vare.ikon) : ''),
       kort: oenske ? 'Ønske: ' + oenske : '',
       tekst: (gave
         ? me.navn + ' (' + me.initialer + ') giver ' + str(vare.ikon) + ' ' + vareNavn + ' til ' + modtager.navn + ' (' + modtager.initialer + ').'
