@@ -34,7 +34,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs" +
 |---|---|
 | `index.html` | Skal for hele appen |
 | `assets/config.js` | `API_URL` (Apps Script web app-URL) og `GOOGLE_CLIENT_ID` – **sat og live siden 2026-11-10**. Tom `API_URL` = demo-tilstand (tøm den kun lokalt til test, og commit den aldrig tom) |
-| `assets/app.js` | Al UI-logik (vanilla JS, hash-routing `#/`, `#/profil`, `#/admin/bestillinger`, `…/brugere`, `…/konkurrencer`, `…/regler`, `…/posteringer`) |
+| `assets/app.js` | Al UI-logik (vanilla JS, hash-routing `#/`, `#/profil`, `#/tv`, `#/admin/bestillinger`, `…/brugere`, `…/konkurrencer`, `…/regler`, `…/posteringer`) |
 | `assets/app.css` | Design (lyst shop-look med blå + guld, mørkt tema som valg) |
 | `assets/mock.js` | Demo-backend i browseren (localStorage), bruger `shared/core.js` |
 | `shared/sortiment.js` | **Sortimentet**: menu, lykkehjul (præmier/vægte/pris) og events (ikke vist længere). Rettes kun her i koden – ingen Sortiment-side i admin, ingen faner i arket |
@@ -53,7 +53,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs" +
 - **Intet må brække over 2 linjer** i lister, regel-boksen, knapper og labels på laptop/desktop – brug `white-space: nowrap` og bredere felter frem for linjeskift.
 - UI-tekster på dansk, korte. Ingen lange forklaringer i UI'et — funktionalitet og god UI.
 - Branding: Montserrat, Best One-blå `#225581`. **Farver: kun blå eller hvid/grå/mørk** – ingen gul/guld baggrunde, bjælker eller flader. Guld (`--gold`) bruges **kun** i selve Webcoin-mønten (`coin()`) **og** som baggrund på lykkehjulets hovedpræmie (største Webcoins-gevinst, `hoved` i state). Lyst tema som standard, mørkt som valg. Skal bevidst **ikke** ligne det mørke salgsdashboard 1:1. Favicon = Webcoin-mønten (`favicon.svg`).
-- Medarbejdere får topmenu (Overblik, Min profil) – intet sidepanel. Kun admin har sidepanel – det kan foldes sammen til kun ikoner («-knappen øverst, huskes i `localStorage` `ws-side-foldet`).
+- Medarbejdere får topmenu (Overblik, Min profil, TV) – intet sidepanel. **TV** (`pageTv`, også i admins sidepanel) viser fælles mål i stort format til skærmen på kontoret: "⛶ Fuld skærm" sætter hele siden i fuld skærm (`html.tv-fuld` skjuler menuer, alt skaleres i `vw`), tallene hentes igen hvert 5. minut, og skærmen holdes tændt (Wake Lock). Kun admin har sidepanel – det kan foldes sammen til kun ikoner («-knappen øverst, huskes i `localStorage` `ws-side-foldet`).
 - **Luk shoppen:** Config `VEDLIGEHOLD` = ja → medarbejdere ser kun "Shoppen opdateres / Vi åbner snart igen", og `handle()` afviser alle skrivende handlinger for ikke-admins. Nye skrivende handlinger skal i `SKRIVER`, så de også blokeres.
 - **Admin-overblik** (`pageAdminOverblik`, route `#/` for admin): nye bestillinger **øverst** med Udleveret/Annullér, så tre nøgletal (Brugt i måneden, Teambudget tilbage, Webcoins i omløb ≈ kr). Øverst i sidehovedet står fast "Brugt siden start: X Webcoins ≈ kr Y" ved siden af "Hentet …", Fælles mål (belønning + status pr. mål) ved siden af Månedens Webkollega (præmie/stilling), seneste aktivitet og opgørelse pr. måned. Admin ser **ikke** medarbejdernes forside og har ingen Min profil; den gamle Opgørelse-side er lagt ind i overblikket.
 - **Logo = det officielle "best One"-ordmærke som SVG** (`boLogo()`, `LOGO_PATHS` i app.js). Må **kun** vises i blå (`--brand`) eller hvid (mørkt tema). Ikke en tekst-efterligning. "Webshoppen" ved siden af er fed og en anelse mindre end logoet.

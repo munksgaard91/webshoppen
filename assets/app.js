@@ -125,6 +125,7 @@
 
   var IKON = {
     home: '<path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+    tv: '<path d="M3 5h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2v9h16V7z"/><path d="M8 20h8v1.5H8z"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6z"/>',
     eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="3"/>',
     book: '<path d="M5 4h10a4 4 0 0 1 4 4v12H9a4 4 0 0 1-4-4z"/>',
@@ -375,6 +376,7 @@
   var SIDER = {
     '': { titel: 'Overblik', fn: pageOverblik },
     'profil': { titel: 'Min profil', fn: pageProfil },
+    'tv': { titel: 'TV', fn: pageTv },
     'admin/bestillinger': { titel: 'Bestillinger', fn: pageAdminBestillinger, admin: true },
     'admin/brugere': { titel: 'Brugere', fn: pageAdminBrugere, admin: true },
     'admin/konkurrencer': { titel: 'Konkurrencer', fn: pageAdminKonkurrencer, admin: true },
@@ -403,6 +405,8 @@
       return;
     }
     var indhold = side.fn();
+    // TV i fuld skærm: menuer skjules (hele siden er i fuld skærm, så den bliver der, når siden tegnes igen)
+    document.documentElement.classList.toggle('tv-fuld', !!document.fullscreenElement && side === SIDER.tv);
     app.innerHTML = S.me.admin ? adminShell(indhold) : brugerShell(indhold);
     document.title = side.titel + ' · Webshoppen';
     visLukket();
@@ -414,7 +418,7 @@
     var bar = ui.visSom ? '<div class="vis-som-bar">' + ico('eye') + '<span>Du ser siden som <b>' + esc(me.navn) + '</b> · ' + esc(me.gruppe) + ' · kun visning</span>' +
       '<button class="btn sm" data-act="vis-som-slut">Tilbage til admin</button></div>' : '';
     return bar + '<header class="top"><div class="top-in">' + logo() +
-      '<nav class="tabs">' + navLink('', '', 'Overblik') + navLink('profil', '', 'Min profil') + '</nav>' +
+      '<nav class="tabs">' + navLink('', '', 'Overblik') + navLink('profil', '', 'Min profil') + navLink('tv', '', 'TV') + '</nav>' +
       '<div class="top-r">' +
       '<button class="icon-btn" data-act="theme" title="Skift tema" aria-label="Skift tema">' + ico('sun') + '</button>' +
       '<div class="me-menu"><button class="me-btn" data-act="me-menu" aria-haspopup="true" title="' + esc(me.navn) + '">' + avatar(me) + '</button>' +
@@ -443,6 +447,7 @@
       navLink('admin/regler', 'book', 'Regler') +
       navLink('admin/posteringer', 'list', 'Posteringer') +
       navLink('admin/feedback', 'chat', 'Feedback', nyFb ? '<span class="badge">' + nyFb + '</span>' : '') +
+      navLink('tv', 'tv', 'TV') +
       '<a role="button" tabindex="0" class="nav-vis" data-act="vis-som" title="Vis som medarbejder">' + ico('eye') + '<span>Vis som medarbejder</span></a></nav>' +
       '<div class="side-foot">' +
       '<div class="me">' + avatar(me) + '<div class="who"><b>' + esc(fornavn(me.navn)) + '</b><small>Admin</small></div>' +
@@ -620,6 +625,41 @@
       '<div class="maal-ide"><span>💡 Har du en idé til hvad vi skal lave næste gang?</span><button class="btn sm" data-act="forslag" data-type="praemie">' + ico('send') + 'Send forslag</button></div></div>' +
       (sidste ? '<h3 class="maal-sub">Resultat for ' + MAANEDER[(nu.getMonth() + 11) % 12] + '</h3><div class="card maal-liste">' + maalPraemie(f.sidste.praemie, true) + sidste + '</div>' : '') + '</section>';
   }
+
+  // TV: fælles mål i stort format til skærmen på kontoret (kan castes fra Chrome). Fuld skærm skjuler menuerne,
+  // tallene hentes igen hvert 5. minut (tvTimer), og skærmen holdes tændt (Wake Lock), mens den står i fuld skærm.
+  function pageTv() {
+    var f = S.faellesMaal || { maal: [], sidste: { maal: [] } };
+    var nu = new Date(S.nu);
+    var slut = !f.maal.length && f.sidste.maal.length;
+    var mIdx = slut ? (nu.getMonth() + 11) % 12 : nu.getMonth();
+    var aar = slut && nu.getMonth() === 0 ? nu.getFullYear() - 1 : nu.getFullYear();
+    var mNavn = MAANEDER[mIdx];
+    var maal = slut ? f.sidste.maal : f.maal;
+    var hentet = new Date(ui.tvHentet || Date.now());
+    var kl = ('0' + hentet.getHours()).slice(-2) + ':' + ('0' + hentet.getMinutes()).slice(-2);
+    var fuld = !!document.fullscreenElement;
+    return '<div class="tv">' +
+      '<div class="tv-head"><div><span class="tv-eyebrow">Fælles mål</span><h1>' + cap(mNavn) + ' ' + aar + '</h1></div>' +
+      '<div class="tv-r"><span class="tv-opd">' + (slut ? 'Resultat · nye mål på vej' : 'Afgøres 1. ' + MAANEDER[(mIdx + 1) % 12]) + ' · opdateret ' + kl + '</span>' +
+      '<button class="btn tv-knap" data-act="tv-fuld">' + (fuld ? 'Afslut fuld skærm' : '⛶ Fuld skærm') + '</button></div></div>' +
+      (maal.length
+        ? maalPraemie(slut ? f.sidste.praemie : f.praemie, slut, mNavn).replace('maal-praemie', 'maal-praemie stor') +
+          '<div class="card maal-liste tv-liste">' + maal.map(function (m) { return maalRaekke(m, slut); }).join('') + '</div>'
+        : '<div class="card"><div class="empty">Ingen fælles mål for ' + mNavn + ' endnu.</div></div>') +
+      '</div>';
+  }
+  // Nye tal hvert 5. minut, mens TV-siden er åben (synken i backend kører hver time)
+  setInterval(function () {
+    if (route() !== 'tv' || !S || document.hidden) return;
+    refresh().then(function () { ui.tvHentet = Date.now(); render(); }).catch(function () {});
+  }, 5 * 60 * 1000);
+  var tvLaas = null;
+  document.addEventListener('fullscreenchange', function () {
+    if (document.fullscreenElement && navigator.wakeLock) navigator.wakeLock.request('screen').then(function (l) { tvLaas = l; }).catch(function () {});
+    if (!document.fullscreenElement && tvLaas) { tvLaas.release().catch(function () {}); tvLaas = null; }
+    render();
+  });
 
   // "Andet?"-række med én hvid knap, der sender et forslag direkte til admin
   function forslagRaekke(billede, navn, undertekst, type, kan) {
@@ -1541,6 +1581,10 @@
       case 'open-nav': document.getElementById('shell').classList.add('open'); break;
       case 'close-nav': document.getElementById('shell').classList.remove('open'); break;
       case 'close': case 'modal-bg': closeModal(); break;
+      case 'tv-fuld':
+        if (document.fullscreenElement) document.exitFullscreen().catch(function () {});
+        else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () { toast('Fuld skærm virker ikke her', 'Brug browserens egen fuld skærm (Ctrl+Cmd+F).', true); });
+        break;
 
       case 'koeb': openKoeb(t.dataset.id, false); break;
       case 'giv': openKoeb(t.dataset.id, true); break;

@@ -898,3 +898,49 @@ tr.afregnet td { color: var(--muted); }
 .synk-fejl ul { margin: 2px 0; padding-left: 18px; }
 .synk-fejl small { color: var(--muted); }
 .page-head .chips { align-items: center; }
+
+/* ---------- TV: fælles mål på skærmen på kontoret ---------- */
+.tv-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin: 4px 0 18px; }
+.tv-eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--brand-2); }
+.tv-head h1 { margin: 2px 0 0; font-size: 34px; font-weight: 900; letter-spacing: -.01em; }
+.tv-r { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: flex-end; }
+.tv-opd { color: var(--muted); font-size: 14px; white-space: nowrap; }
+.tv .maal-praemie.stor { padding: 26px 28px; }
+.tv .maal-praemie.stor .mp-txt b { font-size: 32px; }
+.tv .maal-row { grid-template-columns: 300px minmax(0, 1fr) 64px 36px; padding: 18px 0; }
+.tv .maal-row .bar-big { max-width: none; height: 40px; }
+.tv .maal-txt b { font-size: 18px; }
+.tv .maal-pct { font-size: 18px; }
+.tv .maal-ikon { width: 36px; height: 36px; font-size: 18px; }
+
+/* Fuld skærm: menuerne skjules, og alt skaleres efter skærmens bredde, så det kan læses på afstand */
+html.tv-fuld .top, html.tv-fuld .side, html.tv-fuld .scrim, html.tv-fuld .vis-som-bar, html.tv-fuld .vedl-bar { display: none; }
+html.tv-fuld .shell { display: block; }
+html.tv-fuld .main { padding: 4vh 4vw; }
+html.tv-fuld .wrap { max-width: none; }
+html.tv-fuld .tv { min-height: 92vh; display: flex; flex-direction: column; justify-content: center; gap: 2.2vh; }
+html.tv-fuld .tv-head { margin: 0; }
+html.tv-fuld .tv-eyebrow { font-size: 1.1vw; }
+html.tv-fuld .tv-head h1 { font-size: 3.6vw; }
+html.tv-fuld .tv-opd { font-size: 1.1vw; }
+html.tv-fuld .tv-knap { opacity: .35; }
+html.tv-fuld .tv-knap:hover { opacity: 1; }
+html.tv-fuld .tv .maal-praemie.stor { margin: 0; padding: 3vh 2.4vw; gap: 2vw; border-radius: 1.4vw; }
+html.tv-fuld .tv .maal-praemie.stor .mp-ikon { width: 5.5vw; height: 5.5vw; font-size: 3vw; border-radius: 1.2vw; }
+html.tv-fuld .tv .maal-praemie.stor .mp-ikon .coin { width: 3vw; height: 3vw; }
+html.tv-fuld .tv .maal-praemie.stor .mp-eyebrow { font-size: .9vw; }
+html.tv-fuld .tv .maal-praemie.stor .mp-txt small { font-size: 1.3vw; }
+html.tv-fuld .tv .maal-praemie.stor .mp-txt b { font-size: 3vw; }
+html.tv-fuld .tv .maal-praemie.stor .tag { font-size: 1.2vw; padding: .6vh 1vw; }
+html.tv-fuld .tv-liste { padding: 1vh 2vw; border-radius: 1.4vw; }
+html.tv-fuld .tv .maal-row { grid-template-columns: 26vw minmax(0, 1fr) 6vw 3vw; gap: 2vw; padding: 2.4vh 0; }
+html.tv-fuld .tv .maal-txt b { font-size: 1.8vw; }
+html.tv-fuld .tv .maal-txt small { font-size: 1.1vw; }
+html.tv-fuld .tv .maal-row .bar-big { height: 5vh; border-radius: 1vw; }
+html.tv-fuld .tv .bar-label { font-size: 1.2vw; padding: 0 1vw; }
+html.tv-fuld .tv .maal-pct { font-size: 1.8vw; }
+html.tv-fuld .tv .maal-ikon { width: 2.8vw; height: 2.8vw; font-size: 1.4vw; }
+@media (max-width: 760px) {
+  .tv-head { flex-direction: column; align-items: flex-start; }
+  .tv .maal-row { grid-template-columns: minmax(0, 1fr) 44px 30px; }
+}
