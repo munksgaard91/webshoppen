@@ -54,7 +54,7 @@ Den rigtige brugerliste ligger i **`brugere.local.csv`** i repo-mappen på den p
   - **Ingen `boot` efter `gaver_set`, `admin_forslag_laest` og `admin_sync`** (`UDEN_BOOT_` i Code.gs) – browseren bruger den ikke.
   - **Chat/mail sendes efter låsen:** `env.notify` lægger i en kø (`KOE_`), som `doPost` tømmer efter `releaseLock()` – og kun hvis handlingen lykkedes (fejl tømmer køen). Triggere (`env_(true)`) sender direkte som før.
   - **Varm cache:** ny trigger `varmCache` hvert 5. minut genopfrisker `teambudget` (fremmed ark) og `fravaer` (kalender) i CacheService med 11 min levetid, så ingen bruger venter på dem. Mangler triggeren, læses de ved behov som før. `installerTrigger` sletter gamle triggere først (ingen dubletter).
-  - **Måling:** svaret fra backend har `ms: { start, handling, boot, ialt }` (ms efter login-tjek, selve handlingen, forsiden bagefter, i alt). `api()` skriver det med `console.debug` (Chrome: konsol → niveau "Verbose").
+  - **Måling:** svaret fra backend har `ms: { start, handling, boot, ialt }` (ms efter login-tjek, selve handlingen, forsiden bagefter, i alt). `api()` skriver det med `console.info` (konsollen, filtrér på "webshoppen").
   - **Hjulet:** ved "Drej hjulet" tager tomgangsrullen fart med det samme (`ui.spinFart`, op til 2400 px/s), mens backend afgør gevinsten; `reelKoer` fortsætter fra den aktuelle position, når svaret kommer. Fejl → rullen falder tilbage til tomgang + fejl-toast. Ved "Reducer bevægelse" vises resultatet som før, når svaret kommer. Gevinsten afgøres stadig kun i backend.
   - **Login-siden:** `index.html` henter `accounts.google.com/gsi/client` allerede i `<head>` (kun når der ikke er en session i localStorage, id `gsi` – `loadGis` venter på det) + `preconnect` til script.google.com, script.googleusercontent.com og accounts.google.com. Montserrat-vægtene er uændrede – alle seks (400–900) bruges i app.css.
   - **Fravalgt indtil videre:** optimistisk UI (luk vinduet før svaret) og notifikationer via trigger-kø.
@@ -116,7 +116,7 @@ Config-nøgler: `VEDLIGEHOLD` (ja = "Shoppen opdateres"), `UDSOLGT`, `CLIENT_ID`
 7. **Webshoppen → Slå automatisk hentning til** (hentning hver time + månedsmail den 1. + teambudget/fravær holdes varme hvert 5. minut). Prøv mailen med **Send månedsmail nu (test)**.
 
 Ændringer i `shared/core.js`, `shared/sortiment.js` eller `Code.gs`: kopiér ind i Apps Script → **Administrer implementeringer → Rediger → Ny version** (URL bevares).
-Ændringer i assets: bump `?v=` i `index.html` (nu `v=217`).
+Ændringer i assets: bump `?v=` i `index.html` (nu `v=218`).
 Er arket allerede sat op, laver "Opsæt faner" kun nye faner – nye kolonner skal tilføjes sidst i hånden (tekstformat for `id`, `tid`, `maaned`, initialer).
 
 ## Test
