@@ -597,8 +597,9 @@
     var status = slut
       ? '<span class="tag ' + (p.opnaaet ? 'ok' : 'annulleret') + '">' + (p.opnaaet ? 'Nået 🎉' : 'Ikke nået') + '</span>'
       : '<span class="tag' + (p.opnaaet ? ' ok' : '') + '">' + p.naaet + ' af ' + p.ialt + ' på mål lige nu</span>';
-    return '<div class="maal-praemie' + (p.opnaaet ? ' opnaaet' : '') + '"><span class="mp-ikon" aria-hidden="true">' + praemieIkon(p.ikon, p.praemie) + '</span>' +
-      '<div class="mp-txt"><small>' + (slut ? p.naaet + ' af ' + p.ialt + ' mål nået · krav ' + p.antal : 'Hvis vi når ' + p.antal + ' ud af ' + p.ialt + ' mål i ' + mNavn) + '</small>' +
+    // Denne måneds belønning er et stort blåt kort (som saldo-kortet), så man kan se, hvad der er på spil
+    return '<div class="maal-praemie' + (slut ? '' : ' stor') + (p.opnaaet ? ' opnaaet' : '') + '"><span class="mp-ikon" aria-hidden="true">' + praemieIkon(p.ikon, p.praemie) + '</span>' +
+      '<div class="mp-txt">' + (slut ? '' : '<span class="mp-eyebrow">Holdets belønning</span>') + '<small>' + (slut ? p.naaet + ' af ' + p.ialt + ' mål nået · krav ' + p.antal : 'Hvis vi når ' + p.antal + ' ud af ' + p.ialt + ' mål i ' + mNavn) + '</small>' +
       '<b>' + hvad + '</b></div>' + status + '</div>';
   }
   function faellesMaal() {
@@ -757,20 +758,49 @@
 
   // Tomgang: JS flytter rullen langsomt og husker positionen (ui.idle), så den aldrig springer tilbage ved
   // opdateringer. Den kører også, når musen er over den, og er slået fra ved "Reducer bevægelse".
-  // Ved "Drej hjulet" sættes ui.spinFart: rullen tager fart med det samme (op til SPIN_FART), mens backend afgør
-  // gevinsten – og reelKoer tager over fra den aktuelle position, når svaret kommer. Ventetiden ses ikke.
+  // Ved "Drej hjulet" (spinStart) tager rullen fart med det samme, mens backend afgør gevinsten (ca. 2–5 sek. hos
+  // Google). Imens kører den på en lang række nye kort (ui.spin), så man aldrig ser de samme kort komme igen.
+  // Når svaret kommer, tager reelKoer over med samme fart og bremser ned på vinderen.
   var IDLE_FART = 75; // px pr. sekund
-  var SPIN_FART = 2400, SPIN_ACC = 3000; // px/sek. og px/sek² under opstarten
+  var SPIN_FART = 1400, SPIN_ACC = 2800; // px/sek. og px/sek² mens vi venter på backend
+  var STOP_TID = 5; // sek. fra svaret kommer, til rullen står stille
+  function spinStart() {
+    var spor = document.getElementById('reel');
+    if (!spor || !ui.reelStartKort || ui.reel || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    // Samme kort som nu (tomgangens dobbelte række) + nye bagved – det synlige skifter ikke
+    var kort = ui.reelStartKort.concat(ui.reelStartKort);
+    spinFlere(kort, 120);
+    ui.spin = { kort: kort, x: ui.idleOffset || 0, fart: IDLE_FART };
+    spor.classList.remove('tomgang');
+    spor.innerHTML = kort.map(reelKort).join('');
+  }
+  function spinFlere(kort, n) {
+    var felter = S.hjul.felter;
+    for (var i = 0; i < n; i++) kort.push(reelTraek(felter, kort.slice(-2)));
+  }
+  function spinStop() {
+    ui.spin = null;
+    ui.reel = null;
+  }
   function idleLoop(ts) {
     var spor = document.getElementById('reel');
     var sidst = ui.idleTs || ts;
     ui.idleTs = ts;
-    if (spor && spor.classList.contains('tomgang') && ui.reelStartKort) {
-      var dt = Math.min(100, ts - sidst) / 1000;
-      var fart = IDLE_FART;
-      if (ui.spinFart) fart = ui.spinFart = Math.min(SPIN_FART, ui.spinFart + SPIN_ACC * dt);
+    var dt = Math.min(100, ts - sidst) / 1000;
+    if (spor && ui.spin && !ui.spin.stopper) {
+      var sp = ui.spin;
+      sp.fart = Math.min(SPIN_FART, sp.fart + SPIN_ACC * dt);
+      sp.x += dt * sp.fart;
+      // Venter vi længe, fyldes der flere kort på
+      if ((sp.x + 2000) / KORT_B > sp.kort.length) {
+        var fra = sp.kort.length;
+        spinFlere(sp.kort, 60);
+        spor.insertAdjacentHTML('beforeend', sp.kort.slice(fra).map(reelKort).join(''));
+      }
+      spor.style.transform = 'translateX(' + (-sp.x).toFixed(1) + 'px)';
+    } else if (spor && spor.classList.contains('tomgang') && ui.reelStartKort) {
       var periode = ui.reelStartKort.length * KORT_B;
-      ui.idleOffset = ((ui.idleOffset || 0) + dt * fart) % periode;
+      ui.idleOffset = ((ui.idleOffset || 0) + dt * IDLE_FART) % periode;
       spor.style.transform = 'translateX(' + (-ui.idleOffset).toFixed(1) + 'px)';
     }
     requestAnimationFrame(idleLoop);
@@ -812,10 +842,56 @@
   }
 
   // Bygger en ny rulle med vinderen på plads nr. VINDER og animerer den ind under markøren
+  // Rullen kører allerede (spinStart): kortene, man kan se, bliver stående, og vinderen lægges ind længere fremme.
+  // Bremsningen starter med præcis den fart, rullen har, så der ikke er noget hop, og varer STOP_TID sek.
+  function reelBrems(res, vinder, faerdig) {
+    var box = document.getElementById('reel-box'), spor = document.getElementById('reel');
+    var sp = ui.spin, felter = S.hjul.felter;
+    sp.stopper = true;
+    var bredde = box.clientWidth;
+    var v = Math.max(sp.fart, 600);
+    // En bremsekurve, der starter med ca. 2,8 gange gennemsnitsfarten, ser naturlig ud
+    var D = v * STOP_TID / 2.8;
+    var foersteFri = Math.ceil((sp.x + bredde) / KORT_B) + 1; // første kort, man ikke kan se endnu
+    var VINDER = Math.max(foersteFri + 3, Math.round((sp.x + D + bredde / 2 - 60) / KORT_B));
+    var kort = sp.kort.slice(0, foersteFri);
+    for (var i = kort.length; i < VINDER + 6; i++) {
+      var naer = i >= VINDER - 2 && i <= VINDER + 2 && i !== VINDER;
+      kort.push(i === VINDER ? vinder : reelTraek(felter, kort.slice(-2).concat(naer ? [vinder] : [])));
+    }
+    var html = kort.map(reelKort).join('');
+    var jitter = (Math.random() - 0.5) * 70;
+    var slut = -(VINDER * KORT_B + 60 - bredde / 2 + jitter);
+    var forbi = slut - (14 + Math.random() * 16);
+    var x0 = -sp.x, laengde = x0 - forbi;
+    // Kurvens start-hældning = fart × tid ÷ strækning → samme fart som lige før
+    var y1 = Math.min(1, 0.2 * v * STOP_TID / laengde);
+    ui.reel = { html: html, x: slut };
+    ui.spin = null;
+    spor.style.transition = 'none';
+    spor.innerHTML = html;
+    spor.style.transform = 'translateX(' + x0.toFixed(1) + 'px)';
+    void spor.offsetWidth;
+    box.classList.remove('stoppet');
+    spor.style.transition = 'transform ' + STOP_TID + 's cubic-bezier(.2,' + y1.toFixed(3) + ',.25,1)';
+    spor.style.transform = 'translateX(' + forbi + 'px)';
+    setTimeout(function () {
+      spor.style.transition = 'transform .5s ease-in-out';
+      spor.style.transform = 'translateX(' + slut + 'px)';
+    }, STOP_TID * 1000 + 50);
+    setTimeout(function () {
+      var k = spor.children[VINDER];
+      if (k) k.classList.add('vinder');
+      box.classList.add('stoppet');
+      setTimeout(faerdig, 900);
+    }, STOP_TID * 1000 + 600);
+  }
+
   function reelKoer(res, faerdig) {
     var box = document.getElementById('reel-box'), spor = document.getElementById('reel');
     var felter = S.hjul.felter;
     var vinder = felter.filter(function (f) { return f.id === res.id; })[0] || res;
+    if (ui.spin && spor && box) return reelBrems(res, vinder, faerdig);
     // Start med præcis de kort, der står nu (tomgang), så rullen fortsætter flydende fra hvor den er
     var startKort = ui.reel ? [] : (ui.reelStartKort || []).concat(ui.reelStartKort || []);
     var x0 = ui.reel ? 0 : -(ui.idleOffset || 0);
@@ -1510,16 +1586,15 @@
         // Rullen tager fart med det samme (tomgangen speedes op), så ventetiden på backend ikke ses.
         // Gevinsten afgøres stadig kun i backend – reelKoer lægger den ind, når svaret kommer.
         // Ved "Reducer bevægelse" kører tomgangen ikke, og resultatet vises som før, når svaret kommer.
-        if (!ui.reel) ui.spinFart = IDLE_FART;
+        spinStart();
         // Er købet stadig undervejs, venter drejet på det (fejler købet, stopper rullen – fejlen er allerede vist)
         (ui.koeb || Promise.resolve(true)).then(function (koebt) {
-          if (!koebt) { ui.spinFart = null; ui.spinning = false; render(); return; }
+          if (!koebt) { spinStop(); ui.spinning = false; render(); return; }
           return api('spin').then(function (res) {
-            ui.spinFart = null;
             reelKoer(res, function () { ui.spinning = false; visGevinst(res); refresh(); });
           });
         }).catch(function (e) {
-          ui.spinFart = null; ui.spinning = false; busy(t, false); render();
+          spinStop(); ui.spinning = false; busy(t, false); render();
           if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true);
         });
         break;
