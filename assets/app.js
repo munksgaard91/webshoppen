@@ -150,12 +150,14 @@
   };
   function ico(n) { return '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' + IKON[n] + '</svg>'; }
 
-  function toast(titel, tekst, fejl) {
+  // bliv = står, indtil den fjernes (fx "Sender …", mens backend arbejder)
+  function toast(titel, tekst, fejl, bliv) {
     var el = document.createElement('div');
     el.className = 'toast' + (fejl ? ' err' : '');
     el.innerHTML = esc(titel) + (tekst ? '<small>' + esc(tekst) + '</small>' : '');
     document.getElementById('toasts').appendChild(el);
-    setTimeout(function () { el.remove(); }, fejl ? 6000 : 4000);
+    if (!bliv) setTimeout(function () { el.remove(); }, fejl ? 6000 : 4000);
+    return el;
   }
 
   // ---------- API ----------
@@ -229,7 +231,12 @@
     friskBoot = null;
     var p = frisk ? Promise.resolve(frisk)
       : A && S && S.me.admin ? hentBoot() : api('state').then(function (s) { return { state: s, admin: null }; });
-    return p.then(function (b) { S = b.state; if (b.admin) A = b.admin; gemCache(); render(); });
+    return p.then(function (b) {
+      S = b.state; if (b.admin) A = b.admin; gemCache();
+      // Handlinger, der stadig er undervejs, lægges oven på (ellers kunne et svar fra et tidligere kald skjule dem)
+      afventer.forEach(function (f) { f(); });
+      if (!ui.spinning) render();
+    });
   }
 
   // ---------- Login ----------
@@ -1243,6 +1250,46 @@
     });
   }
 
+  // Hvert kald til Apps Script tager ca. 2 sek. (Googles opstart), så vinduer lukker med det samme, og handlingen
+  // gemmes i baggrunden med "Sender …". ret() kan vise resultatet med det samme (fx din stemme). Afviser backend
+  // handlingen, vises fejlen, og de rigtige tal hentes igen. Saldo, lager og stemmer afgøres stadig kun i backend.
+  // Visninger fra handlinger, der endnu ikke er bekræftet af backend (refresh lægger dem oven på nye tal)
+  var afventer = [];
+  function venter(ret) { if (ret) afventer.push(ret); return function () { var i = afventer.indexOf(ret); if (i >= 0) afventer.splice(i, 1); }; }
+  function iBaggrunden(action, data, ok, okTekst, ret) {
+    var fejl = function (e) {
+      if (e.code === 'TOKEN_EXPIRED' || e.code === 'NOT_REGISTERED') return;
+      toast('Det gik ikke', e.message, true);
+      if (e.code !== 'VIS_SOM') refresh().catch(function () {});
+    };
+    if (ui.visSom) return fejl({ code: 'VIS_SOM', message: 'Kun visning – intet bliver gemt.' });
+    closeModal();
+    if (ret) { ret(); render(); }
+    var faerdig = venter(ret);
+    var sender = toast('Sender …', '', false, true);
+    return api(action, data).then(function (res) {
+      faerdig(); sender.remove();
+      if (ok) toast(ok, okTekst);
+      return refresh();
+    }).catch(function (e) { faerdig(); sender.remove(); fejl(e); });
+  }
+  // Admin-knapper (Udleveret, Udsolgt, Sendt til RAB): skifter med det samme, gemmes i baggrunden, rulles tilbage ved fejl
+  function skiftStraks(action, data, ret, ok) {
+    if (ui.visSom) return toast('Det gik ikke', 'Kun visning – intet bliver gemt.', true);
+    ret();
+    render();
+    var faerdig = venter(ret);
+    api(action, data).then(function () {
+      faerdig();
+      if (ok) toast(ok);
+      return refresh();
+    }).catch(function (e) {
+      faerdig();
+      if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true);
+      refresh().catch(function () {});
+    });
+  }
+
   var koebState = null;
   function openKoeb(vareId, gave) {
     var v = S.menu.filter(function (x) { return x.id === vareId; })[0];
@@ -1334,7 +1381,7 @@
       case 'forslag-ok': {
         var ft = val('f-tekst').trim();
         if (ft.length < 5) { toast('Skriv dit forslag', '', true); break; }
-        submit(t, 'forslag', { type: val('f-type'), tekst: ft }, val('f-type') === 'feedback' ? 'Tak for din feedback!' : 'Tak! Dit forslag er sendt');
+        iBaggrunden('forslag', { type: val('f-type'), tekst: ft }, val('f-type') === 'feedback' ? 'Tak for din feedback!' : 'Tak! Dit forslag er sendt');
         break;
       }
       case 'regler-boks':
@@ -1395,7 +1442,10 @@
         break;
       }
       case 'afregnet':
-        submit(t, 'admin_afregnet', { maaned: t.dataset.m, sendt: t.dataset.s === '1' }, t.dataset.s === '1' ? 'Markeret som sendt til RAB' : 'Markering fjernet');
+        var amk = t.dataset.m, as = t.dataset.s === '1', atid = as ? new Date().toISOString() : '';
+        skiftStraks('admin_afregnet', { maaned: amk, sendt: as }, function () {
+          (A.opgoerelse || []).forEach(function (o) { if (o.maaned === amk) { o.sendt = as; o.sendtTid = atid; } });
+        }, as ? 'Markeret som sendt til RAB' : 'Markering fjernet');
         break;
       case 'post-flere': ui.postVis = (ui.postVis || 25) + 25; render(); break;
       case 'bsort': {
@@ -1430,13 +1480,28 @@
         break;
       }
       case 'koeb-drej-ok':
-        busy(t, true);
-        api('koeb_drej').then(function () {
-          ui.reel = null;
-          closeModal();
-          toast('Drej købt', 'Hjulet er låst op. Tryk på Drej hjulet.');
-          return refresh();
-        }).catch(function (e) { busy(t, false); if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true); });
+        // Drej-knappen låses op med det samme; købet gemmes i baggrunden (ui.koeb). Trykker man Drej, før købet er
+        // bekræftet, kører rullen allerede, og drejet sendes først, når købet er gået igennem. Saldoen trækkes kun i backend.
+        if (ui.visSom) { toast('Det gik ikke', 'Kun visning – intet bliver gemt.', true); break; }
+        closeModal();
+        ui.reel = null;
+        var laasOp = function () { S.hjul.klar = 1; };
+        laasOp();
+        render();
+        var koebFaerdig = venter(laasOp);
+        ui.koeb = api('koeb_drej').then(function () {
+          koebFaerdig();
+          ui.koeb = null;
+          if (!ui.spinning) refresh().catch(function () {});
+          return true;
+        }, function (e) {
+          koebFaerdig();
+          ui.koeb = null;
+          S.hjul.klar = 0;
+          if (!ui.spinning) render();
+          if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true);
+          return false;
+        });
         break;
       case 'spin': {
         if (ui.spinning) break;
@@ -1446,11 +1511,15 @@
         // Gevinsten afgøres stadig kun i backend – reelKoer lægger den ind, når svaret kommer.
         // Ved "Reducer bevægelse" kører tomgangen ikke, og resultatet vises som før, når svaret kommer.
         if (!ui.reel) ui.spinFart = IDLE_FART;
-        api('spin').then(function (res) {
-          ui.spinFart = null;
-          reelKoer(res, function () { ui.spinning = false; visGevinst(res); refresh(); });
+        // Er købet stadig undervejs, venter drejet på det (fejler købet, stopper rullen – fejlen er allerede vist)
+        (ui.koeb || Promise.resolve(true)).then(function (koebt) {
+          if (!koebt) { ui.spinFart = null; ui.spinning = false; render(); return; }
+          return api('spin').then(function (res) {
+            ui.spinFart = null;
+            reelKoer(res, function () { ui.spinning = false; visGevinst(res); refresh(); });
+          });
         }).catch(function (e) {
-          ui.spinFart = null; ui.spinning = false; busy(t, false);
+          ui.spinFart = null; ui.spinning = false; busy(t, false); render();
           if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true);
         });
         break;
@@ -1458,7 +1527,7 @@
       case 'koeb-ok': {
         var k = koebState;
         var forud = S.shop && !S.shop.aaben;
-        submit(t, 'bestil', { vareId: k.vare.id, variant: k.variant, oenske: val('koeb-oenske'), til: k.gave ? k.til : '' },
+        iBaggrunden('bestil', { vareId: k.vare.id, variant: k.variant, oenske: val('koeb-oenske'), til: k.gave ? k.til : '' },
           forud ? (k.gave ? 'Din donation er forudbestilt 🎁' : k.vare.navn + ' er forudbestilt') : (k.gave ? 'Din donation er sendt 🎁' : k.vare.navn + ' er bestilt'),
           forud ? 'Leveres når shoppen åbner igen.' : 'Personlig levering, forvent lidt ventetid.');
         break;
@@ -1482,8 +1551,10 @@
           }
         }
         if (t.dataset.ok) closeModal();
-        busy(t, true);
-        api('admin_bestilling', { id: t.dataset.id, status: t.dataset.s }).then(refresh).catch(function (e) { busy(t, false); toast('Det gik ikke', e.message, true); });
+        var bid = t.dataset.id, nyStatus = t.dataset.s;
+        skiftStraks('admin_bestilling', { id: bid, status: nyStatus }, function () {
+          A.bestillinger.forEach(function (x) { if (x.id === bid) x.status = nyStatus; });
+        });
         break;
       }
       case 'ny-bruger': openBruger(''); break;
@@ -1506,7 +1577,14 @@
       case 'vedl':
         submit(t, 'admin_vedligehold', { lukket: t.dataset.l === '1' }, t.dataset.l === '1' ? 'Shoppen er lukket' : 'Shoppen er åben igen');
         break;
-      case 'udsolgt': submit(t, 'admin_udsolgt', { vareId: t.dataset.id, udsolgt: t.dataset.u === '1' }, t.dataset.u === '1' ? 'Markeret som udsolgt' : 'På lager igen'); break;
+      case 'udsolgt': {
+        // Slås op ved hvert kald – refresh lægger ændringen oven på nye tal (nye objekter)
+        var uid = t.dataset.id, ud = t.dataset.u === '1';
+        skiftStraks('admin_udsolgt', { vareId: uid, udsolgt: ud }, function () {
+          S.menu.forEach(function (x) { if (x.id === uid) x.udsolgt = ud; });
+        }, ud ? 'Markeret som udsolgt' : 'På lager igen');
+        break;
+      }
       case 'gave': openGave(t.dataset.ini); break;
       case 'gave-mode': gaveState.vare = t.dataset.v === '1'; renderGave(); break;
       case 'gave-forslag':
@@ -1516,7 +1594,7 @@
       case 'gave-ok': {
         var gd = { initialer: gaveState.u.initialer, besked: val('g-besked') };
         if (gaveState.vare) gd.vareId = val('g-vare'); else gd.beloeb = val('g-beloeb');
-        submit(t, 'admin_gave', gd, 'Gave givet 🎁', gaveState.vare ? 'Den står under Bestillinger.' : fornavn(gaveState.u.navn) + ' har fået ' + wc(gd.beloeb) + '.');
+        iBaggrunden('admin_gave', gd, 'Gave givet 🎁', gaveState.vare ? 'Den står under Bestillinger.' : fornavn(gaveState.u.navn) + ' har fået ' + wc(gd.beloeb) + '.');
         break;
       }
       case 'stem': {
@@ -1534,8 +1612,12 @@
       }
       case 'stem-ok':
         if (!ui.stemKlar) break;
-        submit(t, 'stem', ui.stemKlar, 'Tak for din stemme');
+        var sk = ui.stemKlar;
         ui.stemKlar = null;
+        iBaggrunden('stem', sk, 'Tak for din stemme', '', function () {
+          var u = S.kolleger.filter(function (x) { return x.initialer === sk.til; })[0] || {};
+          S.mdk.minStemme = { initialer: sk.til, navn: u.navn || sk.til, begrundelse: sk.begrundelse };
+        });
         break;
       case 'afsloer': {
         var af = A.mdk.afsloer, afM = MAANEDER[Number(af.maaned.slice(5)) - 1];
@@ -1591,10 +1673,10 @@
         break;
       }
       case 'maal-praemie-ok':
-        submit(t, 'admin_maal_praemie', { praemie: val('maal-praemie'), antal: val('maal-antal'), ikon: val('maal-ikon') }, 'Belønning gemt');
+        iBaggrunden('admin_maal_praemie', { praemie: val('maal-praemie'), antal: val('maal-antal'), ikon: val('maal-ikon') }, 'Belønning gemt');
         break;
       case 'mdk-praemie-ok':
-        submit(t, 'admin_mdk_praemie', { praemie: val('mdk-praemie'), ikon: val('mdk-ikon') }, 'Præmie gemt');
+        iBaggrunden('admin_mdk_praemie', { praemie: val('mdk-praemie'), ikon: val('mdk-ikon') }, 'Præmie gemt');
         break;
       case 'sync':
         busy(t, true);
