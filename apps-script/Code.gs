@@ -23,47 +23,66 @@ function doGet() {
   return ContentService.createTextOutput('Webshoppen API kører.');
 }
 
+// Handlinger, hvor browseren ikke bruger den friske forside i svaret (den opdaterer selv) – så sparer vi at regne den ud
+var UDEN_BOOT_ = { gaver_set: 1, admin_forslag_laest: 1, admin_sync: 1 };
+
 function doPost(e) {
-  var out;
+  var out, t0 = Date.now(), ms = {};
   try {
     var req = JSON.parse(e.postData.contents);
+    // Alle faner hentes i ét kald (Sheets-tjenesten), i stedet for 2–3 kald pr. fane. Virker også uden – så læses fane for fane.
+    SheetDB.preload();
     var conf = cfg_();
     var profil = verificer_(req.token, conf);
     var me = Core.resolveUser(SheetDB, profil, liste_(conf.ADMIN_EMAILS));
-    var data, boot;
+    ms.start = Date.now() - t0;
+    var data, boot, t1 = Date.now();
     if (req.action === 'login') {
       // Kun et Google-login kan give en ny nøgle – ellers kunne en nøgle fornyes i det uendelige
       if (String(req.token).indexOf('ws1.') === 0) throw Core.err('TOKEN_EXPIRED', 'Log ind med Google.');
       // Google-login tjekkes én gang (ovenfor) – derefter bruger browseren Webshoppens egen nøgle i 30 dage.
       // Forsiden sendes med, så login kun koster ét kald.
       data = { token: udstedNoegle_(profil), boot: Core.handle(SheetDB, me, 'boot', {}, env_()) };
+      ms.handling = Date.now() - t1;
     } else if (Core.skriver(req.action)) {
       var lock = LockService.getScriptLock();
       try { lock.waitLock(20000); } catch (e) { throw Core.err('BUSY', 'Shoppen er travl lige nu – prøv igen om lidt.'); }
       try {
+        // Friske tal under låsen (saldo-tjekket skal ske på det, der står i arket lige nu)
         SheetDB.nulstil();
+        SheetDB.preload();
         data = Core.handle(SheetDB, me, req.action, req.data, env_());
         SpreadsheetApp.flush();
       } finally {
         lock.releaseLock();
       }
+      ms.handling = Date.now() - t1;
+      // Chat/mail sendes først nu, uden for låsen – og kun fordi handlingen lykkedes (ellers er køen tømt i catch)
+      sendKoe_();
       // Den friske forside sendes med, så browseren ikke skal lave et kald mere bagefter (hvert kald koster en opstart).
       // Ikke efter admin_sync – synken læser og skriver uden om SheetDB's cache.
-      if (req.action !== 'admin_sync') {
+      if (!UDEN_BOOT_[req.action]) {
+        var t2 = Date.now();
         try { boot = Core.handle(SheetDB, me, 'boot', {}, env_()); } catch (x) { console.error('Boot efter handling fejlede', x); }
+        ms.boot = Date.now() - t2;
       }
     } else {
       data = Core.handle(SheetDB, me, req.action, req.data, env_());
+      ms.handling = Date.now() - t1;
     }
     out = { ok: true, data: data };
     if (boot) out.boot = boot;
   } catch (err) {
+    KOE_ = [];
     // Fejl fra core (med kode) er beskeder til brugeren. Andre fejl er interne: fuld tekst i loggen og til admin,
     // en kort dansk besked til medarbejdere (ingen fanenavne m.m.)
     var erAdmin = !!(typeof me !== 'undefined' && me && me.admin);
     out = { ok: false, code: err.code || 'ERROR', error: err.code || erAdmin ? String(err.message || err) : 'Noget gik galt – prøv igen.' };
     if (!err.code) console.error(err);
   }
+  // Tidsforbrug i backend (ms) – browseren skriver det i konsollen, så ventetid kan måles uden at gætte
+  ms.ialt = Date.now() - t0;
+  out.ms = ms;
   return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -135,16 +154,24 @@ function verificer_(token, conf) {
 
 // ---------- Miljø til Core ----------
 
-function env_() {
+// I doPost lægges beskeder i en kø og sendes efter låsen (sendKoe_) – Chat og mail tager 0,3–1,5 sek., som andre
+// ellers ville vente på. Triggere (synk, månedsmail) sender direkte, da der ikke er nogen kø at tømme bagefter.
+var KOE_ = [];
+function env_(direkte) {
   return {
     now: function () { return new Date(); },
     uuid: function () { return Utilities.getUuid().slice(0, 8); },
-    notify: notify_,
+    notify: direkte ? notify_ : function (b) { KOE_.push(b); },
     teambudget: teambudget_,
     shop: shopStatus_,
     sync: syncOptjening,
     synkStatus: synkStatus_
   };
+}
+function sendKoe_() {
+  var koe = KOE_;
+  KOE_ = [];
+  koe.forEach(notify_);
 }
 
 // ---------- Status for den timelige hentning ----------
@@ -205,11 +232,14 @@ function notify_(b) {
   }
 }
 
-function teambudget_() {
+// Teambudget og fravær ligger i CacheService. Triggeren varmCache (hvert 5. min) genopfrisker dem med 11 min levetid,
+// så ingen bruger rammer et tomt cache og venter på det fremmede ark/kalenderen. Mangler triggeren, læses de ved behov som før.
+var CACHE_TTL_ = 660;
+function teambudget_(tving) {
   var conf = cfg_();
   if (!conf.TEAMBUDGET_ARK_ID || !(conf.TEAMBUDGET_BUDGET_CELLE || conf.TEAMBUDGET_REST_CELLE)) return null;
   var cache = CacheService.getScriptCache();
-  var hit = cache.get('teambudget');
+  var hit = tving ? null : cache.get('teambudget');
   if (hit) return JSON.parse(hit);
   try {
     var ark = SpreadsheetApp.openById(conf.TEAMBUDGET_ARK_ID);
@@ -218,12 +248,19 @@ function teambudget_() {
     // Viser arket allerede, hvad der er tilbage (fx "Balance"), bruges TEAMBUDGET_REST_CELLE i stedet for budget − brugt
     var rest = conf.TEAMBUDGET_REST_CELLE ? celle(conf.TEAMBUDGET_REST_CELLE) : celle(conf.TEAMBUDGET_BUDGET_CELLE) - brugt;
     var tb = { budget: rest + brugt, brugt: brugt, rest: rest, saeson: conf.TEAMBUDGET_SAESON || '' };
-    cache.put('teambudget', JSON.stringify(tb), 300);
+    cache.put('teambudget', JSON.stringify(tb), CACHE_TTL_);
     return tb;
   } catch (e) {
     console.error('Teambudget kunne ikke læses', e);
     return null;
   }
+}
+
+// Trigger hvert 5. minut: holder teambudget og fravær varme i cachen. Fejler den, læser forespørgslerne selv som før.
+function varmCache() {
+  SheetDB.nulstil(true);
+  try { teambudget_(true); } catch (e) { console.error('varmCache teambudget', e); }
+  try { fravaer_(cfg_(), true); } catch (e) { console.error('varmCache fravaer', e); }
 }
 
 // ---------- Åbningstid og fravær ----------
@@ -243,9 +280,9 @@ function shopStatus_() {
 
 // Tjekker kalenderen (som scriptet kører som = admin) for "Ikke til stede" lige nu.
 // Returnerer tekst om hvornår der åbnes igen, eller '' hvis ingen fravær.
-function fravaer_(conf) {
+function fravaer_(conf, tving) {
   var cache = CacheService.getScriptCache();
-  var hit = cache.get('fravaer');
+  var hit = tving ? null : cache.get('fravaer');
   if (hit !== null) return hit;
   var res = '';
   try {
@@ -264,7 +301,7 @@ function fravaer_(conf) {
   } catch (e) {
     console.error('Kalender kunne ikke læses', e);
   }
-  cache.put('fravaer', res, 300);
+  cache.put('fravaer', res, CACHE_TTL_);
   return res;
 }
 
@@ -285,7 +322,7 @@ function syncOptjening(opts) {
   var fejl = [], res, raa = {};
   try {
     // Kildearkene læses FØR låsen (det kan tage op til 20 sek.), så bestillinger ikke venter imens
-    SheetDB.nulstil();
+    SheetDB.nulstil(true);
     // OPTJENING_FRA er en måned (2026-11) eller en dato (2026-11-17 / 17-11-2026 = lanceringsdagen). Rækker før tælles ikke.
     var fraV = String(cfg_().OPTJENING_FRA || '').trim();
     var fraDato = dato_(fraV);
@@ -323,8 +360,8 @@ function syncOptjening(opts) {
     var lock = LockService.getScriptLock();
     try { lock.waitLock(30000); } catch (e) { throw new Error('Shoppen var optaget – prøver igen ved næste hentning'); }
     try {
-      SheetDB.nulstil();
-      res = Core.applyEarnings(SheetDB, kilder, env_(), fraMaaned, { genberegn: genberegn });
+      SheetDB.nulstil(true);
+      res = Core.applyEarnings(SheetDB, kilder, env_(true), fraMaaned, { genberegn: genberegn });
       SpreadsheetApp.flush();
     } finally {
       lock.releaseLock();
@@ -414,21 +451,24 @@ function clickupAntal_(conf, liste, status) {
 }
 
 function installerTrigger() {
+  // Gamle triggere fjernes først, så der aldrig bliver dubletter
   ScriptApp.getProjectTriggers().forEach(function (t) {
-    if (['syncOptjening', 'maanedsmail'].indexOf(t.getHandlerFunction()) >= 0) ScriptApp.deleteTrigger(t);
+    if (['syncOptjening', 'maanedsmail', 'varmCache'].indexOf(t.getHandlerFunction()) >= 0) ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger('syncOptjening').timeBased().everyHours(1).create();
   ScriptApp.newTrigger('maanedsmail').timeBased().onMonthDay(1).atHour(7).create();
-  SpreadsheetApp.getActive().toast('Optjening hentes hver time, og månedsmailen sendes den 1. kl. 7–8.');
+  ScriptApp.newTrigger('varmCache').timeBased().everyMinutes(5).create();
+  varmCache();
+  SpreadsheetApp.getActive().toast('Optjening hentes hver time, månedsmailen sendes den 1. kl. 7–8, og teambudget/fravær holdes varme hvert 5. minut.');
 }
 
 // Månedsmail til admin den 1.: opgørelse til RAB + påmindelser (fælles mål, præmie, Afslør). Til NOTIFIKATION_MAIL eller første admin.
 function maanedsmail() {
-  SheetDB.nulstil();
+  SheetDB.nulstil(true);
   var conf = cfg_();
   var til = conf.NOTIFIKATION_MAIL || liste_(conf.ADMIN_EMAILS)[0];
   if (!til) return;
-  var r = Core.maanedsrapport(SheetDB, env_());
+  var r = Core.maanedsrapport(SheetDB, env_(true));
   MailApp.sendEmail(til, 'Webshoppen · ' + r.emne, r.tekst + (conf.SIDE_URL ? '\n\n' + conf.SIDE_URL : ''));
 }
 
@@ -461,66 +501,150 @@ function dato_(v) {
 // Kolonner der altid skal være tekst. Ellers laver Sheets "2026-11" om til en dato og id'er som "12e45678" om til tal.
 var TEKST_KOL_ = ['id', 'tid', 'maaned', 'initialer', 'fra', 'til', 'ref', 'email', 'sheet_id', 'noegle', 'vaerdi', 'gaver_set', 'afsloeret', 'vinder'];
 
+// Hvert kald til SpreadsheetApp (getSheetByName, getValues, setValue …) koster 50–150 ms. Derfor:
+//  - preload() henter alle faner i ét kald via Sheets-tjenesten (Advanced Sheets Service, v4). Er den ikke slået til,
+//    eller fejler kaldet, læses fane for fane som før (all).
+//  - insert/update skriver med så få kald som muligt (én formatering + én setValues pr. række/sammenhængende felter).
+//  - nulstil() beholder Config og Brugere (de indgår ikke i saldo-tjekket); nulstil(true) smider alt væk (synk, triggere).
 var SheetDB = (function () {
-  var cache = {};
+  var cache = {}; // fane -> { headers, rows, sh (hentes først ved skrivning), sidste (sidste række med data), max (antal rækker i arket) }
+  var SS_ = null, TITLER_ = null;
+  function ss() { return SS_ || (SS_ = SpreadsheetApp.getActive()); }
   function ark(navn) {
-    var sh = SpreadsheetApp.getActive().getSheetByName(navn);
+    var sh = ss().getSheetByName(navn);
     if (!sh) throw new Error('Fanen "' + navn + '" mangler. Kør Webshoppen → Opsæt faner.');
     return sh;
   }
-  function all(navn) {
-    if (cache[navn]) return cache[navn].rows;
-    var sh = ark(navn);
-    var values = sh.getDataRange().getValues();
-    var headers = values[0].map(String);
+  function fane(c, navn) { return c.sh || (c.sh = ark(navn)); }
+  // Rækker (som getValues giver dem) -> objekter. Korte rækker fyldes op til headers, tomme rækker springes over.
+  function laes(navn, values, sh) {
+    var headers = (values[0] || []).map(String);
     var rows = [];
     for (var i = 1; i < values.length; i++) {
-      if (values[i].every(function (c) { return c === ''; })) continue;
+      var r = values[i].slice();
+      while (r.length < headers.length) r.push('');
+      if (r.every(function (c) { return c === ''; })) continue;
       var o = { _row: i + 1 };
       headers.forEach(function (h, j) {
-        var v = values[i][j];
+        var v = r[j];
         // En måned gemt som dato (ældre rækker fra appendRow) læses tilbage som "YYYY-MM"
         if (v instanceof Date && h === 'maaned') o[h] = Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM');
         else o[h] = v instanceof Date ? v.toISOString() : v;
       });
       rows.push(o);
     }
-    cache[navn] = { headers: headers, rows: rows, sh: sh };
+    cache[navn] = { headers: headers, rows: rows, sh: sh || null, sidste: rows.length ? rows[rows.length - 1]._row : 1, max: 0 };
     return rows;
+  }
+  function all(navn) {
+    if (cache[navn]) return cache[navn].rows;
+    var sh = ark(navn);
+    return laes(navn, sh.getDataRange().getValues(), sh);
+  }
+  // Sheets-tjenesten giver datoer som serienumre (dage siden 30-12-1899 i arkets tidszone). Samme Date som getValues giver.
+  function serialDato(n) {
+    var u = new Date(Date.UTC(1899, 11, 30) + Math.round(n * 864e5));
+    return new Date(u.getUTCFullYear(), u.getUTCMonth(), u.getUTCDate(), u.getUTCHours(), u.getUTCMinutes(), u.getUTCSeconds(), u.getUTCMilliseconds());
+  }
+  // Alle faner i ét kald (to med listen over faner, så en manglende fane ikke vælter hele kaldet).
+  // Datoer kan kun skelnes fra tal på kolonnen: i datokolonnerne (DATO_KOL) er et tal mellem 20000 og 100000 en dato
+  // (år 1954–2173), som ældre rækker kan have. Id'er og Config-værdier røres aldrig, selv om de er blevet til tal.
+  var DATO_KOL = ['tid', 'maaned', 'gaver_set', 'afsloeret', 'laest'];
+  function preload() {
+    if (typeof Sheets === 'undefined') return false;
+    try {
+      var id = ss().getId();
+      if (!TITLER_) {
+        TITLER_ = {};
+        (Sheets.Spreadsheets.get(id, { fields: 'sheets.properties.title' }).sheets || []).forEach(function (s) { TITLER_[s.properties.title] = 1; });
+      }
+      var navne = Object.keys(Core.TABELLER).filter(function (n) { return TITLER_[n]; });
+      if (!navne.length) return false;
+      var res = Sheets.Spreadsheets.Values.batchGet(id, {
+        ranges: navne.map(function (n) { return "'" + n.replace(/'/g, "''") + "'"; }),
+        valueRenderOption: 'UNFORMATTED_VALUE', dateTimeRenderOption: 'SERIAL_NUMBER'
+      });
+      var vr = res.valueRanges || [];
+      if (vr.length !== navne.length) throw new Error('Fik ' + vr.length + ' faner, bad om ' + navne.length);
+      navne.forEach(function (navn, k) {
+        var values = vr[k].values || [];
+        var headers = (values[0] || []).map(String);
+        for (var i = 1; i < values.length; i++) {
+          for (var j = 0; j < values[i].length; j++) {
+            var v = values[i][j];
+            if (typeof v === 'number' && v > 20000 && v < 100000 && DATO_KOL.indexOf(headers[j]) >= 0) values[i][j] = serialDato(v);
+          }
+        }
+        laes(navn, values, null);
+      });
+      return true;
+    } catch (e) {
+      console.error('Preload via Sheets-tjenesten fejlede – læser fane for fane', e);
+      return false;
+    }
   }
   // Tekst, der starter med = + - @, ville Sheets regne ud som en formel (fx "=Config!B18" i en begrundelse).
   // Et ' foran gør den til ren tekst; det gemmes ikke i cellen og kommer ikke med ud igen.
   function sikker(v) { return typeof v === 'string' && /^[=+\-@]/.test(v) ? "'" + v : v; }
   function mangler(navn, k) { return new Error('Kolonnen "' + k + '" mangler i fanen ' + navn + '. Kør Webshoppen → Opsæt faner.'); }
+  // 0 -> "A", 26 -> "AA"
+  function bogstav(i) { var s = ''; i++; while (i > 0) { var r = (i - 1) % 26; s = String.fromCharCode(65 + r) + s; i = (i - r - 1) / 26; } return s; }
+  // Tekstformat på tekstkolonnerne i én omgang (RangeList = ét kald). Ellers laver Sheets "2026-11" om til en dato.
+  function tekstFormat(sh, nr, kolonner) {
+    if (!kolonner.length) return;
+    sh.getRangeList(kolonner.map(function (i) { return bogstav(i) + nr; })).setNumberFormat('@');
+  }
   function insert(navn, obj) {
     all(navn);
     var c = cache[navn];
     Object.keys(obj).forEach(function (k) {
       if (c.headers.indexOf(k) < 0 && obj[k] !== undefined && obj[k] !== '') throw mangler(navn, k);
     });
-    // Ikke appendRow – den ignorerer tekstformatet. Tekstkolonnerne formateres som tekst, før rækken skrives.
-    var nr = c.sh.getLastRow() + 1;
-    if (nr > c.sh.getMaxRows()) c.sh.insertRowsAfter(c.sh.getMaxRows(), 100);
-    c.headers.forEach(function (h, i) { if (TEKST_KOL_.indexOf(h) >= 0) c.sh.getRange(nr, i + 1).setNumberFormat('@'); });
-    c.sh.getRange(nr, 1, 1, c.headers.length).setValues([c.headers.map(function (h) { return obj[h] === undefined ? '' : sikker(obj[h]); })]);
+    var sh = fane(c, navn);
+    // Ikke appendRow – den ignorerer tekstformatet. Rækkenummeret kendes fra cachen (sidste række med data).
+    var nr = c.sidste + 1;
+    if (!c.max) c.max = sh.getMaxRows();
+    if (nr > c.max) { sh.insertRowsAfter(c.max, 100); c.max += 100; }
+    var tekstKol = [];
+    c.headers.forEach(function (h, i) { if (TEKST_KOL_.indexOf(h) >= 0) tekstKol.push(i); });
+    tekstFormat(sh, nr, tekstKol);
+    sh.getRange(nr, 1, 1, c.headers.length).setValues([c.headers.map(function (h) { return obj[h] === undefined ? '' : sikker(obj[h]); })]);
     var row = { _row: nr };
     c.headers.forEach(function (h) { row[h] = obj[h] === undefined ? '' : obj[h]; });
     c.rows.push(row);
+    c.sidste = nr;
     return row;
   }
   function update(navn, row, patch) {
     all(navn);
     var c = cache[navn];
+    var kol = [];
     Object.keys(patch).forEach(function (k) {
       var col = c.headers.indexOf(k);
       if (col < 0) throw mangler(navn, k);
-      var celle = c.sh.getRange(row._row, col + 1);
-      if (TEKST_KOL_.indexOf(k) >= 0) celle.setNumberFormat('@');
-      celle.setValue(sikker(patch[k]));
-      row[k] = patch[k];
+      kol.push(col);
     });
+    if (!kol.length) return;
+    var sh = fane(c, navn);
+    kol.sort(function (a, b) { return a - b; });
+    tekstFormat(sh, row._row, kol.filter(function (i) { return TEKST_KOL_.indexOf(c.headers[i]) >= 0; }));
+    // Felter ved siden af hinanden skrives i ét kald; andre celler røres ikke
+    for (var s = 0; s < kol.length;) {
+      var e = s;
+      while (e + 1 < kol.length && kol[e + 1] === kol[e] + 1) e++;
+      var vaerdier = kol.slice(s, e + 1).map(function (i) { return sikker(patch[c.headers[i]]); });
+      sh.getRange(row._row, kol[s] + 1, 1, vaerdier.length).setValues([vaerdier]);
+      s = e + 1;
+    }
+    Object.keys(patch).forEach(function (k) { row[k] = patch[k]; });
   }
-  return { all: all, insert: insert, update: update, nulstil: function () { cache = {}; CFG_ = null; } };
+  function nulstil(alt) {
+    var behold = {};
+    if (!alt) ['Config', 'Brugere'].forEach(function (n) { if (cache[n]) behold[n] = cache[n]; });
+    cache = behold;
+    CFG_ = null;
+  }
+  return { all: all, insert: insert, update: update, preload: preload, nulstil: nulstil };
 })();
 
 // ---------- Opsætning ----------

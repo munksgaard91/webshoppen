@@ -183,6 +183,8 @@
           try { return JSON.parse(t); } catch (x) { var e = new Error('Forbindelsen fejlede – prøv igen om lidt.'); e.code = 'NET'; throw e; }
         });
       }).then(function (j) {
+        // Backend sender sit tidsforbrug med (ms: start/handling/boot/ialt) – ses i konsollen under "Verbose"
+        if (j.ms) console.debug('[webshoppen] ' + action + ' · backend ' + j.ms.ialt + ' ms', j.ms);
         if (!j.ok) { var e = new Error(j.error); e.code = j.code; throw e; }
         if (j.boot) friskBoot = j.boot;
         return j.data;
@@ -297,12 +299,17 @@
 
   function loadGis(cb) {
     if (window.google && google.accounts && google.accounts.id) return cb();
-    var s = document.createElement('script');
-    s.src = 'https://accounts.google.com/gsi/client';
-    s.async = true;
-    s.onload = cb;
-    s.onerror = function () { toast('Google-login kunne ikke hentes', 'Tjek din forbindelse og genindlæs.', true); };
-    document.head.appendChild(s);
+    // index.html sætter scriptet i gang allerede i <head>, når man ikke er logget ind – så ventes der bare på det
+    var s = document.getElementById('gsi');
+    if (!s) {
+      s = document.createElement('script');
+      s.id = 'gsi';
+      s.src = 'https://accounts.google.com/gsi/client';
+      s.async = true;
+      document.head.appendChild(s);
+    }
+    s.addEventListener('load', cb);
+    s.addEventListener('error', function () { toast('Google-login kunne ikke hentes', 'Tjek din forbindelse og genindlæs.', true); });
   }
 
   // Google-beviset (1 time) byttes til Webshoppens egen login-nøgle (30 dage), så man ikke ryger ud hver time
@@ -741,14 +748,20 @@
 
   // Tomgang: JS flytter rullen langsomt og husker positionen (ui.idle), så den aldrig springer tilbage ved
   // opdateringer. Den kører også, når musen er over den, og er slået fra ved "Reducer bevægelse".
+  // Ved "Drej hjulet" sættes ui.spinFart: rullen tager fart med det samme (op til SPIN_FART), mens backend afgør
+  // gevinsten – og reelKoer tager over fra den aktuelle position, når svaret kommer. Ventetiden ses ikke.
   var IDLE_FART = 75; // px pr. sekund
+  var SPIN_FART = 2400, SPIN_ACC = 3000; // px/sek. og px/sek² under opstarten
   function idleLoop(ts) {
     var spor = document.getElementById('reel');
     var sidst = ui.idleTs || ts;
     ui.idleTs = ts;
     if (spor && spor.classList.contains('tomgang') && ui.reelStartKort) {
+      var dt = Math.min(100, ts - sidst) / 1000;
+      var fart = IDLE_FART;
+      if (ui.spinFart) fart = ui.spinFart = Math.min(SPIN_FART, ui.spinFart + SPIN_ACC * dt);
       var periode = ui.reelStartKort.length * KORT_B;
-      ui.idleOffset = ((ui.idleOffset || 0) + Math.min(100, ts - sidst) / 1000 * IDLE_FART) % periode;
+      ui.idleOffset = ((ui.idleOffset || 0) + dt * fart) % periode;
       spor.style.transform = 'translateX(' + (-ui.idleOffset).toFixed(1) + 'px)';
     }
     requestAnimationFrame(idleLoop);
@@ -1427,10 +1440,15 @@
         if (ui.spinning) break;
         ui.spinning = true;
         busy(t, true);
+        // Rullen tager fart med det samme (tomgangen speedes op), så ventetiden på backend ikke ses.
+        // Gevinsten afgøres stadig kun i backend – reelKoer lægger den ind, når svaret kommer.
+        // Ved "Reducer bevægelse" kører tomgangen ikke, og resultatet vises som før, når svaret kommer.
+        if (!ui.reel) ui.spinFart = IDLE_FART;
         api('spin').then(function (res) {
+          ui.spinFart = null;
           reelKoer(res, function () { ui.spinning = false; visGevinst(res); refresh(); });
         }).catch(function (e) {
-          ui.spinning = false; busy(t, false);
+          ui.spinFart = null; ui.spinning = false; busy(t, false);
           if (e.code !== 'TOKEN_EXPIRED' && e.code !== 'NOT_REGISTERED') toast('Det gik ikke', e.message, true);
         });
         break;

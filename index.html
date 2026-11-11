@@ -8,10 +8,15 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleusercontent.com">
+  <link rel="preconnect" href="https://accounts.google.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/app.css?v=216">
+  <link rel="stylesheet" href="assets/app.css?v=217">
   <script>
     try { var t = localStorage.getItem('webshoppen-tema'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+    // Ikke logget ind: Google-login-scriptet hentes allerede nu, parallelt med app'en (app.js venter på det, id "gsi")
+    try { if (!localStorage.getItem('webshoppen-session')) { var g = document.createElement('script'); g.id = 'gsi'; g.src = 'https://accounts.google.com/gsi/client'; g.async = true; document.head.appendChild(g); } } catch (e) {}
   </script>
 </head>
 <body>
@@ -19,10 +24,10 @@
   <div id="modal-root"></div>
   <div id="toasts" aria-live="polite"></div>
 
-  <script src="assets/config.js?v=216"></script>
-  <script src="shared/sortiment.js?v=216"></script>
-  <script src="shared/core.js?v=216"></script>
-  <script src="assets/mock.js?v=216"></script>
-  <script src="assets/app.js?v=216"></script>
+  <script src="assets/config.js?v=217"></script>
+  <script src="shared/sortiment.js?v=217"></script>
+  <script src="shared/core.js?v=217"></script>
+  <script src="assets/mock.js?v=217"></script>
+  <script src="assets/app.js?v=217"></script>
 </body>
 </html>
