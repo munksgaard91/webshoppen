@@ -30,7 +30,7 @@ function doPost(e) {
     var conf = cfg_();
     var profil = verificer_(req.token, conf);
     var me = Core.resolveUser(SheetDB, profil, liste_(conf.ADMIN_EMAILS));
-    var data;
+    var data, boot;
     if (req.action === 'login') {
       // Kun et Google-login kan give en ny nøgle – ellers kunne en nøgle fornyes i det uendelige
       if (String(req.token).indexOf('ws1.') === 0) throw Core.err('TOKEN_EXPIRED', 'Log ind med Google.');
@@ -47,10 +47,16 @@ function doPost(e) {
       } finally {
         lock.releaseLock();
       }
+      // Den friske forside sendes med, så browseren ikke skal lave et kald mere bagefter (hvert kald koster en opstart).
+      // Ikke efter admin_sync – synken læser og skriver uden om SheetDB's cache.
+      if (req.action !== 'admin_sync') {
+        try { boot = Core.handle(SheetDB, me, 'boot', {}, env_()); } catch (x) { console.error('Boot efter handling fejlede', x); }
+      }
     } else {
       data = Core.handle(SheetDB, me, req.action, req.data, env_());
     }
     out = { ok: true, data: data };
+    if (boot) out.boot = boot;
   } catch (err) {
     // Fejl fra core (med kode) er beskeder til brugeren. Andre fejl er interne: fuld tekst i loggen og til admin,
     // en kort dansk besked til medarbejdere (ingen fanenavne m.m.)
@@ -452,6 +458,9 @@ function dato_(v) {
 
 // ---------- Sheet som database ----------
 
+// Kolonner der altid skal være tekst. Ellers laver Sheets "2026-11" om til en dato og id'er som "12e45678" om til tal.
+var TEKST_KOL_ = ['id', 'tid', 'maaned', 'initialer', 'fra', 'til', 'ref', 'email', 'sheet_id', 'noegle', 'vaerdi', 'gaver_set', 'afsloeret', 'vinder'];
+
 var SheetDB = (function () {
   var cache = {};
   function ark(navn) {
@@ -470,7 +479,9 @@ var SheetDB = (function () {
       var o = { _row: i + 1 };
       headers.forEach(function (h, j) {
         var v = values[i][j];
-        o[h] = v instanceof Date ? v.toISOString() : v;
+        // En måned gemt som dato (ældre rækker fra appendRow) læses tilbage som "YYYY-MM"
+        if (v instanceof Date && h === 'maaned') o[h] = Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM');
+        else o[h] = v instanceof Date ? v.toISOString() : v;
       });
       rows.push(o);
     }
@@ -487,8 +498,12 @@ var SheetDB = (function () {
     Object.keys(obj).forEach(function (k) {
       if (c.headers.indexOf(k) < 0 && obj[k] !== undefined && obj[k] !== '') throw mangler(navn, k);
     });
-    c.sh.appendRow(c.headers.map(function (h) { return obj[h] === undefined ? '' : sikker(obj[h]); }));
-    var row = { _row: c.sh.getLastRow() };
+    // Ikke appendRow – den ignorerer tekstformatet. Tekstkolonnerne formateres som tekst, før rækken skrives.
+    var nr = c.sh.getLastRow() + 1;
+    if (nr > c.sh.getMaxRows()) c.sh.insertRowsAfter(c.sh.getMaxRows(), 100);
+    c.headers.forEach(function (h, i) { if (TEKST_KOL_.indexOf(h) >= 0) c.sh.getRange(nr, i + 1).setNumberFormat('@'); });
+    c.sh.getRange(nr, 1, 1, c.headers.length).setValues([c.headers.map(function (h) { return obj[h] === undefined ? '' : sikker(obj[h]); })]);
+    var row = { _row: nr };
     c.headers.forEach(function (h) { row[h] = obj[h] === undefined ? '' : obj[h]; });
     c.rows.push(row);
     return row;
@@ -499,7 +514,9 @@ var SheetDB = (function () {
     Object.keys(patch).forEach(function (k) {
       var col = c.headers.indexOf(k);
       if (col < 0) throw mangler(navn, k);
-      c.sh.getRange(row._row, col + 1).setValue(sikker(patch[k]));
+      var celle = c.sh.getRange(row._row, col + 1);
+      if (TEKST_KOL_.indexOf(k) >= 0) celle.setNumberFormat('@');
+      celle.setValue(sikker(patch[k]));
       row[k] = patch[k];
     });
   }
@@ -510,7 +527,7 @@ var SheetDB = (function () {
 
 function opsaet() {
   var ss = SpreadsheetApp.getActive();
-  var tekstKol = ['id', 'tid', 'maaned', 'initialer', 'fra', 'til', 'ref', 'email', 'sheet_id', 'noegle', 'vaerdi', 'gaver_set', 'afsloeret', 'vinder'];
+  var tekstKol = TEKST_KOL_;
   Object.keys(Core.TABELLER).forEach(function (navn) {
     var headers = Core.TABELLER[navn];
     var sh = ss.getSheetByName(navn) || ss.insertSheet(navn);

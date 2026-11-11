@@ -785,6 +785,9 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 
 /* Admin-overblik */
 .start-tag { white-space: nowrap; }
+/* Knap der ligner tags ved siden af (Luk shoppen i admin-toppen) */
+.tag-btn { border: 0; font-family: inherit; line-height: inherit; cursor: pointer; }
+.tag-btn:hover { color: var(--text); background: var(--line-2); }
 .start-tag b { font-weight: 700; }
 .tag.ok { color: #1f7a4f; background: rgba(47, 163, 111, .12); }
 :root[data-theme="dark"] .tag.ok { color: #6fd4a4; }

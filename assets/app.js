@@ -160,8 +160,11 @@
 
   // ---------- API ----------
 
+  // Forsiden, som backend sendte med i svaret på den seneste handling (så refresh() ikke skal lave et kald mere)
+  var friskBoot = null;
   function api(action, data) {
     var p;
+    friskBoot = null;
     // "Vis som medarbejder" er kun visning: intet må gemmes som den medarbejder
     if (ui.visSom && action !== 'admin_vis_som') {
       var stop = new Error('Kun visning – intet bliver gemt.'); stop.code = 'VIS_SOM';
@@ -181,6 +184,7 @@
         });
       }).then(function (j) {
         if (!j.ok) { var e = new Error(j.error); e.code = j.code; throw e; }
+        if (j.boot) friskBoot = j.boot;
         return j.data;
       });
     }
@@ -217,7 +221,10 @@
   }
 
   function refresh() {
-    var p = A && S && S.me.admin ? hentBoot() : api('state').then(function (s) { return { state: s, admin: null }; });
+    var frisk = friskBoot;
+    friskBoot = null;
+    var p = frisk ? Promise.resolve(frisk)
+      : A && S && S.me.admin ? hentBoot() : api('state').then(function (s) { return { state: s, admin: null }; });
     return p.then(function (b) { S = b.state; if (b.admin) A = b.admin; gemCache(); render(); });
   }
 
@@ -1066,7 +1073,7 @@
 
     // Rækkefølge: det der skal klares (nye bestillinger) øverst, så økonomi, derefter resten
     var startTag = '<span class="tag start-tag" title="Alle bestillinger siden start (ikke annullerede) · 1 kr = 2 Webcoins">Brugt siden start: <b>' + wc(start) + '</b> ≈ ' + kr(start / 2) + '</span>';
-    return adminHead('Overblik', startTag + synkTag() + (S.vedligehold ? '' : '<button class="btn" data-act="vedl-spoerg">🛠️ Luk shoppen</button>')) + synkBanner() + '<div class="adm-first">' + best + '</div>' + stats +
+    return adminHead('Overblik', startTag + synkTag() + (S.vedligehold ? '' : '<button class="tag tag-btn" data-act="vedl-spoerg">❌ Luk shoppen</button>')) + synkBanner() + '<div class="adm-first">' + best + '</div>' + stats +
       '<div class="grid-2 top0 lige">' + ev + kollega + '</div>' +
       '<div class="adm-stak">' + opg + akt + '</div>';
   }

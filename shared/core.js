@@ -571,8 +571,8 @@ var Core = (function () {
     var idag = env.now().toDateString(), iDag = 0;
     try { db.all('Forslag').forEach(function (f) { if (ini(f.initialer) === me.initialer && new Date(str(f.tid)).toDateString() === idag) iDag++; }); } catch (e) { /* fanen mangler */ }
     if (iDag >= 5) throw err('BAD', 'Du har sendt mange forslag i dag – prøv igen i morgen.');
-    // Gemmes i fanen Forslag (Admin → Feedback). Mangler fanen i et ældre ark, sendes beskeden stadig som mail.
-    try { db.insert('Forslag', { id: env.uuid(), tid: env.now().toISOString(), initialer: me.initialer, type: type, tekst: tekst }); } catch (e) { /* fanen mangler */ }
+    // Gemmes i fanen Forslag (Admin → Feedback). Fejler det, får kollegaen en fejl – beskeden må ikke forsvinde i stilhed.
+    db.insert('Forslag', { id: env.uuid(), tid: env.now().toISOString(), initialer: me.initialer, type: type, tekst: tekst });
     if (type === 'feedback') {
       env.notify({ ikon: '💬', side: 'feedback', emne: 'Feedback på Webshoppen fra ' + me.navn, tekst: me.navn + ' (' + me.initialer + ') har feedback til Webshoppen:\n\n' + tekst });
       return { ok: true };
