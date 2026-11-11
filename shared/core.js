@@ -726,10 +726,13 @@ var Core = (function () {
       var k = maanedKey(b.tid);
       var o = m[k] = m[k] || { maaned: k, antal: 0, wc: 0, kr: 0, aabne: 0, varer: {} };
       var kr = num(b.kostpris);
+      // Ikke-udleverede tælles for alle varer (tjeklisten i månedsmailen)
+      if (str(b.status) === 'ny') o.aabne++;
+      // Opgørelsen til RAB tæller kun firmaets varer (kostpris > 0 – Sodavand, Monster). Teamkassens varer er betalt.
+      if (kr <= 0) return;
       o.antal++;
       o.wc += num(b.pris);
       o.kr += kr;
-      if (str(b.status) === 'ny') o.aabne++;
       var v = o.varer[str(b.vare)] = o.varer[str(b.vare)] || { navn: str(b.vare), antal: 0, kr: 0 };
       v.antal++;
       v.kr += kr;

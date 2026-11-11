@@ -319,6 +319,19 @@ t('afslør: præmien i Webcoins udbetales én gang og huskes, selv om ny præmie
   eq(r.udbetalt, 50);
   eq(data.Posteringer.filter(function (p) { return p.ref === 'mdk:2026-10'; }).length, 1);
 });
+t('opgørelse til RAB tæller kun varer med kostpris', function () {
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
+  var mk = Core.maanedKey(env.now());
+  var opg = function () { return Core.handle(db, adm, 'admin_state', {}, env).opgoerelse.filter(function (o) { return o.maaned === mk; })[0]; };
+  var foer = opg();
+  data.Bestillinger.push({ id: 'team1', tid: env.now().toISOString(), fra: 'BBB', til: 'BBB', vare: 'Mini Candybar', pris: 5, kostpris: 0, status: 'ny' });
+  var efter = opg();
+  eq(efter.antal, foer.antal, 'teamkassens vare tæller ikke som bestilling');
+  eq(efter.wc, foer.wc, 'teamkassens vare tæller ikke i Webcoins');
+  eq(efter.kr, foer.kr);
+  eq(efter.aabne, foer.aabne + 1, 'men står stadig som ikke udleveret');
+  data.Bestillinger = data.Bestillinger.filter(function (b) { return b.id !== 'team1'; });
+});
 t('afregning: admin krydser måned af som sendt til RAB', function () {
   var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
   var mk = Core.maanedKey(env.now());
