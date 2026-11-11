@@ -175,7 +175,8 @@ function gemSynkStatus_(fejl) {
   }
 }
 
-// b = { emne, tekst, ikon?, side? } – side er admin-siden linket peger på ('bestillinger', 'feedback' …, '' = Overblik)
+// b = { emne, tekst, ikon?, side?, kunChat? } – side er admin-siden linket peger på ('bestillinger', 'feedback' …, '' = Overblik)
+// kunChat (bestillinger, forudbestillinger, gaver, lykkehjul): ingen mail – medmindre CHAT_WEBHOOK mangler, så beskeden ikke forsvinder
 function notify_(b) {
   var conf = cfg_();
   var side = b.side === undefined ? 'bestillinger' : b.side;
@@ -189,7 +190,7 @@ function notify_(b) {
         payload: JSON.stringify({ text: ikon + ' *' + b.emne + '*\n' + b.tekst + (link ? '\n<' + link + '|Åbn i admin>' : '') })
       });
     }
-    if (conf.NOTIFIKATION_MAIL) {
+    if (conf.NOTIFIKATION_MAIL && !(b.kunChat && conf.CHAT_WEBHOOK)) {
       MailApp.sendEmail(conf.NOTIFIKATION_MAIL, 'Webshoppen · ' + ikon + ' ' + b.emne, b.tekst + url);
     }
   } catch (e) {

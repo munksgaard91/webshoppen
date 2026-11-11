@@ -478,7 +478,7 @@ var Core = (function () {
       });
     }
     env.notify({
-      ikon: gave ? '🎁' : '🛒', side: 'bestillinger',
+      ikon: gave ? '🎁' : '🛒', side: 'bestillinger', kunChat: true,
       emne: (forud ? 'Forudbestilling · ' : '') + (gave ? 'Gave: ' + vareNavn + ' til ' + modtager.navn : 'Bestilling: ' + vareNavn + ' til ' + me.navn),
       tekst: (gave
         ? me.navn + ' (' + me.initialer + ') giver ' + str(vare.ikon) + ' ' + vareNavn + ' til ' + modtager.navn + ' (' + modtager.initialer + ').'
@@ -709,6 +709,7 @@ var Core = (function () {
       besked = { side: '', emne: 'Hjulet: ingen gevinst til ' + me.navn, tekst: hvem + " har drejet lykkehjulet (Feelin' Lucky?) og vandt ingenting denne gang." };
     }
     besked.ikon = '🎰';
+    besked.kunChat = true;
     env.notify(besked);
     return { id: vinder.id, navn: vinder.navn, ikon: vinder.ikon, type: vinder.type, beloeb: vinder.beloeb };
   }

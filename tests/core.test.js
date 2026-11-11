@@ -65,6 +65,7 @@ t('bestil med variant', function () {
 t('én variant vælges automatisk', function () {
   Core.handle(db, A, 'bestil', { vareId: 'mon' }, env);
   eq(data.Bestillinger[1].vare, 'Monster · Hvid Monster');
+  eq(sidsteBesked.kunChat, true); // bestillinger kun i Chat
 });
 t('ønske gemmes kun på varer med ønske-felt', function () {
   Core.handle(db, A, 'bestil', { vareId: 'cola', oenske: 'Pepsi Max' }, env);
@@ -110,7 +111,7 @@ t('lykkehjul: vare, webcoins og intet', function () {
   tal = 0.9; Core.handle(db, B, 'spin', {}, env); foer -= 15;
   eq(saldo(B), foer - 45 + 25, 'saldo efter 3 drej');
   eq(data.Bestillinger.filter(function (b) { return b.vare === 'Hjulgevinst: Candybar'; }).length, 1);
-  beskeder = []; Core.handle(db, B, 'koeb_drej', {}, env); tal = 0.9; Core.handle(db, B, 'spin', {}, env); eq(sidsteBesked.ikon, '🎰'); foer -= 15;
+  beskeder = []; Core.handle(db, B, 'koeb_drej', {}, env); tal = 0.9; Core.handle(db, B, 'spin', {}, env); eq(sidsteBesked.ikon, '🎰'); eq(sidsteBesked.kunChat, true); foer -= 15;
   eq(beskeder.length, 1, 'besked ved ingen gevinst');
   eq(data.Spil.filter(function (x) { return x.status === 'drejet'; }).length, 5, 'alle drej registreret');
 });
@@ -357,6 +358,7 @@ t('forslag sendes til admin', function () {
   Core.handle(db, B, 'forslag', { type: 'feedback', tekst: 'Mørkt tema er fedt' }, env);
   eq(sidsteBesked.ikon, '💬');
   eq(sidsteBesked.side, 'feedback');
+  eq(sidsteBesked.kunChat, undefined); // feedback går stadig også på mail
   eq(beskeder[beskeder.length - 1], 'Feedback på Webshoppen fra Bo B');
   // Gemmes også, så admin kan se det under Feedback (nyeste først, med navn)
   var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
