@@ -175,7 +175,7 @@ function gemSynkStatus_(fejl) {
   }
 }
 
-// b = { emne, tekst, ikon?, side?, kunChat? } – side er admin-siden linket peger på ('bestillinger', 'feedback' …, '' = Overblik)
+// b = { emne, tekst, ikon?, side?, kunChat?, kort? } – side er admin-siden linket peger på ('bestillinger', 'feedback' …, '' = Overblik)
 // kunChat (bestillinger, forudbestillinger, gaver, lykkehjul): ingen mail – medmindre CHAT_WEBHOOK mangler, så beskeden ikke forsvinder
 function notify_(b) {
   var conf = cfg_();
@@ -183,11 +183,12 @@ function notify_(b) {
   var link = conf.SIDE_URL ? conf.SIDE_URL + '/#/' + (side ? 'admin/' + side : '') : '';
   var url = link ? '\n' + link : '';
   var ikon = b.ikon || '🛒';
+  var kort = b.kort === undefined ? b.tekst : b.kort; // kort linje til Chat (tom = kun overskrift + link)
   try {
     if (conf.CHAT_WEBHOOK) {
       UrlFetchApp.fetch(conf.CHAT_WEBHOOK, {
         method: 'post', contentType: 'application/json; charset=UTF-8', muteHttpExceptions: true,
-        payload: JSON.stringify({ text: ikon + ' *' + b.emne + '*\n' + b.tekst + (link ? '\n<' + link + '|Åbn i admin>' : '') })
+        payload: JSON.stringify({ text: ikon + ' *' + b.emne + '*' + (kort ? '\n' + kort : '') + (link ? '\n<' + link + '|Åbn i admin>' : '') })
       });
     }
     if (conf.NOTIFIKATION_MAIL && !(b.kunChat && conf.CHAT_WEBHOOK)) {

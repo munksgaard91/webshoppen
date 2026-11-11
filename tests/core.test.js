@@ -70,6 +70,7 @@ t('én variant vælges automatisk', function () {
 t('ønske gemmes kun på varer med ønske-felt', function () {
   Core.handle(db, A, 'bestil', { vareId: 'cola', oenske: 'Pepsi Max' }, env);
   eq(data.Bestillinger[data.Bestillinger.length - 1].oenske, 'Pepsi Max');
+  eq(sidsteBesked.kort, 'Ønske: Pepsi Max', 'kort Chat-linje med ønske');
   Core.handle(db, A, 'bestil', { vareId: 'mon', oenske: 'ignoreres' }, env);
   eq(data.Bestillinger[data.Bestillinger.length - 1].oenske, '', 'ingen ønske-felt på Monster');
   Core.handle(db, A, 'bestil', { vareId: 'soda', variant: 'Danskvand', oenske: 'ignoreres' }, env);
@@ -80,6 +81,8 @@ t('kommer snart kan ikke bestilles', function () {
 });
 t('gave til kollega + refusion trækkes fra donationer', function () {
   var r = Core.handle(db, A, 'bestil', { vareId: 'soda', variant: 'Pepsi Max', til: 'BBB' }, env);
+  eq(sidsteBesked.emne, 'Gave: Sodavand · Pepsi Max til Bo B fra ' + A.navn, 'gave-overskrift med afsender');
+  eq(sidsteBesked.kort, '', 'ingen ønske → kun overskrift og link i Chat');
   var st = Core.handle(db, A, 'state', {}, env).stats;
   eq(st.givet, 10); eq(st.givetAntal, 1);
   Core.handle(db, A, 'admin_bestilling', { id: r.id, status: 'annulleret' }, env);
