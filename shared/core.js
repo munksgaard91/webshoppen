@@ -521,6 +521,24 @@ var Core = (function () {
     try { db.all('Webkollega').forEach(function (r) { if (str(r.maaned).trim() === mk) row = r; }); } catch (e) { row = null; }
     return row;
   }
+  // Én række pr. måned (Webkollega, MaalPraemie): den nyeste overskrives, så en ny præmie altid gælder.
+  // Ældre dubletter (fx fra dengang en måned blev gemt som dato) tømmes; står der noget i dem, som den nyeste
+  // mangler (fx vinder/afsloeret), flyttes det over først, så intet går tabt.
+  function gemMaanedRaekke(db, tabel, mk, felter) {
+    var rows = db.all(tabel).filter(function (r) { return str(r.maaned).trim() === mk; });
+    if (!rows.length) { db.insert(tabel, Object.assign({ maaned: mk }, felter)); return; }
+    var behold = rows[rows.length - 1], patch = Object.assign({}, felter);
+    rows.slice(0, -1).forEach(function (r) {
+      var tom = {};
+      Object.keys(r).forEach(function (k) {
+        if (k === '_row') return;
+        if (!(k in felter) && str(r[k]).trim() && !str(behold[k]).trim() && patch[k] === undefined) patch[k] = r[k];
+        tom[k] = '';
+      });
+      db.update(tabel, r, tom);
+    });
+    db.update(tabel, behold, patch);
+  }
   // Ikon til en præmie/belønning: 'coin' (Webcoin-mønten) eller en kort emoji. Alt andet ignoreres.
   function rensIkon(v) {
     var t = str(v).trim();
@@ -606,9 +624,8 @@ var Core = (function () {
     var ikon = rensIkon(data.ikon);
     saetCfg(db, 'MDK_PRAEMIE_IKON', ikon);
     // Præmien gemmes også pr. måned, så sidste måneds præmie huskes, selv om en ny er sat før afsløringen
-    var row = mdkRaekke(db, mk);
     try {
-      if (row) db.update('Webkollega', row, { praemie: tekst, ikon: ikon }); else db.insert('Webkollega', { maaned: mk, praemie: tekst, vinder: '', afsloeret: '', ikon: ikon });
+      gemMaanedRaekke(db, 'Webkollega', mk, { praemie: tekst, ikon: ikon });
     } catch (e) { /* fanen mangler i et ældre ark – Config-præmien gælder stadig */ }
     return { ok: true };
   }
@@ -621,9 +638,7 @@ var Core = (function () {
     var mk = maanedKey(env.now());
     var ialt = faellesMaal(db, mk).length;
     if (antal < 1 || (ialt && antal > ialt)) throw err('BAD', 'Antal mål skal være mellem 1 og ' + (ialt || 1) + '.');
-    var row = maalPraemieRaekke(db, mk);
-    var ikon = rensIkon(data.ikon);
-    if (row) db.update('MaalPraemie', row, { antal: antal, praemie: tekst, ikon: ikon }); else db.insert('MaalPraemie', { maaned: mk, antal: antal, praemie: tekst, ikon: ikon });
+    gemMaanedRaekke(db, 'MaalPraemie', mk, { antal: antal, praemie: tekst, ikon: rensIkon(data.ikon) });
     return { ok: true };
   }
 

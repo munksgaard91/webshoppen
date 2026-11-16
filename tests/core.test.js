@@ -557,4 +557,28 @@ t('optjening pr. dato: satser med decimaler giver altid floor(antal × sats)', f
     data.Regler = data.Regler.filter(function (r) { return r.kilde !== x[0]; });
   });
 });
+t('præmie for måneden: ny præmie overskriver altid, dubletter ryddes, afsløret vinder bevares', function () {
+  var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
+  data.Maal = [{ maaned: '2026-11', navn: 'A', retning: 'over', graense: 1, nu: 0 }, { maaned: '2026-11', navn: 'B', retning: 'over', graense: 1, nu: 0 }];
+  data.MaalPraemie = [{ maaned: '2026-11', antal: 2, praemie: 'Escape Room', ikon: '' }, { maaned: '2026-11', antal: 2, praemie: 'Spisning', ikon: '🍴' }];
+  Core.handle(db, adm, 'admin_maal_praemie', { praemie: 'Bowling', antal: 1, ikon: '🎳' }, env);
+  var nov = data.MaalPraemie.filter(function (r) { return r.maaned === '2026-11'; });
+  eq(nov.length, 1, 'kun én række tilbage');
+  eq(nov[0].praemie, 'Bowling');
+  eq(Core.handle(db, B, 'state', {}, env).faellesMaal.praemie.praemie, 'Bowling');
+  Core.handle(db, adm, 'admin_maal_praemie', { praemie: 'Biograf', antal: 2, ikon: '' }, env);
+  eq(data.MaalPraemie.filter(function (r) { return r.maaned === '2026-11'; }).length, 1);
+  eq(Core.handle(db, B, 'state', {}, env).faellesMaal.praemie.praemie, 'Biograf');
+  data.Webkollega = (data.Webkollega || []).filter(function (r) { return r.maaned !== '2026-11'; });
+  data.Webkollega.push({ maaned: '2026-11', praemie: '20 Webcoins', vinder: 'AAA', afsloeret: '2026-11-02T08:00:00.000Z', ikon: '' });
+  data.Webkollega.push({ maaned: '2026-11', praemie: '30 Webcoins', vinder: '', afsloeret: '', ikon: 'coin' });
+  Core.handle(db, adm, 'admin_mdk_praemie', { praemie: '50 Webcoins', ikon: 'coin' }, env);
+  var wk = data.Webkollega.filter(function (r) { return r.maaned === '2026-11'; });
+  eq(wk.length, 1);
+  eq(wk[0].praemie, '50 Webcoins');
+  eq(wk[0].vinder, 'AAA', 'afsløret vinder flyttes med');
+  eq(!!wk[0].afsloeret, true);
+  data.Webkollega = data.Webkollega.filter(function (r) { return r.maaned !== '2026-11'; });
+  data.MaalPraemie = []; data.Maal = [];
+});
 print('OK: ' + ok + '  FEJL: ' + fejl);
