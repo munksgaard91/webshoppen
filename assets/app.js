@@ -50,6 +50,12 @@
     if (isNaN(d)) return '';
     return d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short' }) + ' · ' + d.toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
   }
+  // Optjening har kun en dato (fra kildearket), intet klokkeslæt
+  function postDato(p) {
+    if (p.type !== 'optjent') return dato(p.tid);
+    var d = new Date(p.tid);
+    return isNaN(d) ? '' : d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short' });
+  }
   function maanedLabel(key) {
     var p = String(key).split('-');
     return cap(MAANEDER[Number(p[1]) - 1] || '') + ' ' + p[0];
@@ -246,11 +252,13 @@
     var cache = !klar && laesCache();
     if (cache) {
       // Kan cachen ikke tegnes (fx fra en ældre version), smides den væk, og vi venter på backend i stedet
+      ui.fraCache = true; // den gemte side har gamle tidspunkter – ingen "ikke hentet siden"-advarsel, før de friske tal er her
       try { S = cache.state; A = cache.admin; render(); } catch (e) { store('webshoppen-cache', null); cache = null; S = null; A = null; }
     }
     if (!cache && !klar) app.innerHTML = '<div class="boot"><span class="spinner"></span></div>';
     (klar ? Promise.resolve(klar) : hentBoot()).then(function (b) {
       S = b.state; A = b.admin;
+      ui.fraCache = false;
       gemCache();
       render();
       if (!S.me.admin) visGaver();
@@ -1021,30 +1029,15 @@
       '<small class="num">' + st.gaverModtaget + ' modtaget</small></div>' +
       '</div>';
 
-    var faner = { bestillinger: 'Bestillinger', optjening: 'Optjening', aktivitet: 'Aktivitet' };
+    // Aktivitet = optjening og forbrug samlet: hver anmeldelse, sag, bestilling … på sin egen dato
+    var faner = { bestillinger: 'Bestillinger', aktivitet: 'Aktivitet' };
+    if (!faner[fane]) fane = 'aktivitet';
     var tabs = '<nav class="ptabs">' + Object.keys(faner).map(function (k) {
       return '<button class="' + (fane === k ? 'on' : '') + '" data-act="pfane" data-f="' + k + '">' + faner[k] + '</button>';
     }).join('') + '</nav>';
 
     var indhold;
-    if (fane === 'optjening') {
-      var maaneder = {};
-      S.historik.forEach(function (p) {
-        if (p.type !== 'optjent' || !p.beloeb) return;
-        var m = maaneder[p.maaned] = maaneder[p.maaned] || { maaned: p.maaned, total: 0, kilder: {} };
-        var kilde = String(p.tekst).split(' · ')[0];
-        m.total += p.beloeb;
-        m.kilder[kilde] = (m.kilder[kilde] || 0) + p.beloeb;
-      });
-      var mRows = Object.keys(maaneder).sort().reverse().map(function (k) { return maaneder[k]; });
-      var maxM = Math.max.apply(null, mRows.map(function (m) { return m.total; }).concat([1]));
-      indhold = mRows.length ? mRows.map(function (m) {
-        return '<div class="prow month-row"><div class="month-name"><b>' + esc(maanedLabel(m.maaned)) + '</b></div>' +
-          '<div class="row-main"><div class="bar"><i style="width:' + ((m.total / maxM) * 100).toFixed(0) + '%"></i></div>' +
-          '<div class="top3">' + Object.keys(m.kilder).map(function (k) { return '<span>' + esc(k) + ' <b class="num">' + wc(m.kilder[k]) + '</b></span>'; }).join('') + '</div></div>' +
-          '<span class="pamt plus num">+' + wc(m.total) + '</span></div>';
-      }).join('') : '<div class="empty">Intet optjent endnu.</div>';
-    } else if (fane === 'bestillinger') {
+    if (fane === 'bestillinger') {
       indhold = S.bestillinger.length ? S.bestillinger.map(function (b) {
         var tekst = b.fra === me.initialer
           ? (b.til !== b.fra ? b.vare + ' til ' + b.tilNavn : b.vare)
@@ -1064,11 +1057,14 @@
         grupper[grupper.length - 1].rows.push(p);
       });
       indhold = grupper.length ? grupper.map(function (g) {
-        return '<div class="pmonth">' + esc(cap(MAANEDER[Number(g.maaned.slice(5)) - 1] || '')) + ' ' + esc(g.maaned.slice(0, 4)) + '</div>' +
+        var ind = 0, ud = 0;
+        g.rows.forEach(function (p) { if (p.beloeb > 0) ind += p.beloeb; else ud -= p.beloeb; });
+        return '<div class="pmonth"><span>' + esc(cap(MAANEDER[Number(g.maaned.slice(5)) - 1] || '')) + ' ' + esc(g.maaned.slice(0, 4)) + '</span>' +
+          '<span class="pmonth-sum num">' + (ind ? '<span class="plus">+' + fmt(ind) + '</span>' : '') + (ud ? '<span class="minus">−' + fmt(ud) + '</span>' : '') + '</span></div>' +
           g.rows.map(function (p) {
             var a = AKT[p.type] || ['neutral', 'list'];
             return '<div class="prow"><span class="pico ' + a[0] + '">' + ico(a[1]) + '</span>' +
-              '<div class="row-main"><b>' + esc(p.tekst) + '</b><small>' + esc(TYPER[p.type] || p.type) + ' · ' + dato(p.tid) + '</small></div>' +
+              '<div class="row-main"><b>' + esc(p.tekst) + '</b><small>' + esc(TYPER[p.type] || p.type) + ' · ' + postDato(p) + '</small></div>' +
               '<span class="pamt num">' + (p.beloeb ? beloebCell(p.beloeb) : '<span class="zero">' + (p.type === 'gave_modtaget' ? 'Gave' : '–') + '</span>') + '</span></div>';
           }).join('');
       }).join('') : '<div class="empty">Ingen bevægelser endnu.</div>';
@@ -1134,7 +1130,7 @@
   }
   function synkBanner() {
     var st = A && A.synk;
-    if (!st || !st.tid) return '';
+    if (!st || !st.tid || ui.fraCache) return '';
     var gammel = Date.now() - new Date(st.tid).getTime() > 3 * 36e5;
     if (!(st.fejl || []).length && !gammel) return '';
     return '<div class="synk-fejl" role="alert"><b>⚠️ ' + ((st.fejl || []).length ? 'Hentning af tal fejlede ' + esc(dato(st.tid)) : 'Tallene er ikke hentet siden ' + esc(dato(st.tid))) + '</b>' +
@@ -1194,7 +1190,7 @@
 
     var akt = '<section class="card"><div class="card-head"><h2 class="card-title">Seneste aktivitet</h2><a class="link" href="#/admin/posteringer">Se alle</a></div>' +
       (A.posteringer.length ? '<div class="adm-list">' + A.posteringer.filter(function (p) { return p.type !== 'gave_modtaget'; }).slice(0, 6).map(function (p) {
-        return '<div class="adm-row"><div class="adm-who">' + pAvatar(p.initialer, p.initialer, 'mini-av md') + '<div class="adm-main"><b>' + esc(p.navn) + '</b><small class="faint">' + esc(TYPER[p.type] || p.type) + ' · ' + esc(p.tekst) + ' · ' + dato(p.tid) + '</small></div></div>' +
+        return '<div class="adm-row"><div class="adm-who">' + pAvatar(p.initialer, p.initialer, 'mini-av md') + '<div class="adm-main"><b>' + esc(p.navn) + '</b><small class="faint">' + esc(TYPER[p.type] || p.type) + ' · ' + esc(p.tekst) + ' · ' + postDato(p) + '</small></div></div>' +
           '<span class="num ' + (p.beloeb < 0 ? 'minus' : 'plus') + '">' + (p.beloeb > 0 ? '+' : '') + fmt(p.beloeb) + '</span></div>';
       }).join('') + '</div>' : '<div class="empty">Ingen aktivitet endnu.</div>') +
       '</section>';
@@ -1325,7 +1321,7 @@
       '<div class="muted num" style="font-size:13px;margin-bottom:8px">' + rows.length + ' posteringer · sum ' + wc(sum) + (rows.length > vist.length ? ' · viser de nyeste ' + vist.length : '') + '</div>' +
       (vist.length ? '<div class="table-wrap"><table><thead><tr><th>Tid</th><th>Person</th><th>Type</th><th>Tekst</th><th class="r">Beløb</th></tr></thead><tbody>' +
         vist.map(function (p) {
-          return '<tr><td class="faint">' + dato(p.tid) + '</td><td class="nowrap">' + pAvatar(p.initialer, p.initialer, 'mini-av') + esc(p.navn) + '</td><td><span class="tag">' + esc(TYPER[p.type] || p.type) + '</span></td><td>' + esc(p.tekst) + '</td><td class="r">' + beloebCell(p.beloeb) + '</td></tr>';
+          return '<tr><td class="faint">' + postDato(p) + '</td><td class="nowrap">' + pAvatar(p.initialer, p.initialer, 'mini-av') + esc(p.navn) + '</td><td><span class="tag">' + esc(TYPER[p.type] || p.type) + '</span></td><td>' + esc(p.tekst) + '</td><td class="r">' + beloebCell(p.beloeb) + '</td></tr>';
         }).join('') + '</tbody></table></div>' +
         (rows.length > vist.length ? '<div class="vis-flere"><button class="btn" data-act="post-flere">Vis flere</button></div>' : '') : '<div class="empty">Ingen posteringer.</div>') +
       '</section>';

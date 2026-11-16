@@ -176,9 +176,14 @@ t('klub-bonus: kun højeste klub, rykker op når tallet stiger', function () {
 });
 t('optjening: tjente Webcoins tages aldrig fra nogen, afsluttede måneder er låst', function () {
   data.Regler.push({ gruppe: 'Support', kilde: 'gammel', sats: 2, navn: '', fra: 0 });
-  var post = function (mk) { return data.Posteringer.filter(function (p) { return p.ref === 'optjent:gammel:' + mk + ':BBB'; })[0]; };
+  // Summen af enhederne (én pr. ting) for en måned
+  var post = function (mk) {
+    var r = data.Posteringer.filter(function (p) { return String(p.ref).indexOf('optjent:gammel:' + mk + ':BBB:') === 0; });
+    return r.length ? { beloeb: r.reduce(function (s, p) { return s + Number(p.beloeb); }, 0), antal: r.length } : undefined;
+  };
   Core.applyEarnings(db, { gammel: { 'BBB|2026-11': 5, 'BBB|2026-10': 5 } }, env);
   eq(post('2026-11').beloeb, 10);
+  eq(post('2026-11').antal, 5, 'én postering pr. ting');
   data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'gammel'; }); // regel fjernet
   Core.applyEarnings(db, { gammel: { 'BBB|2026-11': 5 } }, env);
   eq(post('2026-11').beloeb, 10); // beholdes
@@ -192,7 +197,43 @@ t('optjening: tjente Webcoins tages aldrig fra nogen, afsluttede måneder er lå
   eq(post('2026-11').beloeb, 20); // almindelig hentning sænker ikke
   Core.applyEarnings(db, { gammel: { 'BBB|2026-11': 5 } }, env, null, { genberegn: true });
   eq(post('2026-11').beloeb, 15); // genberegn gør
+  Core.applyEarnings(db, { gammel: { 'BBB|2026-11': 3 } }, env);
+  eq(post('2026-11').beloeb, 15, 'færre ting i kildearket tager intet fra nogen');
   data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'gammel'; });
+});
+t('optjening pr. dato: én postering pr. anmeldelse og pr. 10. tekst på den dato, den blev nået', function () {
+  data.Regler.push({ gruppe: 'Support', kilde: 'anm', sats: 20 });
+  data.Regler.push({ gruppe: 'Support', kilde: 'tekst', sats: 0.1 });
+  var kilder = { anm: { 'BBB|2026-11': 3 }, tekst: { 'BBB|2026-11': 25 } };
+  var dage = { anm: { 'BBB|2026-11': [['2026-11-12', 2], ['2026-11-04', 1]] }, tekst: { 'BBB|2026-11': [['2026-11-02', 6], ['2026-11-05', 6], ['2026-11-09', 13]] } };
+  Core.applyEarnings(db, kilder, env, null, { dage: dage });
+  var anm = data.Posteringer.filter(function (p) { return String(p.ref).indexOf('optjent:anm:2026-11:BBB:') === 0; });
+  eq(anm.length, 3);
+  eq(anm.map(function (p) { return Core.maanedKey(p.tid) + '|' + new Date(p.tid).getDate() + '|' + p.beloeb; }).join(','), '2026-11|4|20,2026-11|12|20,2026-11|12|20');
+  var tk = data.Posteringer.filter(function (p) { return String(p.ref).indexOf('optjent:tekst:2026-11:BBB:') === 0; });
+  eq(tk.length, 2, '25 tekster = 2 Webcoins');
+  eq(new Date(tk[0].tid).getDate(), 5, '10. tekst nået den 5.');
+  eq(new Date(tk[1].tid).getDate(), 9);
+  eq(tk[1].tekst, 'tekst · nr. 20');
+  eq(Core.applyEarnings(db, kilder, env, null, { dage: dage }).nye, 0, 'idempotent');
+  data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'anm' && r.kilde !== 'tekst'; });
+});
+t('optjening pr. dato: gammel månedspostering lægges om uden at summen ændres', function () {
+  data.Regler.push({ gruppe: 'Support', kilde: 'mig', sats: 20 });
+  data.Posteringer.push({ id: 'gl1', tid: '2026-11-10T20:13:24.750Z', initialer: 'BBB', type: 'optjent', beloeb: 40, tekst: 'Anmeldelse · november 2026', ref: 'optjent:mig:2026-11:BBB' });
+  var sum = function () { return data.Posteringer.filter(function (p) { return String(p.ref).indexOf('optjent:mig:2026-11:BBB') === 0; }).reduce(function (s, p) { return s + Number(p.beloeb); }, 0); };
+  Core.applyEarnings(db, { mig: { 'BBB|2026-11': 2 } }, env, null, { dage: { mig: { 'BBB|2026-11': [['2026-11-03', 1], ['2026-11-04', 1]] } } });
+  eq(sum(), 40, 'samme sum');
+  eq(data.Posteringer.filter(function (p) { return p.id === 'gl1'; })[0].beloeb, 0, 'den gamle står med 0');
+  eq(Core.handle(db, B, 'state', {}, env).historik.filter(function (p) { return p.beloeb === 0 && p.type === 'optjent'; }).length, 0, '0-posteringer vises ikke');
+  Core.applyEarnings(db, { mig: { 'BBB|2026-11': 3 } }, env, null, { dage: { mig: { 'BBB|2026-11': [['2026-11-03', 1], ['2026-11-04', 1], ['2026-11-15', 1]] } } });
+  eq(sum(), 60);
+  // Var den gamle større end det, kildearket viser nu, beholdes resten
+  data.Posteringer.push({ id: 'gl2', tid: '2026-11-10T20:13:24.750Z', initialer: 'BBB', type: 'optjent', beloeb: 100, tekst: 'x', ref: 'optjent:mig2:2026-11:BBB' });
+  data.Regler.push({ gruppe: 'Support', kilde: 'mig2', sats: 20 });
+  Core.applyEarnings(db, { mig2: { 'BBB|2026-11': 2 } }, env);
+  eq(data.Posteringer.filter(function (p) { return p.id === 'gl2'; })[0].beloeb, 60);
+  data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'mig' && r.kilde !== 'mig2'; });
 });
 t('audit: initialer låst, ingen 0-refusion, forslag højst 5 om dagen, ukendt handling', function () {
   var adm = Core.resolveUser(db, { email: 'demo.admin@best-one.dk', name: 'Demo Admin' }, ['demo.admin@best-one.dk']);
@@ -346,10 +387,10 @@ t('afregning: admin krydser måned af som sendt til RAB', function () {
 t('optjening er idempotent', function () {
   data.Regler.push({ gruppe: 'Support', kilde: 'genfak', sats: 0.002 });
   var k = { genfak: { 'BBB|2026-11': 10000 } };
-  eq(Core.applyEarnings(db, k, env).nye, 1);
+  eq(Core.applyEarnings(db, k, env).nye, 20); // 1 Webcoin pr. 500
   eq(Core.applyEarnings(db, k, env).nye, 0);
   k.genfak['BBB|2026-11'] = 20000;
-  eq(Core.applyEarnings(db, k, env).rettede, 1);
+  eq(Core.applyEarnings(db, k, env).nye, 20);
 });
 t('åbningstider', function () {
   eq(Core.aabningstider(new Date(2026, 10, 16, 9, 0)).aaben, true);

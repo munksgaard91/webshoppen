@@ -327,12 +327,13 @@ function syncOptjening(opts) {
     var fraV = String(cfg_().OPTJENING_FRA || '').trim();
     var fraDato = dato_(fraV);
     var fraMaaned = fraDato ? Core.maanedKey(fraDato) : fraV;
-    var kilder = {}, fejlede = {};
+    var kilder = {}, dage = {}, fejlede = {};
     SheetDB.all('Kilder').forEach(function (k) {
       var id = String(k.kilde).trim();
       if (!id || !k.sheet_id) return;
       var data = kilder[id] = kilder[id] || {};
       var alle = raa[id] = raa[id] || {};
+      var pr = dage[id] = dage[id] || {};
       try {
         var ss = SpreadsheetApp.openById(String(k.sheet_id).trim());
         var sh = k.fane ? ss.getSheetByName(String(k.fane)) : ss.getSheets()[0];
@@ -348,6 +349,8 @@ function syncOptjening(opts) {
           alle[key] = (alle[key] || 0) + v; // fælles mål tæller også før lanceringen
           if (fraDato && d < fraDato) continue;
           data[key] = (data[key] || 0) + v;
+          // Rækkerne pr. dato, så hver anmeldelse/sag/session bliver sin egen postering på den rigtige dag
+          (pr[key] = pr[key] || []).push([Core.maanedKey(d) + '-' + ('0' + d.getDate()).slice(-2), v]);
         }
       } catch (e) {
         console.error('Kilde ' + id + ' fejlede: ' + e);
@@ -356,12 +359,12 @@ function syncOptjening(opts) {
       }
     });
     // En kilde, der fejlede, tages helt ud – både af optjeningen og af fælles mål (de beholder deres gamle tal)
-    Object.keys(fejlede).forEach(function (id) { delete kilder[id]; delete raa[id]; });
+    Object.keys(fejlede).forEach(function (id) { delete kilder[id]; delete raa[id]; delete dage[id]; });
     var lock = LockService.getScriptLock();
     try { lock.waitLock(30000); } catch (e) { throw new Error('Shoppen var optaget – prøver igen ved næste hentning'); }
     try {
       SheetDB.nulstil(true);
-      res = Core.applyEarnings(SheetDB, kilder, env_(true), fraMaaned, { genberegn: genberegn });
+      res = Core.applyEarnings(SheetDB, kilder, env_(true), fraMaaned, { genberegn: genberegn, dage: dage });
       SpreadsheetApp.flush();
     } finally {
       lock.releaseLock();

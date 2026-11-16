@@ -100,6 +100,8 @@ var Core = (function () {
   }
 
   function nyesteFoerst(a, b) { return String(b.tid).localeCompare(String(a.tid)); }
+  // Gamle månedsposteringer, der er delt op pr. dato, står tilbage med 0 – de vises ikke
+  function nulOptjent(p) { return p.type === 'optjent' && num(p.beloeb) === 0; }
 
   function saldoFor(posteringer, initialer) {
     var s = 0;
@@ -320,7 +322,7 @@ var Core = (function () {
   function state(db, me, data, env) {
     var nu = env.now();
     var poster = db.all('Posteringer');
-    var mine = me.initialer ? poster.filter(function (p) { return p.initialer === me.initialer; }).sort(nyesteFoerst) : [];
+    var mine = me.initialer ? poster.filter(function (p) { return p.initialer === me.initialer && !nulOptjent(p); }).sort(nyesteFoerst) : [];
     var bestillinger = me.initialer ? db.all('Bestillinger').filter(function (b) {
       return b.fra === me.initialer || b.til === me.initialer;
     }).sort(nyesteFoerst).slice(0, 50) : [];
@@ -808,7 +810,7 @@ var Core = (function () {
           return { id: str(f.id), tid: str(f.tid), initialer: ini(f.initialer), navn: navne[ini(f.initialer)] || ini(f.initialer), type: str(f.type) || 'feedback', tekst: str(f.tekst), laest: str(f.laest) };
         });
       })(),
-      posteringer: poster.slice().sort(nyesteFoerst).slice(0, 2000).map(function (p) {
+      posteringer: poster.filter(function (p) { return !nulOptjent(p); }).sort(nyesteFoerst).slice(0, 2000).map(function (p) {
         return { id: str(p.id), tid: str(p.tid), initialer: str(p.initialer), navn: navne[p.initialer] || p.initialer, type: str(p.type), beloeb: num(p.beloeb), tekst: str(p.tekst), maaned: postMaaned(p) };
       }),
       mdk: (function () {
@@ -955,29 +957,61 @@ var Core = (function () {
 
   /*
    * Optjening. `kilder` = { kildeId: { 'INI|YYYY-MM': værdi } } (summeret pr. måned).
-   * Laver/opdaterer én postering pr. regel-kilde, måned og person. Idempotent.
+   * opts.dage = { kildeId: { 'INI|YYYY-MM': [['YYYY-MM-DD', værdi], …] } } – rækkerne pr. dato (fra synken).
+   * Almindelige regler giver én postering pr. enhed på den dato, den blev nået: én pr. anmeldelse, sag og session
+   * (sats ≥ 1) eller én pr. 10. tekst (sats 0,1 → 1 Webcoin). Ref `optjent:<kilde>:<YYYY-MM>:<INI>:<nr>`.
+   * Klub-bonus er én postering pr. kilde og måned (`optjent:<kilde>-klub:<YYYY-MM>:<INI>`) på den dato, klubben blev nået.
+   * Idempotent: samme tal giver ingen ændringer.
    */
   // opts.genberegn = true (kun via admin, menuen "Genberegn optjening (også ned)"): ulåste måneder må også rettes ned
   // – fx når en regel er sat for højt. Saldoen må stadig ikke gå i minus, så den sænkes højst til 0.
   function applyEarnings(db, kilder, env, fraMaaned, opts) {
     var genberegn = !!(opts && opts.genberegn === true);
+    var dage = (opts && opts.dage) || {};
     giveStart(db, env);
     var fra = fraMaaned || '0000-00';
     var navne = {};
     db.all('Kilder').forEach(function (k) { navne[str(k.kilde)] = str(k.navn) || str(k.kilde); });
     var regelListe = db.all('Regler');
-    var oensket = {};
+    // Dato-rækker for én person og måned; uden dem (ældre synk, test) tæller hele måneden på den 1.
+    function raekker(kilde, key, mk) {
+      var liste = (dage[kilde] || {})[key];
+      if (!liste || !liste.length) return [[mk + '-01', num((kilder[kilde] || {})[key])]];
+      return liste.slice().sort(function (a, b) { return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0; });
+    }
+    // Middag lokal tid på datoen, så posteringen står på den rigtige dag uanset tidszone
+    function dagTid(d) {
+      var p = String(d).split('-');
+      return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), 12).toISOString();
+    }
+    var oensket = {}, daekket = {};
     aktiveBrugere(db).forEach(function (u) {
       var i = ini(u.initialer);
+      var satser = {};
       regelListe.forEach(function (r) {
         if (str(r.gruppe) !== str(u.gruppe) || num(r.fra) > 0) return;
-        var data = kilder[str(r.kilde)] || {};
-        Object.keys(data).forEach(function (key) {
+        satser[str(r.kilde)] = (satser[str(r.kilde)] || 0) + num(r.sats);
+      });
+      Object.keys(satser).forEach(function (kilde) {
+        var sats = satser[kilde];
+        if (!(sats > 0)) return;
+        // En enhed er én ting (20 Webcoins pr. anmeldelse) eller så mange ting, der giver 1 Webcoin (10 tekster)
+        var stk = sats >= 1 ? 1 : Math.round(1 / sats * 1000) / 1000;
+        var beloeb = sats >= 1 ? Math.floor(sats) : 1;
+        var navn = navne[kilde] || kilde;
+        Object.keys(kilder[kilde] || {}).forEach(function (key) {
           var dele = key.split('|');
           if (dele[0] !== i || dele[1] < fra) return;
-          var ref = 'optjent:' + str(r.kilde) + ':' + dele[1] + ':' + i;
-          var beloeb = Math.floor(num(data[key]) * num(r.sats));
-          oensket[ref] = { initialer: i, beloeb: (oensket[ref] ? oensket[ref].beloeb : 0) + beloeb, tekst: (navne[str(r.kilde)] || r.kilde) + ' · ' + maanedNavn(dele[1]) };
+          var mk = dele[1], sum = 0, n = 0;
+          raekker(kilde, key, mk).forEach(function (rk) {
+            sum += num(rk[1]);
+            while ((n + 1) * stk <= sum + 1e-9) {
+              n++;
+              oensket['optjent:' + kilde + ':' + mk + ':' + i + ':' + n] = { initialer: i, beloeb: beloeb, tid: dagTid(rk[0]),
+                tekst: stk > 1 ? navn + ' · nr. ' + Math.round(n * stk) : navn };
+            }
+          });
+          daekket['optjent:' + kilde + ':' + mk + ':' + i] = { antal: n, total: n * beloeb, initialer: i };
         });
       });
       // Klub-bonus (regler med `fra`): fast beløb, når månedens tal når grænsen. Kun den højeste klub pr. kilde tæller,
@@ -995,14 +1029,29 @@ var Core = (function () {
           var bedst = klubber.filter(function (x) { return str(x.kilde) === kilde && vaerdi >= num(x.fra); })
             .sort(function (a, b) { return num(b.fra) - num(a.fra); })[0];
           var ref = 'optjent:' + kilde + '-klub:' + dele[1] + ':' + i;
+          var naaet = null, sum = 0;
+          if (bedst) raekker(kilde, key, dele[1]).forEach(function (rk) { sum += num(rk[1]); if (!naaet && sum >= num(bedst.fra) - 1e-9) naaet = rk[0]; });
           oensket[ref] = bedst
-            ? { initialer: i, beloeb: Math.floor(num(bedst.sats)), tekst: (str(bedst.navn) || 'Klub ' + num(bedst.fra)) + ' · ' + maanedNavn(dele[1]) }
+            ? { initialer: i, beloeb: Math.floor(num(bedst.sats)), tid: naaet ? dagTid(naaet) : '', tekst: (str(bedst.navn) || 'Klub ' + num(bedst.fra)) + ' · ' + maanedNavn(dele[1]) }
             : { initialer: i, beloeb: 0, tekst: 'Klub · ' + maanedNavn(dele[1]) };
         });
       });
     });
     var eksisterende = {};
     db.all('Posteringer').forEach(function (p) { if (p.type === 'optjent' && p.ref) eksisterende[str(p.ref)] = p; });
+    Object.keys(eksisterende).forEach(function (ref) {
+      var p = eksisterende[ref], dele = ref.split(':');
+      // Enheder ud over det nuværende antal (tallet er rettet ned): 0 ønsket – sænkes kun ved genberegn
+      if (dele.length === 5 && !oensket[ref]) {
+        var d = daekket[dele.slice(0, 4).join(':')];
+        if (d && Number(dele[4]) > d.antal) oensket[ref] = { initialer: str(p.initialer), beloeb: 0 };
+      }
+      // Gammel månedspostering (fra før optjeningen blev delt op pr. dato): det, enhederne nu dækker, trækkes fra,
+      // så summen er uændret. Den står tilbage med 0 (vises ikke) eller med resten, hvis den var større.
+      if (dele.length === 4 && daekket[ref]) {
+        oensket[ref] = { initialer: str(p.initialer), beloeb: Math.max(0, num(p.beloeb) - daekket[ref].total), migrer: true };
+      }
+    });
     // Tjente Webcoins tages aldrig fra nogen: en optjening kan kun stige (ny regel, gruppeskift, fjernet regel
     // eller rettelse i kildearket sænker den ikke). Afsluttede måneder er låst – fra den 4. i næste måned
     // (3 dages frist til sene registreringer) rettes en eksisterende optjening ikke mere. Regler gælder dermed kun fremad.
@@ -1012,19 +1061,21 @@ var Core = (function () {
     Object.keys(oensket).forEach(function (ref) {
       var o = oensket[ref];
       var p = eksisterende[ref];
+      var mk = ref.split(':')[2];
       if (p) {
-        var mk = ref.split(':')[2];
-        if (mk < laastFoer || o.beloeb === num(p.beloeb)) return;
-        var ny = o.beloeb;
-        if (ny < num(p.beloeb)) {
-          if (!genberegn) return;
-          var saldo = saldoFor(db.all('Posteringer'), o.initialer);
-          ny = Math.max(ny, num(p.beloeb) - Math.max(0, saldo));
-          if (ny === num(p.beloeb)) return;
+        if (mk < laastFoer) return;
+        var ny = o.beloeb, gl = num(p.beloeb);
+        if (ny < gl && !o.migrer) {
+          if (!genberegn) ny = gl;
+          else ny = Math.max(ny, gl - Math.max(0, saldoFor(db.all('Posteringer'), o.initialer)));
         }
-        db.update('Posteringer', p, { beloeb: ny, tekst: o.tekst }); rettede++;
-      } else if (o.beloeb !== 0 && ref.split(':')[2] >= laastFoer) { // låste måneder får heller ikke ny optjening
-        db.insert('Posteringer', { id: env.uuid(), tid: env.now().toISOString(), initialer: o.initialer, type: 'optjent', beloeb: o.beloeb, tekst: o.tekst, ref: ref });
+        var patch = {};
+        if (ny !== gl) patch.beloeb = ny;
+        if (patch.beloeb !== undefined && o.tekst) patch.tekst = o.tekst;
+        if (o.tid && o.tid !== str(p.tid)) patch.tid = o.tid;
+        if (Object.keys(patch).length) { db.update('Posteringer', p, patch); rettede++; }
+      } else if (o.beloeb !== 0 && mk >= laastFoer) { // låste måneder får heller ikke ny optjening
+        db.insert('Posteringer', { id: env.uuid(), tid: o.tid || env.now().toISOString(), initialer: o.initialer, type: 'optjent', beloeb: o.beloeb, tekst: o.tekst, ref: ref });
         nye++;
       }
     });

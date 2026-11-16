@@ -579,7 +579,8 @@ body::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circl
 .ptabs button.on { background: var(--brand-soft); color: var(--brand); }
 :root[data-theme="dark"] .ptabs button.on { color: var(--brand-2); }
 .plist { padding: 6px 24px 18px; }
-.pmonth { font-size: 13px; font-weight: 700; color: var(--muted); padding: 16px 0 6px; }
+.pmonth { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px; font-weight: 700; color: var(--muted); padding: 16px 0 6px; white-space: nowrap; }
+.pmonth-sum { display: inline-flex; gap: 12px; }
 .prow { display: flex; align-items: center; gap: 14px; padding: 11px 0; border-top: 1px solid var(--line); }
 .pmonth + .prow { border-top: 0; }
 .plist > .prow:first-child { border-top: 0; }

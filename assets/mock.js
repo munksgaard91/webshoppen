@@ -1,6 +1,6 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v55';
+  var KEY = 'webshoppen-demo-v56';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
@@ -98,6 +98,32 @@ window.Mock = (function () {
     return k;
   }
 
+  // Rækkerne pr. dato, som synken laver dem: månedens tal fordelt på tilfældige dage (til og med i dag)
+  function falskeDage(k, nu) {
+    var dage = {};
+    var tf = (function (s) { return function () { s = (s * 9301 + 49297) % 233280; return s / 233280; }; })(7);
+    Object.keys(k).forEach(function (kilde) {
+      var ud = dage[kilde] = {};
+      Object.keys(k[kilde]).forEach(function (key) {
+        var tot = k[kilde][key];
+        if (!tot) return;
+        var mk = key.split('|')[1], aar = Number(mk.slice(0, 4)), md = Number(mk.slice(5)) - 1;
+        var sidste = aar === nu.getFullYear() && md === nu.getMonth() ? nu.getDate() : new Date(aar, md + 1, 0).getDate();
+        var stykker = Math.min(tot, kilde === 'tekster' ? 8 : tot), raekker = [];
+        for (var j = 0; j < stykker; j++) {
+          var v = Math.floor(tot / stykker) + (j < tot % stykker ? 1 : 0);
+          raekker.push([mk + '-' + ('0' + (1 + Math.floor(tf() * sidste))).slice(-2), v]);
+        }
+        ud[key] = raekker;
+      });
+    });
+    return dage;
+  }
+  function falskOptjening() {
+    var k = falskeKilder(new Date());
+    return Core.applyEarnings(db, k, env(), null, { dage: falskeDage(k, new Date()) });
+  }
+
   function env() {
     return {
       now: function () { return new Date(); },
@@ -114,7 +140,7 @@ window.Mock = (function () {
         if (m === 'tid') return Core.aabningstider(new Date(new Date().setHours(17, 0)), '08:00', '15:30', '1-5');
         return { aaben: true };
       },
-      sync: function () { return Core.applyEarnings(db, falskeKilder(new Date()), env()); },
+      sync: function () { return falskOptjening(); },
       // Demo: ?synkfejl viser banneret for en fejlet hentning
       synkStatus: function () {
         return /[?&]synkfejl\b/.test(location.search)
@@ -130,7 +156,7 @@ window.Mock = (function () {
 
   if (!data) {
     data = seed();
-    Core.applyEarnings(db, falskeKilder(new Date()), env());
+    falskOptjening();
     // Startbeløb, så demoens bestillinger og donationer kan betales. Rettes til sidst, så saldoen ender på 67.
     var start = {};
     BRUGERE.forEach(function (u) {
