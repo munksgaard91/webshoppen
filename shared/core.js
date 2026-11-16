@@ -995,23 +995,27 @@ var Core = (function () {
       Object.keys(satser).forEach(function (kilde) {
         var sats = satser[kilde];
         if (!(sats > 0)) return;
-        // En enhed er én ting (20 Webcoins pr. anmeldelse) eller så mange ting, der giver 1 Webcoin (10 tekster)
-        var stk = sats >= 1 ? 1 : Math.round(1 / sats * 1000) / 1000;
-        var beloeb = sats >= 1 ? Math.floor(sats) : 1;
+        // Ting nr. j giver floor(j × sats) − floor((j−1) × sats) Webcoins, så summen altid er floor(antal × sats):
+        // 20 pr. anmeldelse, 1 pr. sag, og ved sats 0,1 kun hver 10. tekst. Kun ting med beløb > 0 bliver en postering (nr. n).
+        var wc = function (j) { return Math.floor(j * sats + 1e-9); };
         var navn = navne[kilde] || kilde;
         Object.keys(kilder[kilde] || {}).forEach(function (key) {
           var dele = key.split('|');
           if (dele[0] !== i || dele[1] < fra) return;
-          var mk = dele[1], sum = 0, n = 0;
+          var mk = dele[1], sum = 0, j = 0, n = 0, total = 0;
           raekker(kilde, key, mk).forEach(function (rk) {
             sum += num(rk[1]);
-            while ((n + 1) * stk <= sum + 1e-9) {
+            while (j + 1 <= sum + 1e-9) {
+              j++;
+              var beloeb = wc(j) - wc(j - 1);
+              if (beloeb <= 0) continue;
               n++;
+              total += beloeb;
               oensket['optjent:' + kilde + ':' + mk + ':' + i + ':' + n] = { initialer: i, beloeb: beloeb, tid: dagTid(rk[0]),
-                tekst: stk > 1 ? navn + ' · nr. ' + Math.round(n * stk) : navn };
+                tekst: sats < 1 ? navn + ' · nr. ' + j : navn };
             }
           });
-          daekket['optjent:' + kilde + ':' + mk + ':' + i] = { antal: n, total: n * beloeb, initialer: i };
+          daekket['optjent:' + kilde + ':' + mk + ':' + i] = { antal: n, total: total, initialer: i };
         });
       });
       // Klub-bonus (regler med `fra`): fast beløb, når månedens tal når grænsen. Kun den højeste klub pr. kilde tæller,
@@ -1046,11 +1050,21 @@ var Core = (function () {
         var d = daekket[dele.slice(0, 4).join(':')];
         if (d && Number(dele[4]) > d.antal) oensket[ref] = { initialer: str(p.initialer), beloeb: 0 };
       }
-      // Gammel månedspostering (fra før optjeningen blev delt op pr. dato): det, enhederne nu dækker, trækkes fra,
-      // så summen er uændret. Den står tilbage med 0 (vises ikke) eller med resten, hvis den var større.
-      if (dele.length === 4 && daekket[ref]) {
-        oensket[ref] = { initialer: str(p.initialer), beloeb: Math.max(0, num(p.beloeb) - daekket[ref].total), migrer: true };
-      }
+    });
+    // Gammel månedspostering (fra før optjeningen blev delt op pr. dato): summen af den og enhederne må aldrig falde.
+    // Oprindeligt beløb = den gamle + de enheder, der allerede findes; enhederne efter denne hentning er
+    // max(nu, ønsket) pr. enhed (de stiger kun). Den gamle står tilbage med resten – 0 (vises ikke), når enhederne dækker.
+    // Stabil: en ny hentning med samme tal ændrer intet, og den gamle kan kun falde.
+    Object.keys(eksisterende).forEach(function (ref) {
+      var p = eksisterende[ref];
+      if (ref.split(':').length !== 4 || !daekket[ref]) return;
+      var praefiks = ref + ':', har = 0, bliver = 0, alle = {};
+      Object.keys(eksisterende).forEach(function (r) { if (r.indexOf(praefiks) === 0) { har += num(eksisterende[r].beloeb); alle[r] = 1; } });
+      Object.keys(oensket).forEach(function (r) { if (r.indexOf(praefiks) === 0) alle[r] = 1; });
+      Object.keys(alle).forEach(function (r) {
+        bliver += Math.max(eksisterende[r] ? num(eksisterende[r].beloeb) : 0, oensket[r] ? oensket[r].beloeb : 0);
+      });
+      oensket[ref] = { initialer: str(p.initialer), beloeb: Math.max(0, Math.min(num(p.beloeb), num(p.beloeb) + har - bliver)), migrer: true };
     });
     // Tjente Webcoins tages aldrig fra nogen: en optjening kan kun stige (ny regel, gruppeskift, fjernet regel
     // eller rettelse i kildearket sænker den ikke). Afsluttede måneder er låst – fra den 4. i næste måned

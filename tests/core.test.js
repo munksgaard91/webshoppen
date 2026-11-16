@@ -527,4 +527,34 @@ t('ikon til præmier: emoji eller Webcoin-mønt, alt andet afvises', function ()
   Core.handle(db, adm, 'admin_mdk_praemie', { praemie: 'Biografbilletter', ikon: '🎬' }, env);
   eq(Core.handle(db, B, 'state', {}, env).mdk.praemieIkon, '🎬');
 });
+t('optjening pr. dato: rest fra gammel månedspostering er stabil over flere hentninger og saldoen går aldrig i minus', function () {
+  data.Regler.push({ gruppe: 'Support', kilde: 'rest', sats: 20 });
+  data.Posteringer.push({ id: 'gl3', tid: '2026-11-10T20:00:00.000Z', initialer: 'BBB', type: 'optjent', beloeb: 60, tekst: 'x', ref: 'optjent:rest:2026-11:BBB' });
+  var sum = function () { return data.Posteringer.filter(function (p) { return String(p.ref).indexOf('optjent:rest:2026-11:BBB') === 0; }).reduce(function (s, p) { return s + Number(p.beloeb); }, 0); };
+  var gl = function () { return data.Posteringer.filter(function (p) { return p.id === 'gl3'; })[0].beloeb; };
+  var k2 = { rest: { 'BBB|2026-11': 2 } };
+  Core.applyEarnings(db, k2, env);
+  eq(gl(), 20); eq(sum(), 60);
+  Core.applyEarnings(db, k2, env);
+  Core.applyEarnings(db, k2, env);
+  eq(gl(), 20, 'resten spises ikke ved næste hentning'); eq(sum(), 60);
+  Core.applyEarnings(db, { rest: { 'BBB|2026-11': 1 } }, env); // rettet ned i kildearket
+  eq(sum(), 60, 'færre ting: summen holder');
+  Core.applyEarnings(db, { rest: { 'BBB|2026-11': 4 } }, env); // flere ting end den gamle dækkede
+  eq(gl(), 0); eq(sum(), 80);
+  Core.applyEarnings(db, { rest: { 'BBB|2026-11': 4 } }, env);
+  eq(sum(), 80, 'stabil');
+  data.Regler = data.Regler.filter(function (r) { return r.kilde !== 'rest'; });
+});
+t('optjening pr. dato: satser med decimaler giver altid floor(antal × sats)', function () {
+  var tot = function (kilde) { return data.Posteringer.filter(function (p) { return String(p.ref).indexOf('optjent:' + kilde + ':2026-11:BBB:') === 0; }).reduce(function (s, p) { return s + Number(p.beloeb); }, 0); };
+  [['s15', [1.5], 10, 15], ['s07', [0.7], 10, 7], ['s1505', [0.1, 0.05], 20, 3], ['s01', [0.1], 25, 2], ['s20', [20], 3, 60]].forEach(function (x) {
+    x[1].forEach(function (sats) { data.Regler.push({ gruppe: 'Support', kilde: x[0], sats: sats }); });
+    var k = {}; k[x[0]] = { 'BBB|2026-11': x[2] };
+    Core.applyEarnings(db, k, env);
+    eq(tot(x[0]), x[3], x[0]);
+    eq(Core.applyEarnings(db, k, env).nye, 0, x[0] + ' idempotent');
+    data.Regler = data.Regler.filter(function (r) { return r.kilde !== x[0]; });
+  });
+});
 print('OK: ' + ok + '  FEJL: ' + fejl);
