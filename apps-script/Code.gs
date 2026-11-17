@@ -319,7 +319,7 @@ function genberegnOptjening() {
 
 function syncOptjening(opts) {
   var genberegn = !!(opts && opts.genberegn === true); // timer-triggeren sender et event-objekt uden genberegn
-  var fejl = [], res, raa = {};
+  var fejl = [], res, raa = {}, optaget = false;
   try {
     // Kildearkene læses FØR låsen (det kan tage op til 20 sek.), så bestillinger ikke venter imens
     SheetDB.nulstil(true);
@@ -361,13 +361,17 @@ function syncOptjening(opts) {
     // En kilde, der fejlede, tages helt ud – både af optjeningen og af fælles mål (de beholder deres gamle tal)
     Object.keys(fejlede).forEach(function (id) { delete kilder[id]; delete raa[id]; delete dage[id]; });
     var lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); } catch (e) { throw new Error('Shoppen var optaget – prøver igen ved næste hentning'); }
-    try {
-      SheetDB.nulstil(true);
-      res = Core.applyEarnings(SheetDB, kilder, env_(true), fraMaaned, { genberegn: genberegn, dage: dage });
-      SpreadsheetApp.flush();
-    } finally {
-      lock.releaseLock();
+    // Holder en anden hentning eller en bestilling låsen i over et minut, springes optjeningen over – næste time tager den.
+    // Det er ikke en fejl (ingen mail); står den stille i over 3 timer, viser admin-overblikket det røde banner.
+    try { lock.waitLock(60000); } catch (e) { optaget = true; }
+    if (!optaget) {
+      try {
+        SheetDB.nulstil(true);
+        res = Core.applyEarnings(SheetDB, kilder, env_(true), fraMaaned, { genberegn: genberegn, dage: dage });
+        SpreadsheetApp.flush();
+      } finally {
+        lock.releaseLock();
+      }
     }
   } catch (e) {
     fejl.push('Optjening: ' + (e.message || e));
@@ -381,6 +385,11 @@ function syncOptjening(opts) {
   } catch (e) {
     console.error('Fælles mål kunne ikke opdateres: ' + e);
     fejl.push('Fælles mål: ' + (e.message || e));
+  }
+  if (optaget) {
+    console.warn('Optjening sprunget over – låsen var optaget. Prøver igen ved næste hentning.');
+    if (fejl.length) gemSynkStatus_(fejl); // kun fejl fra fælles mål; "Hentet"-tidspunktet står ellers uændret
+    return { nye: 0, rettede: 0, optaget: true };
   }
   gemSynkStatus_(fejl);
   return res;

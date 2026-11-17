@@ -1796,7 +1796,8 @@
       case 'sync':
         busy(t, true);
         api('admin_sync').then(function (r) {
-          toast('Optjening hentet', (r ? r.nye + ' nye · ' + r.rettede + ' rettede' : ''));
+          if (r && r.optaget) toast('Prøv igen om lidt', 'En anden hentning eller bestilling er i gang.', true);
+          else toast('Optjening hentet', (r ? r.nye + ' nye · ' + r.rettede + ' rettede' : ''));
           return refresh();
         }).catch(function (e) { busy(t, false); toast('Det gik ikke', e.message, true); });
         break;
