@@ -449,6 +449,11 @@ td.r, th.r { text-align: right; }
 .seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--card-2); border: 1px solid var(--line); border-radius: 14px; padding: 4px; margin-bottom: 16px; }
 .seg button { border: 0; background: transparent; border-radius: 10px; padding: 9px; font-weight: 700; color: var(--muted); }
 .seg button.on { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
+.seg.seg-3 { grid-template-columns: repeat(3, 1fr); margin-top: -8px; }
+.seg button { white-space: nowrap; }
+.seg button:disabled { opacity: .45; cursor: not-allowed; }
+.modt { display: flex; flex-wrap: wrap; gap: 6px; }
+.sum .gange { font-weight: 500; margin-right: 4px; }
 .sum { display: flex; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--line); font-size: 14px; }
 .sum b { font-weight: 800; }
 @keyframes fade { from { opacity: 0; } }

@@ -7,7 +7,7 @@
  * (betalt på forhånd – sendes ikke til RAB; indkøbsprisen står i kommentaren).
  *
  * Menu:   id (fast – bruges i bestillinger), navn, ikon (emoji), pris, kostpris,
- *         varianter ("A, B" → valgknapper), oenske: true → "Dit ønske"-felt,
+ *         varianter ("A, B" → valgknapper), oenske: true → "Dit ønske"-felt (oenskeTekst = eksempel i feltet),
  *         snart: true → "Andet?"-række med "Send forslag", aktiv: false → skjult.
  * Hjul:   type 'webcoins' | 'vare' | 'intet', beloeb (ved webcoins), kostpris (kr, ved vare),
  *         vaegt = chance i promille (summen behøver ikke være 1000). Største Webcoins-gevinst = guld-kort.
@@ -23,6 +23,7 @@ var SORTIMENT = {
     { id: 'monster', navn: 'Hvid Monster', ikon: '⚡', pris: 30, kostpris: 15 },
     // Teamkassen (kostpris 0 – ikke til RAB). Indkøb (Nemlig 2026-11-11): Celebrations 419,25 kr / ca. 160 stk ≈ 2,62 kr,
     // Lay's mini 16 kr / 6 poser ≈ 2,67 kr, Mini Mix Slikposer 49,95 kr / 17 poser ≈ 2,94 kr
+    { id: 'frugt', navn: 'Munk henter 1 stk. frugt til dig', ikon: '🍎', pris: 4, kostpris: 0, oenske: true, oenskeTekst: 'eks. en banan' },
     { id: 'candybar', navn: 'Mini Candybar', ikon: '🍫', pris: 5, kostpris: 0 },
     { id: 'chips', navn: 'Mini Chipspose', ikon: '🥔', pris: 6, kostpris: 0 },
     { id: 'slik', navn: 'Mini Slikpose', ikon: '🍬', pris: 6, kostpris: 0 },

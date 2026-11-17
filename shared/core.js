@@ -10,12 +10,14 @@
  */
 var Core = (function () {
   var GRUPPER = ['Hjemmeside', 'Redaktør', 'Fotograf', 'Support'];
+  var TEAMS = ['Gators', 'Sharks', 'Owls'];
   var MAANEDER = ['januar', 'februar', 'marts', 'april', 'maj', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'december'];
 
   var TABELLER = {
     Config: ['noegle', 'vaerdi'],
     // gaver_set = hvornår brugeren sidst så gave-popuppen (nye gaver efter det vises ved næste login)
-    Brugere: ['email', 'initialer', 'navn', 'gruppe', 'aktiv', 'gaver_set'],
+    // team = Gators / Sharks / Owls (til "Donér til team")
+    Brugere: ['email', 'initialer', 'navn', 'gruppe', 'aktiv', 'gaver_set', 'team'],
     Stemmer: ['id', 'tid', 'maaned', 'fra', 'til', 'begrundelse'],
     Spil: ['id', 'tid', 'initialer', 'status', 'resultat'],
     Posteringer: ['id', 'tid', 'initialer', 'type', 'beloeb', 'tekst', 'ref'],
@@ -116,6 +118,9 @@ var Core = (function () {
     // Refusion af en gave trækkes fra donationer, ellers fra "til dig selv".
     var gaveRefs = {};
     posteringer.forEach(function (p) { if (p.initialer === initialer && p.type === 'gave') gaveRefs[str(p.ref)] = 1; });
+    // Donation til team/afdeling: én postering (ref = fælles id), bestillingerne hedder <id>.<nr>. Delvis refusion
+    // trækkes fra donationer, men antallet falder ikke (donationen er der stadig).
+    var gaveRef = function (ref) { var r = str(ref), i = r.lastIndexOf('.'); return gaveRefs[r] ? 1 : i > 0 && gaveRefs[r.slice(0, i)] ? 2 : 0; };
     posteringer.forEach(function (p) {
       if (p.initialer !== initialer) return;
       var b = num(p.beloeb);
@@ -132,7 +137,8 @@ var Core = (function () {
       if (p.type === 'projekt') { st.brugt -= b; st.indskudt -= b; }
       if (p.type === 'refusion') {
         st.brugt -= b;
-        if (gaveRefs[str(p.ref)]) { st.givet -= b; st.givetAntal--; } else st.brugtSelv -= b;
+        var g = gaveRef(p.ref);
+        if (g) { st.givet -= b; if (g === 1) st.givetAntal--; } else st.brugtSelv -= b;
       }
       if (p.type === 'gave_modtaget') st.gaverModtaget++;
     });
@@ -162,7 +168,7 @@ var Core = (function () {
   function menu(db, alle) {
     var ud = udsolgte(db);
     return sortiment().menu.filter(function (v) { return alle || til(v.aktiv); }).map(function (v) {
-      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), billede: str(v.billede), pris: num(v.pris), kostpris: num(v.kostpris), varianter: varianter(v), oenskeFelt: ja(v.oenske), snart: ja(v.snart), aktiv: til(v.aktiv), udsolgt: ud.indexOf(str(v.id)) >= 0 };
+      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), billede: str(v.billede), pris: num(v.pris), kostpris: num(v.kostpris), varianter: varianter(v), oenskeFelt: ja(v.oenske), oenskeTekst: str(v.oenskeTekst), snart: ja(v.snart), aktiv: til(v.aktiv), udsolgt: ud.indexOf(str(v.id)) >= 0 };
     });
   }
 
@@ -277,6 +283,19 @@ var Core = (function () {
     return antal > 0 ? Math.round(tid / antal * 100) / 100 : null;
   }
 
+  // Ekstra modtagere af donationer, der ikke er brugere (fx en fra bogholderiet). Config EKSTRA_MODTAGERE = navne
+  // adskilt af ; – de får faste nøgler EKS1, EKS2 … (kan ikke forveksles med initialer). Kun i Config, aldrig i repoet.
+  function eksterne(db) {
+    return str(cfgVal(db, 'EKSTRA_MODTAGERE', '')).split(';').map(function (x) { return x.trim(); }).filter(Boolean)
+      .map(function (navn, i) { return { initialer: 'EKS' + (i + 1), navn: navn }; });
+  }
+  function alleNavne(db) {
+    var navne = {};
+    db.all('Brugere').forEach(function (u) { navne[ini(u.initialer)] = str(u.navn); });
+    eksterne(db).forEach(function (e) { navne[e.initialer] = e.navn; });
+    return navne;
+  }
+
   function aktiveBrugere(db) {
     return db.all('Brugere').filter(function (u) { return sand(u.aktiv) && ini(u.initialer); });
   }
@@ -306,6 +325,7 @@ var Core = (function () {
       billede: str(profil.picture),
       initialer: u ? ini(u.initialer) : '',
       gruppe: u ? str(u.gruppe) : '',
+      team: u ? str(u.team).trim() : '',
       admin: admin
     };
   }
@@ -326,16 +346,16 @@ var Core = (function () {
     var bestillinger = me.initialer ? db.all('Bestillinger').filter(function (b) {
       return b.fra === me.initialer || b.til === me.initialer;
     }).sort(nyesteFoerst).slice(0, 50) : [];
-    var navne = {};
-    db.all('Brugere').forEach(function (u) { navne[ini(u.initialer)] = str(u.navn); });
+    var navne = alleNavne(db);
     return {
       me: me,
       nu: nu.toISOString(),
       stats: me.initialer ? statsFor(poster, me.initialer, nu) : statsFor([], '', nu),
       menu: menu(db, false),
       kolleger: aktiveBrugere(db).filter(function (u) { return ini(u.initialer) !== me.initialer; }).map(function (u) {
-        return { initialer: ini(u.initialer), navn: str(u.navn), gruppe: str(u.gruppe) };
+        return { initialer: ini(u.initialer), navn: str(u.navn), gruppe: str(u.gruppe), team: str(u.team).trim() };
       }).sort(function (a, b) { return a.navn.localeCompare(b.navn, 'da'); }),
+      eksterne: eksterne(db),
       historik: mine.map(function (p) {
         return { id: str(p.id), tid: str(p.tid), type: str(p.type), beloeb: num(p.beloeb), tekst: str(p.tekst), maaned: postMaaned(p) };
       }),
@@ -407,7 +427,8 @@ var Core = (function () {
   function nyeAnnulleringer(db, me) {
     if (!me.initialer) return [];
     var row = null, navne = {}, best = {};
-    db.all('Brugere').forEach(function (u) { navne[ini(u.initialer)] = str(u.navn); if (ini(u.initialer) === me.initialer) row = u; });
+    db.all('Brugere').forEach(function (u) { if (ini(u.initialer) === me.initialer) row = u; });
+    navne = alleNavne(db);
     var sidst = row ? str(row.gaver_set) : '';
     db.all('Bestillinger').forEach(function (b) { best[str(b.id)] = b; });
     var ud = [];
@@ -452,13 +473,15 @@ var Core = (function () {
     var shop = env.shop ? env.shop() : { aaben: true };
     var forud = !shop.aaben;
     var pris = num(vare.pris);
+    var hvem = str(data.hvem);
+    if (hvem === 'team' || hvem === 'afdeling') return bestilFlere(db, me, vare, hvem, forud, env);
     var gave = !!data.til;
     var modtager = { initialer: me.initialer, navn: me.navn };
     if (gave) {
       var t = ini(data.til);
       if (t === me.initialer) throw err('BAD', 'Vælg en kollega.');
       var u = null;
-      aktiveBrugere(db).forEach(function (r) { if (ini(r.initialer) === t) u = r; });
+      aktiveBrugere(db).concat(eksterne(db)).forEach(function (r) { if (ini(r.initialer) === t) u = r; });
       if (!u) throw err('BAD', 'Kollegaen findes ikke.');
       modtager = { initialer: t, navn: str(u.navn) };
     }
@@ -473,7 +496,7 @@ var Core = (function () {
       tekst: gave ? vareNavn + ' til ' + modtager.navn : vareNavn, ref: id
     });
     db.insert('Bestillinger', { id: id, tid: tid, fra: me.initialer, til: modtager.initialer, vare: vareNavn, pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '', oenske: oenske });
-    if (gave) {
+    if (gave && !/^EKS\d+$/.test(modtager.initialer)) {
       db.insert('Posteringer', {
         id: env.uuid(), tid: tid, initialer: modtager.initialer, type: 'gave_modtaget', beloeb: 0,
         tekst: vareNavn + ' fra ' + me.navn, ref: id
@@ -489,6 +512,38 @@ var Core = (function () {
     });
     return { id: id, forud: forud };
   }
+
+  // Donér til team (alle i ens team inkl. en selv) eller afdelingen (alle aktive inkl. en selv): pris × antal.
+  // Én postering til giveren (ref = fælles id) og én bestilling pr. person (<id>.<nr>), så admin kan udlevere og
+  // annullere (refundere) hver for sig.
+  function bestilFlere(db, me, vare, hvem, forud, env) {
+    var alle = aktiveBrugere(db).filter(function (u) { return str(u.gruppe); });
+    if (hvem === 'team') {
+      if (!me.team) throw err('BAD', 'Du er ikke tilknyttet et team.');
+      alle = alle.filter(function (u) { return str(u.team).trim().toLowerCase() === me.team.toLowerCase(); });
+    }
+    if (!alle.some(function (u) { return ini(u.initialer) === me.initialer; })) alle.push({ initialer: me.initialer, navn: me.navn });
+    if (alle.length < 2) throw err('BAD', 'Der er ingen andre at donere til.');
+    var pris = num(vare.pris), total = pris * alle.length;
+    if (saldoFor(db.all('Posteringer'), me.initialer) < total) throw err('FUNDS', 'Du har ikke nok Webcoins.');
+    var hvemTekst = hvem === 'team' ? 'team ' + me.team : 'afdelingen';
+    var id = env.uuid(), tid = env.now().toISOString();
+    db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'gave', beloeb: -total, tekst: vareNavnAntal(vare, alle.length) + ' til ' + hvemTekst, ref: id });
+    alle.sort(function (a, b) { return str(a.navn).localeCompare(str(b.navn), 'da'); }).forEach(function (u, n) {
+      var bid = id + '.' + (n + 1), t = ini(u.initialer);
+      db.insert('Bestillinger', { id: bid, tid: tid, fra: me.initialer, til: t, vare: str(vare.navn), pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '', oenske: '' });
+      if (t !== me.initialer) db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: t, type: 'gave_modtaget', beloeb: 0, tekst: str(vare.navn) + ' fra ' + me.navn, ref: bid });
+    });
+    env.notify({
+      ikon: '🎁', side: 'bestillinger', kunChat: true,
+      emne: 'Gave: ' + vareNavnAntal(vare, alle.length) + ' til ' + hvemTekst + ' fra ' + me.navn + (vare.ikon ? ' ' + str(vare.ikon) : ''),
+      kort: alle.map(function (u) { return ini(u.initialer); }).join(', '),
+      tekst: me.navn + ' (' + me.initialer + ') ' + (forud ? 'forudbestiller ' : 'giver ') + str(vare.ikon) + ' ' + str(vare.navn) + ' til ' + hvemTekst + ' (' + alle.length + ' personer: ' +
+        alle.map(function (u) { return ini(u.initialer); }).join(', ') + '). Pris: ' + total + ' Webcoins.'
+    });
+    return { id: id, forud: forud, antal: alle.length };
+  }
+  function vareNavnAntal(vare, n) { return n + ' × ' + str(vare.navn); }
 
   // ---------- Månedens kollega ----------
   // Én stemme pr. person pr. måned. Flest stemmer vinder; ved lighed vinder den, der fik sin første stemme først.
@@ -804,13 +859,12 @@ var Core = (function () {
     kraevAdmin(me);
     var nu = env.now();
     var poster = db.all('Posteringer');
-    var navne = {};
-    db.all('Brugere').forEach(function (u) { navne[ini(u.initialer)] = str(u.navn); });
+    var navne = alleNavne(db);
     return {
       brugere: db.all('Brugere').map(function (u) {
         var i = ini(u.initialer);
         var st = statsFor(poster, i, nu);
-        return { email: str(u.email).toLowerCase(), initialer: i, navn: str(u.navn), gruppe: str(u.gruppe), aktiv: sand(u.aktiv), saldo: st.saldo, optjentMaaned: st.optjentMaaned, optjentTotal: st.optjentTotal, brugt: st.brugt };
+        return { email: str(u.email).toLowerCase(), initialer: i, navn: str(u.navn), gruppe: str(u.gruppe), team: str(u.team).trim(), aktiv: sand(u.aktiv), saldo: st.saldo, optjentMaaned: st.optjentMaaned, optjentTotal: st.optjentTotal, brugt: st.brugt };
       }).sort(function (a, b) { return a.navn.localeCompare(b.navn, 'da'); }),
       bestillinger: db.all('Bestillinger').slice().sort(nyesteFoerst).map(function (b) {
         return { id: str(b.id), tid: str(b.tid), fra: str(b.fra), fraNavn: navne[b.fra] || b.fra, til: str(b.til), tilNavn: navne[b.til] || b.til, vare: str(b.vare), pris: num(b.pris), kostpris: num(b.kostpris), status: str(b.status), forud: str(b.forud) === 'ja', oenske: str(b.oenske) };
@@ -844,7 +898,8 @@ var Core = (function () {
         return { maaned: mk, stilling: mdkStilling(db, mk), afgivet: afgivet, praemie: mdkPraemie(db, mk), praemieIkon: mdkPraemieIkon(db, mk), historik: hist, afsloer: afsloer };
       })(),
       regler: regler(db),
-      grupper: GRUPPER
+      grupper: GRUPPER,
+      teams: TEAMS
     };
   }
 
@@ -875,6 +930,7 @@ var Core = (function () {
     if (!/^[^@\s]+@[^@\s]+$/.test(email)) throw err('BAD', 'Ugyldig mail.');
     if (!/^[A-ZÆØÅ]{2,5}$/.test(i)) throw err('BAD', 'Initialer skal være 2–5 bogstaver.');
     if (data.gruppe && GRUPPER.indexOf(data.gruppe) < 0) throw err('BAD', 'Ukendt gruppe.');
+    if (data.team && TEAMS.indexOf(data.team) < 0) throw err('BAD', 'Ukendt team.');
     var orig = str(data.origEmail || email).trim().toLowerCase();
     var rows = db.all('Brugere');
     var row = null;
@@ -890,6 +946,7 @@ var Core = (function () {
     // Initialer sættes kun ved oprettelse – alt (Webcoins, bestillinger, stemmer) hænger på dem
     if (row && ini(row.initialer) && ini(row.initialer) !== i) throw err('BAD', 'Initialer kan ikke ændres.');
     var obj = { email: email, initialer: i, navn: str(data.navn).trim(), gruppe: str(data.gruppe), aktiv: data.aktiv === false ? 'nej' : 'ja' };
+    if (data.team !== undefined) obj.team = str(data.team);
     if (row) db.update('Brugere', row, obj); else db.insert('Brugere', obj);
     giveStart(db, env);
     return { ok: true };
@@ -1120,7 +1177,7 @@ var Core = (function () {
   function adminVisSom(db, me, data, env) {
     kraevAdmin(me);
     var u = findBruger(db, ini(data.initialer));
-    var vis = { email: str(u.email).toLowerCase(), navn: str(u.navn), billede: '', initialer: ini(u.initialer), gruppe: str(u.gruppe), admin: false };
+    var vis = { email: str(u.email).toLowerCase(), navn: str(u.navn), billede: '', initialer: ini(u.initialer), gruppe: str(u.gruppe), team: str(u.team).trim(), admin: false };
     return state(db, vis, {}, env);
   }
 
@@ -1161,6 +1218,7 @@ var Core = (function () {
 
   return {
     GRUPPER: GRUPPER,
+    TEAMS: TEAMS,
     TABELLER: TABELLER,
     err: err,
     num: num,

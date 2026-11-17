@@ -1,23 +1,23 @@
 // Demo-backend: kører shared/core.js mod data i localStorage. Bruges kun når API_URL er tom.
 window.Mock = (function () {
-  var KEY = 'webshoppen-demo-v56';
+  var KEY = 'webshoppen-demo-v57';
   var ADMINS = ['demo.admin@best-one.dk'];
 
   var BRUGERE = [
-    { email: 'demo.jst@best-one.dk', initialer: 'JST', navn: 'Demo Hjemmeside', gruppe: 'Hjemmeside', aktiv: 'ja' },
-    { email: 'demo.dsi@best-one.dk', initialer: 'DSI', navn: 'Demo Redaktør', gruppe: 'Redaktør', aktiv: 'ja' },
-    { email: 'demo.cbo@best-one.dk', initialer: 'CBO', navn: 'Demo Fotograf', gruppe: 'Fotograf', aktiv: 'ja' },
-    { email: 'demo.jfr@best-one.dk', initialer: 'JFR', navn: 'Demo Support', gruppe: 'Support', aktiv: 'ja' },
+    { email: 'demo.jst@best-one.dk', initialer: 'JST', navn: 'Demo Hjemmeside', gruppe: 'Hjemmeside', team: 'Sharks', aktiv: 'ja' },
+    { email: 'demo.dsi@best-one.dk', initialer: 'DSI', navn: 'Demo Redaktør', gruppe: 'Redaktør', team: 'Sharks', aktiv: 'ja' },
+    { email: 'demo.cbo@best-one.dk', initialer: 'CBO', navn: 'Demo Fotograf', gruppe: 'Fotograf', team: 'Owls', aktiv: 'ja' },
+    { email: 'demo.jfr@best-one.dk', initialer: 'JFR', navn: 'Demo Support', gruppe: 'Support', team: 'Owls', aktiv: 'ja' },
     // Pladsholdere, så demoen har lige så mange kolleger som det rigtige hold (13). Opdigtede navne/initialer.
-    { email: 'ade@best-one.dk', initialer: 'ADE', navn: 'Anders Demo', gruppe: 'Hjemmeside', aktiv: 'ja', ekstra: true },
-    { email: 'bde@best-one.dk', initialer: 'BDE', navn: 'Bente Demo', gruppe: 'Hjemmeside', aktiv: 'ja', ekstra: true },
-    { email: 'cde@best-one.dk', initialer: 'CDE', navn: 'Camilla Demo', gruppe: 'Hjemmeside', aktiv: 'ja', ekstra: true },
-    { email: 'dde@best-one.dk', initialer: 'DDE', navn: 'Dennis Demo', gruppe: 'Hjemmeside', aktiv: 'ja', ekstra: true },
-    { email: 'ede@best-one.dk', initialer: 'EDE', navn: 'Eva Demo', gruppe: 'Hjemmeside', aktiv: 'ja', ekstra: true },
-    { email: 'fde@best-one.dk', initialer: 'FDE', navn: 'Frederik Demo', gruppe: 'Hjemmeside', aktiv: 'ja', ekstra: true },
-    { email: 'gde@best-one.dk', initialer: 'GDE', navn: 'Gitte Demo', gruppe: 'Redaktør', aktiv: 'ja', ekstra: true },
-    { email: 'hde@best-one.dk', initialer: 'HDE', navn: 'Henrik Demo', gruppe: 'Redaktør', aktiv: 'ja', ekstra: true },
-    { email: 'ide@best-one.dk', initialer: 'IDE', navn: 'Ida Demo', gruppe: 'Support', aktiv: 'ja', ekstra: true }
+    { email: 'ade@best-one.dk', initialer: 'ADE', navn: 'Anders Demo', gruppe: 'Hjemmeside', team: 'Sharks', aktiv: 'ja', ekstra: true },
+    { email: 'bde@best-one.dk', initialer: 'BDE', navn: 'Bente Demo', gruppe: 'Hjemmeside', team: 'Sharks', aktiv: 'ja', ekstra: true },
+    { email: 'cde@best-one.dk', initialer: 'CDE', navn: 'Camilla Demo', gruppe: 'Hjemmeside', team: 'Gators', aktiv: 'ja', ekstra: true },
+    { email: 'dde@best-one.dk', initialer: 'DDE', navn: 'Dennis Demo', gruppe: 'Hjemmeside', team: 'Gators', aktiv: 'ja', ekstra: true },
+    { email: 'ede@best-one.dk', initialer: 'EDE', navn: 'Eva Demo', gruppe: 'Hjemmeside', team: 'Gators', aktiv: 'ja', ekstra: true },
+    { email: 'fde@best-one.dk', initialer: 'FDE', navn: 'Frederik Demo', gruppe: 'Hjemmeside', team: 'Owls', aktiv: 'ja', ekstra: true },
+    { email: 'gde@best-one.dk', initialer: 'GDE', navn: 'Gitte Demo', gruppe: 'Redaktør', team: 'Gators', aktiv: 'ja', ekstra: true },
+    { email: 'hde@best-one.dk', initialer: 'HDE', navn: 'Henrik Demo', gruppe: 'Redaktør', team: 'Owls', aktiv: 'ja', ekstra: true },
+    { email: 'ide@best-one.dk', initialer: 'IDE', navn: 'Ida Demo', gruppe: 'Support', team: 'Sharks', aktiv: 'ja', ekstra: true }
   ];
 
   var DEMO_ALLE = [{ email: 'demo.admin@best-one.dk', initialer: 'ADM', navn: 'Demo Admin', gruppe: '' }].concat(BRUGERE.filter(function (b) { return !b.ekstra; }), [{ email: 'ukendt@best-one.dk', initialer: '?', navn: 'Ikke registreret', gruppe: '' }]);
@@ -25,7 +25,7 @@ window.Mock = (function () {
   function seed() {
     return {
       Brugere: BRUGERE.map(function (b) { return Object.assign({}, b); }),
-      Config: [{ noegle: 'MDK_PRAEMIE', vaerdi: '50 Webcoins' }, { noegle: 'MDK_PRAEMIE_MAANED', vaerdi: Core.maanedKey(new Date()) }],
+      Config: [{ noegle: 'MDK_PRAEMIE', vaerdi: '50 Webcoins' }, { noegle: 'MDK_PRAEMIE_MAANED', vaerdi: Core.maanedKey(new Date()) }, { noegle: 'EKSTRA_MODTAGERE', vaerdi: 'Demo fra bogholderiet' }],
       Stemmer: [],
       Forslag: [
         { id: 'f1', tid: new Date(Date.now() - 2 * 864e5).toISOString(), initialer: 'DSI', type: 'vare', tekst: 'Kunne vi få Faxe Kondi Free i menuen?' },

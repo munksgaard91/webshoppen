@@ -552,7 +552,7 @@
           '<div class="row-main"><b>' + esc(v.navn) + '</b>' + (v.udsolgt ? ' <span class="tag annulleret">Udsolgt</span>' : '') + '</div>' +
           '<div class="row-price num">' + (v.snart ? '<span class="tag">Kommer snart</span>' : '<span class="amt">' + fmt(v.pris) + '</span><span class="unit">' + enhed(v.pris) + '</span>' + coin()) + '</div>' +
           '<div class="row-acts">' +
-          '<button class="btn sm" data-act="giv" data-id="' + esc(v.id) + '"' + (raad && S.kolleger.length ? '' : ' disabled') + '>' + ico('gift') + 'Donér til en kollega</button>' +
+          '<button class="btn sm" data-act="giv" data-id="' + esc(v.id) + '"' + (raad && S.kolleger.length ? '' : ' disabled') + '>' + ico('gift') + 'Donér</button>' +
           '<button class="btn primary sm" data-act="koeb" data-id="' + esc(v.id) + '"' + (raad ? '' : ' disabled') + '>' + (lukket ? 'Forudbestil' : 'Bestil') + '</button></div></div>';
       }).join('') + '</div>' : '<div class="card empty">Menuen er tom.</div>') +
       '</section>';
@@ -1407,36 +1407,56 @@
     var v = S.menu.filter(function (x) { return x.id === vareId; })[0];
     if (!v) return;
     if (v.snart) return;
-    koebState = { vare: v, gave: gave, til: '', variant: v.varianter.length === 1 ? v.varianter[0] : '' };
+    koebState = { vare: v, gave: gave, hvem: 'kollega', til: '', variant: v.varianter.length === 1 ? v.varianter[0] : '' };
     renderKoeb();
+  }
+  // Modtagere ved donation til team / afdelingen (inkl. en selv) – backend regner det samme ud
+  function donerTil(hvem) {
+    var me = S.me || {};
+    var andre = S.kolleger.filter(function (u) { return u.gruppe && (hvem === 'afdeling' || (me.team && (u.team || '').toLowerCase() === me.team.toLowerCase())); });
+    return andre.concat([{ initialer: me.initialer, navn: me.navn }]).sort(function (a, b) { return a.navn.localeCompare(b.navn, 'da'); });
   }
   function renderKoeb() {
     var k = koebState, v = k.vare;
-    var efter = S.stats.saldo - v.pris;
+    var flere = k.gave && k.hvem !== 'kollega';
+    var modt = flere ? donerTil(k.hvem) : [];
+    var antal = flere ? modt.length : 1;
+    var total = v.pris * antal;
+    var efter = S.stats.saldo - total;
     var forud = S.shop && !S.shop.aaben;
+    var team = (S.me || {}).team;
     var kollegaer = S.kolleger.map(function (u) {
       return '<option value="' + esc(u.initialer) + '"' + (k.til === u.initialer ? ' selected' : '') + '>' + esc(u.navn) + ' · ' + esc(u.gruppe) + '</option>';
+    }).join('') + (S.eksterne || []).map(function (u) {
+      return '<option value="' + esc(u.initialer) + '"' + (k.til === u.initialer ? ' selected' : '') + '>' + esc(u.navn) + '</option>';
     }).join('');
     var mangler = v.varianter.length > 1 && !k.variant;
+    var klar = !k.gave || (k.hvem === 'kollega' ? !!k.til : antal > 1);
     modalIndhold('<h2><span class="ico">' + esc(v.ikon || '🛍️') + '</span>' + esc(v.navn) + '</h2>' +
       (v.varianter.length > 1 ? '<div class="field"><label>Vælg</label><div class="choices">' + v.varianter.map(function (x) {
         return '<button class="choice' + (k.variant === x ? ' on' : '') + '" data-act="koeb-variant" data-v="' + esc(x) + '">' + esc(x) + '</button>';
-      }).join('') + '</div></div>' : !v.oenskeFelt ? '' : '<div class="field"><label for="koeb-oenske">Dit ønske</label><input class="input" id="koeb-oenske" maxlength="200" value="' + esc(k.oenske || '') + '" placeholder="Skriv dit ønske, fx Pepsi Max"></div>') +
-      '<div class="seg"><button class="' + (k.gave ? '' : 'on') + '" data-act="koeb-mode" data-g="0">Til mig</button><button class="' + (k.gave ? 'on' : '') + '" data-act="koeb-mode" data-g="1">Donér til en kollega</button></div>' +
-      (k.gave ? '<div class="field"><label for="koeb-til">Kollega</label><select class="input" id="koeb-til" data-act="koeb-til"><option value="">Vælg …</option>' + kollegaer + '</select></div>' : '') +
-      '<div class="sum"><span class="muted">Pris</span><b class="num">' + wc(v.pris) + '</b></div>' +
+      }).join('') + '</div></div>' : !v.oenskeFelt || flere ? '' : '<div class="field"><label for="koeb-oenske">Dit ønske</label><input class="input" id="koeb-oenske" maxlength="200" value="' + esc(k.oenske || '') + '" placeholder="Skriv dit ønske, ' + esc(v.oenskeTekst || 'fx Pepsi Max') + '"></div>') +
+      '<div class="seg"><button class="' + (k.gave ? '' : 'on') + '" data-act="koeb-mode" data-g="0">Til mig</button><button class="' + (k.gave ? 'on' : '') + '" data-act="koeb-mode" data-g="1">Donér</button></div>' +
+      (k.gave ? '<div class="seg seg-3">' +
+        '<button class="' + (k.hvem === 'kollega' ? 'on' : '') + '" data-act="koeb-hvem" data-h="kollega">En kollega</button>' +
+        '<button class="' + (k.hvem === 'team' ? 'on' : '') + '" data-act="koeb-hvem" data-h="team"' + (team ? '' : ' disabled title="Du er ikke tilknyttet et team"') + '>' + (team ? 'Team ' + esc(team) : 'Team') + '</button>' +
+        '<button class="' + (k.hvem === 'afdeling' ? 'on' : '') + '" data-act="koeb-hvem" data-h="afdeling">Afdelingen</button></div>' : '') +
+      (k.gave && k.hvem === 'kollega' ? '<div class="field"><label for="koeb-til">Kollega</label><select class="input" id="koeb-til" data-act="koeb-til"><option value="">Vælg …</option>' + kollegaer + '</select></div>' : '') +
+      (flere ? '<div class="field"><label>' + antal + ' personer inkl. dig</label><div class="modt">' + modt.map(function (u) { return '<span class="tag">' + esc(u.navn) + '</span>'; }).join('') + '</div></div>' : '') +
+      '<div class="sum"><span class="muted">Pris</span><b class="num">' + (antal > 1 ? '<span class="muted gange">' + antal + ' × ' + fmt(v.pris) + ' =</span> ' : '') + wc(total) + '</b></div>' +
       '<div class="sum"><span class="muted">Saldo efter</span><b class="num ' + (efter < 0 ? 'minus' : '') + '">' + wc(efter) + '</b></div>' +
       '<p class="note" style="margin:6px 0 0">' + (forud ? 'Shoppen har lukket. Leveres når shoppen åbner igen.' : 'Personlig levering, forvent lidt ventetid.') + '</p>' +
-      '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="koeb-ok"' + (efter < 0 || mangler || (k.gave && !k.til) ? ' disabled' : '') + '>' + (forud ? (k.gave ? 'Forudbestil donation' : 'Forudbestil') : (k.gave ? 'Donér' : 'Bestil')) + '</button></div>');
+      '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="koeb-ok"' + (efter < 0 || mangler || !klar ? ' disabled' : '') + '>' + (forud ? (k.gave ? 'Forudbestil donation' : 'Forudbestil') : (k.gave ? 'Donér' : 'Bestil')) + '</button></div>');
   }
 
   function openBruger(email) {
-    var u = email ? A.brugere.filter(function (x) { return x.email === email; })[0] : { email: '', initialer: '', navn: '', gruppe: '', aktiv: true };
+    var u = email ? A.brugere.filter(function (x) { return x.email === email; })[0] : { email: '', initialer: '', navn: '', gruppe: '', team: '', aktiv: true };
     openModal('<h2>' + (email ? 'Rediger bruger' : 'Ny bruger') + '</h2>' +
       '<input type="hidden" id="b-orig" value="' + esc(email || '') + '">' +
       '<div class="field"><label for="b-navn">Navn</label><input class="input" id="b-navn" value="' + esc(u.navn) + '"></div>' +
       '<div class="row-2"><div class="field"><label for="b-ini">Initialer</label><input class="input" id="b-ini" maxlength="5" value="' + esc(u.initialer) + '" style="text-transform:uppercase"' + (email ? ' disabled title="Initialer kan ikke ændres"' : '') + '></div>' +
       '<div class="field"><label for="b-gruppe">Gruppe</label><select class="input" id="b-gruppe"><option value="">Ingen</option>' + A.grupper.map(function (g) { return '<option' + (u.gruppe === g ? ' selected' : '') + '>' + esc(g) + '</option>'; }).join('') + '</select></div></div>' +
+      '<div class="field"><label for="b-team">Team</label><select class="input" id="b-team"><option value="">Intet</option>' + (A.teams || []).map(function (g) { return '<option' + (u.team === g ? ' selected' : '') + '>' + esc(g) + '</option>'; }).join('') + '</select></div>' +
       '<div class="field"><label for="b-email">Google-mail</label><input class="input" id="b-email" type="email" value="' + esc(u.email) + '" placeholder="navn@best-one.dk"></div>' +
       '<label class="check"><input type="checkbox" id="b-aktiv"' + (u.aktiv ? ' checked' : '') + '> Aktiv</label>' +
       '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="bruger-ok">Gem</button></div>');
@@ -1584,7 +1604,8 @@
 
       case 'koeb': openKoeb(t.dataset.id, false); break;
       case 'giv': openKoeb(t.dataset.id, true); break;
-      case 'koeb-mode': koebState.oenske = val('koeb-oenske'); koebState.gave = t.dataset.g === '1'; renderKoeb(); break;
+      case 'koeb-mode': if (document.getElementById('koeb-oenske')) koebState.oenske = val('koeb-oenske'); koebState.gave = t.dataset.g === '1'; renderKoeb(); break;
+      case 'koeb-hvem': if (document.getElementById('koeb-oenske')) koebState.oenske = val('koeb-oenske'); koebState.hvem = t.dataset.h; renderKoeb(); break;
       case 'koeb-variant': koebState.variant = t.dataset.v; renderKoeb(); break;
       case 'koeb-drej': {
         // Bekræft købet, så man altid ser prisen
@@ -1642,7 +1663,8 @@
       case 'koeb-ok': {
         var k = koebState;
         var forud = S.shop && !S.shop.aaben;
-        iBaggrunden('bestil', { vareId: k.vare.id, variant: k.variant, oenske: val('koeb-oenske'), til: k.gave ? k.til : '' },
+        var flere = k.gave && k.hvem !== 'kollega';
+        iBaggrunden('bestil', { vareId: k.vare.id, variant: k.variant, oenske: flere ? '' : val('koeb-oenske'), til: k.gave && !flere ? k.til : '', hvem: flere ? k.hvem : '' },
           forud ? (k.gave ? 'Din donation er forudbestilt 🎁' : k.vare.navn + ' er forudbestilt') : (k.gave ? 'Din donation er sendt 🎁' : k.vare.navn + ' er bestilt'),
           forud ? 'Leveres når shoppen åbner igen.' : 'Personlig levering, forvent lidt ventetid.');
         break;
@@ -1675,7 +1697,7 @@
       case 'ny-bruger': openBruger(''); break;
       case 'ret-bruger': openBruger(t.dataset.email); break;
       case 'bruger-ok':
-        submit(t, 'admin_bruger', { origEmail: val('b-orig'), navn: val('b-navn'), initialer: val('b-ini'), gruppe: val('b-gruppe'), email: val('b-email'), aktiv: checked('b-aktiv') }, 'Bruger gemt');
+        submit(t, 'admin_bruger', { origEmail: val('b-orig'), navn: val('b-navn'), initialer: val('b-ini'), gruppe: val('b-gruppe'), team: val('b-team'), email: val('b-email'), aktiv: checked('b-aktiv') }, 'Bruger gemt');
         break;
       case 'gaver-ok': {
         closeModal();
@@ -1806,7 +1828,7 @@
 
   document.addEventListener('change', function (ev) {
     var t = ev.target;
-    if (t.dataset.act === 'koeb-til') { koebState.oenske = val('koeb-oenske'); koebState.til = t.value; renderKoeb(); }
+    if (t.dataset.act === 'koeb-til') { if (document.getElementById('koeb-oenske')) koebState.oenske = val('koeb-oenske'); koebState.til = t.value; renderKoeb(); }
     if (t.dataset.act === 'pperson') { ui.postPerson = t.value; ui.postVis = 25; render(); }
   });
 
