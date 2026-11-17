@@ -513,7 +513,7 @@ var Core = (function () {
     return { id: id, forud: forud };
   }
 
-  // Donér til team (alle i ens team inkl. en selv) eller afdelingen (alle aktive inkl. en selv): pris × antal.
+  // Donér til team (alle andre i ens team) eller afdelingen (alle andre aktive): pris × antal.
   // Én postering til giveren (ref = fælles id) og én bestilling pr. person (<id>.<nr>), så admin kan udlevere og
   // annullere (refundere) hver for sig.
   function bestilFlere(db, me, vare, hvem, forud, env) {
@@ -522,8 +522,8 @@ var Core = (function () {
       if (!me.team) throw err('BAD', 'Du er ikke tilknyttet et team.');
       alle = alle.filter(function (u) { return str(u.team).trim().toLowerCase() === me.team.toLowerCase(); });
     }
-    if (!alle.some(function (u) { return ini(u.initialer) === me.initialer; })) alle.push({ initialer: me.initialer, navn: me.navn });
-    if (alle.length < 2) throw err('BAD', 'Der er ingen andre at donere til.');
+    alle = alle.filter(function (u) { return ini(u.initialer) !== me.initialer; });
+    if (!alle.length) throw err('BAD', 'Der er ingen at donere til.');
     var pris = num(vare.pris), total = pris * alle.length;
     if (saldoFor(db.all('Posteringer'), me.initialer) < total) throw err('FUNDS', 'Du har ikke nok Webcoins.');
     var hvemTekst = hvem === 'team' ? 'team ' + me.team : 'afdelingen';
@@ -532,7 +532,7 @@ var Core = (function () {
     alle.sort(function (a, b) { return str(a.navn).localeCompare(str(b.navn), 'da'); }).forEach(function (u, n) {
       var bid = id + '.' + (n + 1), t = ini(u.initialer);
       db.insert('Bestillinger', { id: bid, tid: tid, fra: me.initialer, til: t, vare: str(vare.navn), pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '', oenske: '' });
-      if (t !== me.initialer) db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: t, type: 'gave_modtaget', beloeb: 0, tekst: str(vare.navn) + ' fra ' + me.navn, ref: bid });
+      db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: t, type: 'gave_modtaget', beloeb: 0, tekst: str(vare.navn) + ' fra ' + me.navn, ref: bid });
     });
     env.notify({
       ikon: '🎁', side: 'bestillinger', kunChat: true,

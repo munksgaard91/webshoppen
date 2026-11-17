@@ -581,7 +581,7 @@ t('præmie for måneden: ny præmie overskriver altid, dubletter ryddes, afslør
   data.Webkollega = data.Webkollega.filter(function (r) { return r.maaned !== '2026-11'; });
   data.MaalPraemie = []; data.Maal = [];
 });
-t('donér til team og afdelingen: pris × antal, én bestilling pr. person, refusion pr. bestilling', function () {
+t('donér til team og afdelingen (uden en selv): pris × antal, én bestilling pr. person, refusion pr. bestilling', function () {
   var gemB = data.Brugere, gemP = data.Posteringer, gemBe = data.Bestillinger, gemC = data.Config;
   data.Brugere = [
     { email: 't1@best-one.dk', initialer: 'TTA', navn: 'Tea', gruppe: 'Hjemmeside', aktiv: 'ja', team: 'Sharks' },
@@ -590,17 +590,18 @@ t('donér til team og afdelingen: pris × antal, én bestilling pr. person, refu
     { email: 't4@best-one.dk', initialer: 'TTD', navn: 'Tue', gruppe: 'Fotograf', aktiv: 'nej', team: 'Sharks' },
     { email: 't5@best-one.dk', initialer: 'TTE', navn: 'Tina', gruppe: 'Redaktør', aktiv: 'ja', team: '' }
   ];
-  data.Posteringer = [{ id: 's', tid: '2026-11-01T10:00:00.000Z', initialer: 'TTA', type: 'justering', beloeb: 45, tekst: 'Start' }];
+  data.Posteringer = [{ id: 's', tid: '2026-11-01T10:00:00.000Z', initialer: 'TTA', type: 'justering', beloeb: 25, tekst: 'Start' }];
+  data.Brugere.push({ email: 't6@best-one.dk', initialer: 'TTF', navn: 'Tage', gruppe: 'Support', aktiv: 'ja', team: 'Sharks' });
   data.Bestillinger = [];
   data.Config = [{ noegle: 'EKSTRA_MODTAGERE', vaerdi: 'Ekstern Person; ' }];
   var T = Core.resolveUser(db, { email: 't1@best-one.dk' }, []);
   var E = Core.resolveUser(db, { email: 't5@best-one.dk' }, []);
   eq(T.team, 'Sharks');
   var r = Core.handle(db, T, 'bestil', { vareId: 'cola', hvem: 'team' }, env);
-  eq(r.antal, 2, 'kun aktive i samme team (inkl. en selv)');
-  eq(saldo(T), 25);
-  eq(data.Bestillinger.map(function (b) { return b.til; }).sort(), ['TTA', 'TTB']);
-  eq(data.Posteringer.filter(function (p) { return p.type === 'gave_modtaget'; }).map(function (p) { return p.initialer; }), ['TTB']);
+  eq(r.antal, 2, 'kun aktive i samme team, ikke en selv');
+  eq(saldo(T), 5);
+  eq(data.Bestillinger.map(function (b) { return b.til; }).sort(), ['TTB', 'TTF']);
+  eq(data.Posteringer.filter(function (p) { return p.type === 'gave_modtaget'; }).map(function (p) { return p.initialer; }).sort(), ['TTB', 'TTF']);
   kaster(function () { Core.handle(db, T, 'bestil', { vareId: 'cola', hvem: 'afdeling' }, env); }, 'nok Webcoins');
   kaster(function () { Core.handle(db, E, 'bestil', { vareId: 'cola', hvem: 'team' }, env); }, 'team');
   var st = Core.handle(db, T, 'state', {}, env).stats;
@@ -608,9 +609,9 @@ t('donér til team og afdelingen: pris × antal, én bestilling pr. person, refu
   var adm = Core.resolveUser(db, { email: 'adm@best-one.dk' }, ['adm@best-one.dk']);
   Core.handle(db, adm, 'admin_bestilling', { id: data.Bestillinger[1].id, status: 'annulleret' }, env);
   st = Core.handle(db, T, 'state', {}, env).stats;
-  eq([st.saldo, st.givet, st.givetAntal, st.brugtSelv], [35, 10, 1, 0], 'delvis refusion trækkes fra donationer');
+  eq([st.saldo, st.givet, st.givetAntal, st.brugtSelv], [15, 10, 1, 0], 'delvis refusion trækkes fra donationer');
   data.Posteringer.push({ id: 's2', tid: '2026-11-01T10:00:00.000Z', initialer: 'TTA', type: 'justering', beloeb: 100, tekst: 'Mere' });
-  eq(Core.handle(db, T, 'bestil', { vareId: 'cola', hvem: 'afdeling' }, env).antal, 4, 'alle aktive med gruppe');
+  eq(Core.handle(db, T, 'bestil', { vareId: 'cola', hvem: 'afdeling' }, env).antal, 4, 'alle andre aktive med gruppe');
   // Ekstern modtager (Config) – ingen bruger, ingen gave_modtaget
   var s0 = Core.handle(db, T, 'state', {}, env);
   eq(s0.eksterne, [{ initialer: 'EKS1', navn: 'Ekstern Person' }]);
