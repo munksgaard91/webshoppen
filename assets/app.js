@@ -1438,7 +1438,6 @@
       (v.varianter.length > 1 ? '<div class="field"><label>Vælg</label><div class="choices">' + v.varianter.map(function (x) {
         return '<button class="choice' + (k.variant === x ? ' on' : '') + '" data-act="koeb-variant" data-v="' + esc(x) + '">' + esc(x) + '</button>';
       }).join('') + '</div></div>' : !v.oenskeFelt || flere ? '' : '<div class="field"><label for="koeb-oenske">Dit ønske</label><input class="input" id="koeb-oenske" maxlength="200" value="' + esc(k.oenske || '') + '" placeholder="Skriv dit ønske, ' + esc(v.oenskeTekst || 'fx Pepsi Max') + '"></div>') +
-      '<div class="seg"><button class="' + (k.gave ? '' : 'on') + '" data-act="koeb-mode" data-g="0">Til mig</button><button class="' + (k.gave ? 'on' : '') + '" data-act="koeb-mode" data-g="1">Donér</button></div>' +
       (k.gave ? '<div class="seg seg-3">' +
         '<button class="' + (k.hvem === 'kollega' ? 'on' : '') + '" data-act="koeb-hvem" data-h="kollega">En kollega</button>' +
         '<button class="' + (k.hvem === 'team' ? 'on' : '') + '" data-act="koeb-hvem" data-h="team"' + (team ? '' : ' disabled title="Du er ikke tilknyttet et team"') + '>' + (team ? 'Team ' + esc(team) : 'Team') + '</button>' +
@@ -1610,7 +1609,6 @@
 
       case 'koeb': openKoeb(t.dataset.id, false); break;
       case 'giv': openKoeb(t.dataset.id, true); break;
-      case 'koeb-mode': if (document.getElementById('koeb-oenske')) koebState.oenske = val('koeb-oenske'); koebState.gave = t.dataset.g === '1'; renderKoeb(); break;
       case 'koeb-vaelg': koebState.valgt = koebState.valgt || {}; if (koebState.valgt[t.dataset.i]) delete koebState.valgt[t.dataset.i]; else koebState.valgt[t.dataset.i] = 1; renderKoeb(); break;
       case 'koeb-hvem': if (document.getElementById('koeb-oenske')) koebState.oenske = val('koeb-oenske'); koebState.hvem = t.dataset.h; renderKoeb(); break;
       case 'koeb-variant': koebState.variant = t.dataset.v; renderKoeb(); break;
