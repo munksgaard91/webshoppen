@@ -1410,11 +1410,11 @@
     koebState = { vare: v, gave: gave, hvem: 'kollega', til: '', variant: v.varianter.length === 1 ? v.varianter[0] : '' };
     renderKoeb();
   }
-  // Modtagere ved donation til team / afdelingen (uden en selv) – backend regner det samme ud
+  // Modtagere ved donation til team / afdelingen (inkl. en selv) – backend regner det samme ud
   function donerTil(hvem) {
     var me = S.me || {};
     var andre = S.kolleger.filter(function (u) { return u.gruppe && (hvem === 'afdeling' || (me.team && (u.team || '').toLowerCase() === me.team.toLowerCase())); });
-    return andre.sort(function (a, b) { return a.navn.localeCompare(b.navn, 'da'); });
+    return andre.concat([{ initialer: me.initialer, navn: me.navn }]).sort(function (a, b) { return a.navn.localeCompare(b.navn, 'da'); });
   }
   function renderKoeb() {
     var k = koebState, v = k.vare;
@@ -1431,7 +1431,7 @@
       return '<option value="' + esc(u.initialer) + '"' + (k.til === u.initialer ? ' selected' : '') + '>' + esc(u.navn) + '</option>';
     }).join('');
     var mangler = v.varianter.length > 1 && !k.variant;
-    var klar = !k.gave || (k.hvem === 'kollega' ? !!k.til : antal > 0);
+    var klar = !k.gave || (k.hvem === 'kollega' ? !!k.til : antal > 1);
     modalIndhold('<h2><span class="ico">' + esc(v.ikon || '🛍️') + '</span>' + esc(v.navn) + '</h2>' +
       (v.varianter.length > 1 ? '<div class="field"><label>Vælg</label><div class="choices">' + v.varianter.map(function (x) {
         return '<button class="choice' + (k.variant === x ? ' on' : '') + '" data-act="koeb-variant" data-v="' + esc(x) + '">' + esc(x) + '</button>';
@@ -1442,8 +1442,8 @@
         '<button class="' + (k.hvem === 'team' ? 'on' : '') + '" data-act="koeb-hvem" data-h="team"' + (team ? '' : ' disabled title="Du er ikke tilknyttet et team"') + '>' + (team ? 'Team ' + esc(team) : 'Team') + '</button>' +
         '<button class="' + (k.hvem === 'afdeling' ? 'on' : '') + '" data-act="koeb-hvem" data-h="afdeling">Afdelingen</button></div>' : '') +
       (k.gave && k.hvem === 'kollega' ? '<div class="field"><label for="koeb-til">Kollega</label><select class="input" id="koeb-til" data-act="koeb-til"><option value="">Vælg …</option>' + kollegaer + '</select></div>' : '') +
-      (flere ? '<div class="field"><label>' + antal + (antal === 1 ? ' kollega' : ' kolleger') + '</label><div class="modt">' + modt.map(function (u) { return '<span class="tag">' + esc(u.navn) + '</span>'; }).join('') + '</div></div>' : '') +
-      '<div class="sum"><span class="muted">Pris</span><b class="num">' + (flere ? '<span class="muted gange">' + antal + ' × ' + fmt(v.pris) + ' =</span> ' : '') + wc(total) + '</b></div>' +
+      (flere ? '<div class="field"><label>' + antal + ' personer inkl. dig</label><div class="modt">' + modt.map(function (u) { return '<span class="tag">' + esc(u.navn) + '</span>'; }).join('') + '</div></div>' : '') +
+      '<div class="sum"><span class="muted">Pris</span><b class="num">' + (antal > 1 ? '<span class="muted gange">' + antal + ' × ' + fmt(v.pris) + ' =</span> ' : '') + wc(total) + '</b></div>' +
       '<div class="sum"><span class="muted">Saldo efter</span><b class="num ' + (efter < 0 ? 'minus' : '') + '">' + wc(efter) + '</b></div>' +
       '<p class="note" style="margin:6px 0 0">' + (forud ? 'Shoppen har lukket. Leveres når shoppen åbner igen.' : 'Personlig levering, forvent lidt ventetid.') + '</p>' +
       '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="koeb-ok"' + (efter < 0 || mangler || !klar ? ' disabled' : '') + '>' + (forud ? (k.gave ? 'Forudbestil donation' : 'Forudbestil') : (k.gave ? 'Donér' : 'Bestil')) + '</button></div>');
