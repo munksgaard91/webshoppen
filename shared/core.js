@@ -474,7 +474,7 @@ var Core = (function () {
     var forud = !shop.aaben;
     var pris = num(vare.pris);
     var hvem = str(data.hvem);
-    if (hvem === 'team' || hvem === 'afdeling') return bestilFlere(db, me, vare, hvem, forud, env);
+    if (hvem === 'team' || hvem === 'afdeling' || hvem === 'valgt') return bestilFlere(db, me, vare, hvem, forud, env, data.liste);
     var gave = !!data.til;
     var modtager = { initialer: me.initialer, navn: me.navn };
     if (gave) {
@@ -513,33 +513,43 @@ var Core = (function () {
     return { id: id, forud: forud };
   }
 
-  // Donér til team (alle i ens team inkl. en selv) eller afdelingen (alle aktive inkl. en selv): pris × antal.
+  // Donér til team (alle i ens team inkl. en selv), afdelingen (alle aktive inkl. en selv) eller "Vælg selv" (en blanding
+  // af kolleger, ekstra modtagere og evt. en selv): pris × antal.
   // Én postering til giveren (ref = fælles id) og én bestilling pr. person (<id>.<nr>), så admin kan udlevere og
   // annullere (refundere) hver for sig.
-  function bestilFlere(db, me, vare, hvem, forud, env) {
+  function bestilFlere(db, me, vare, hvem, forud, env, liste) {
     var alle = aktiveBrugere(db).filter(function (u) { return str(u.gruppe); });
-    if (hvem === 'team') {
-      if (!me.team) throw err('BAD', 'Du er ikke tilknyttet et team.');
-      alle = alle.filter(function (u) { return str(u.team).trim().toLowerCase() === me.team.toLowerCase(); });
+    if (hvem === 'valgt') {
+      var valgt = {};
+      (Array.isArray(liste) ? liste : []).slice(0, 100).forEach(function (x) { valgt[ini(x)] = 1; });
+      alle = alle.concat(eksterne(db)).filter(function (u) { return valgt[ini(u.initialer)]; });
+      if (valgt[me.initialer] && !alle.some(function (u) { return ini(u.initialer) === me.initialer; })) alle.push({ initialer: me.initialer, navn: me.navn });
+      if (Object.keys(valgt).length !== alle.length) throw err('BAD', 'En af de valgte findes ikke.');
+      if (!alle.some(function (u) { return ini(u.initialer) !== me.initialer; })) throw err('BAD', 'Vælg mindst én kollega.');
+    } else {
+      if (hvem === 'team') {
+        if (!me.team) throw err('BAD', 'Du er ikke tilknyttet et team.');
+        alle = alle.filter(function (u) { return str(u.team).trim().toLowerCase() === me.team.toLowerCase(); });
+      }
+      if (!alle.some(function (u) { return ini(u.initialer) === me.initialer; })) alle.push({ initialer: me.initialer, navn: me.navn });
+      if (alle.length < 2) throw err('BAD', 'Der er ingen andre at donere til.');
     }
-    if (!alle.some(function (u) { return ini(u.initialer) === me.initialer; })) alle.push({ initialer: me.initialer, navn: me.navn });
-    if (alle.length < 2) throw err('BAD', 'Der er ingen andre at donere til.');
     var pris = num(vare.pris), total = pris * alle.length;
     if (saldoFor(db.all('Posteringer'), me.initialer) < total) throw err('FUNDS', 'Du har ikke nok Webcoins.');
-    var hvemTekst = hvem === 'team' ? 'team ' + me.team : 'afdelingen';
+    var hvemTekst = hvem === 'team' ? 'team ' + me.team : hvem === 'afdeling' ? 'afdelingen' : alle.length <= 3 ? alle.map(function (u) { return ini(u.initialer) === me.initialer ? 'sig selv' : str(u.navn); }).join(', ') : alle.length + ' personer';
     var id = env.uuid(), tid = env.now().toISOString();
     db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'gave', beloeb: -total, tekst: vareNavnAntal(vare, alle.length) + ' til ' + hvemTekst, ref: id });
     alle.sort(function (a, b) { return str(a.navn).localeCompare(str(b.navn), 'da'); }).forEach(function (u, n) {
       var bid = id + '.' + (n + 1), t = ini(u.initialer);
       db.insert('Bestillinger', { id: bid, tid: tid, fra: me.initialer, til: t, vare: str(vare.navn), pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '', oenske: '' });
-      if (t !== me.initialer) db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: t, type: 'gave_modtaget', beloeb: 0, tekst: str(vare.navn) + ' fra ' + me.navn, ref: bid });
+      if (t !== me.initialer && !/^EKS\d+$/.test(t)) db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: t, type: 'gave_modtaget', beloeb: 0, tekst: str(vare.navn) + ' fra ' + me.navn, ref: bid });
     });
     env.notify({
       ikon: '🎁', side: 'bestillinger', kunChat: true,
       emne: 'Gave: ' + vareNavnAntal(vare, alle.length) + ' til ' + hvemTekst + ' fra ' + me.navn + (vare.ikon ? ' ' + str(vare.ikon) : ''),
-      kort: alle.map(function (u) { return ini(u.initialer); }).join(', '),
+      kort: alle.map(function (u) { return /^EKS\d+$/.test(ini(u.initialer)) ? str(u.navn) : ini(u.initialer); }).join(', '),
       tekst: me.navn + ' (' + me.initialer + ') ' + (forud ? 'forudbestiller ' : 'giver ') + str(vare.ikon) + ' ' + str(vare.navn) + ' til ' + hvemTekst + ' (' + alle.length + ' personer: ' +
-        alle.map(function (u) { return ini(u.initialer); }).join(', ') + '). Pris: ' + total + ' Webcoins.'
+        alle.map(function (u) { return /^EKS\d+$/.test(ini(u.initialer)) ? str(u.navn) : ini(u.initialer); }).join(', ') + '). Pris: ' + total + ' Webcoins.'
     });
     return { id: id, forud: forud, antal: alle.length };
   }

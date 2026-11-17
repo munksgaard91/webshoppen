@@ -619,6 +619,14 @@ t('donér til team og afdelingen: pris × antal, én bestilling pr. person, refu
   eq(data.Posteringer.filter(function (p) { return p.type === 'gave_modtaget'; }).length, nGm);
   eq(Core.handle(db, adm, 'admin_state', {}, env).bestillinger.filter(function (b) { return b.til === 'EKS1'; })[0].tilNavn, 'Ekstern Person');
   kaster(function () { Core.handle(db, T, 'bestil', { vareId: 'cola', til: 'EKS2' }, env); }, 'findes ikke');
+  // Vælg selv: blanding af kolleger, ekstern og en selv
+  var g0 = data.Posteringer.filter(function (p) { return p.type === 'gave_modtaget'; }).length, s1 = saldo(T);
+  eq(Core.handle(db, T, 'bestil', { vareId: 'cola', hvem: 'valgt', liste: ['TTA', 'TTC', 'EKS1', 'ttc'] }, env).antal, 3);
+  eq(saldo(T), s1 - 30);
+  eq(data.Posteringer.filter(function (p) { return p.type === 'gave_modtaget'; }).length, g0 + 1, 'kun TTC får gave-popup');
+  kaster(function () { Core.handle(db, T, 'bestil', { vareId: 'cola', hvem: 'valgt', liste: ['TTA'] }, env); }, 'mindst én');
+  kaster(function () { Core.handle(db, T, 'bestil', { vareId: 'cola', hvem: 'valgt', liste: ['TTB', 'TTD'] }, env); }, 'findes ikke');
+  kaster(function () { Core.handle(db, T, 'bestil', { vareId: 'cola', hvem: 'valgt', liste: 'TTB' }, env); }, 'mindst én');
   data.Brugere = gemB; data.Posteringer = gemP; data.Bestillinger = gemBe; data.Config = gemC;
 });
 print('OK: ' + ok + '  FEJL: ' + fejl);

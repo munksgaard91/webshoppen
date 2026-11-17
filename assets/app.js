@@ -1419,7 +1419,9 @@
   function renderKoeb() {
     var k = koebState, v = k.vare;
     var flere = k.gave && k.hvem !== 'kollega';
-    var modt = flere ? donerTil(k.hvem) : [];
+    var me0 = S.me || {};
+    var valgbare = [{ initialer: me0.initialer, navn: 'Dig selv' }].concat(S.kolleger.filter(function (u) { return u.gruppe; }), S.eksterne || []);
+    var modt = !flere ? [] : k.hvem === 'valgt' ? valgbare.filter(function (u) { return (k.valgt || {})[u.initialer]; }) : donerTil(k.hvem);
     var antal = flere ? modt.length : 1;
     var total = v.pris * antal;
     var efter = S.stats.saldo - total;
@@ -1431,7 +1433,7 @@
       return '<option value="' + esc(u.initialer) + '"' + (k.til === u.initialer ? ' selected' : '') + '>' + esc(u.navn) + '</option>';
     }).join('');
     var mangler = v.varianter.length > 1 && !k.variant;
-    var klar = !k.gave || (k.hvem === 'kollega' ? !!k.til : antal > 1);
+    var klar = !k.gave || (k.hvem === 'kollega' ? !!k.til : k.hvem === 'valgt' ? modt.some(function (u) { return u.initialer !== me0.initialer; }) : antal > 1);
     modalIndhold('<h2><span class="ico">' + esc(v.ikon || '🛍️') + '</span>' + esc(v.navn) + '</h2>' +
       (v.varianter.length > 1 ? '<div class="field"><label>Vælg</label><div class="choices">' + v.varianter.map(function (x) {
         return '<button class="choice' + (k.variant === x ? ' on' : '') + '" data-act="koeb-variant" data-v="' + esc(x) + '">' + esc(x) + '</button>';
@@ -1440,9 +1442,13 @@
       (k.gave ? '<div class="seg seg-3">' +
         '<button class="' + (k.hvem === 'kollega' ? 'on' : '') + '" data-act="koeb-hvem" data-h="kollega">En kollega</button>' +
         '<button class="' + (k.hvem === 'team' ? 'on' : '') + '" data-act="koeb-hvem" data-h="team"' + (team ? '' : ' disabled title="Du er ikke tilknyttet et team"') + '>' + (team ? 'Team ' + esc(team) : 'Team') + '</button>' +
-        '<button class="' + (k.hvem === 'afdeling' ? 'on' : '') + '" data-act="koeb-hvem" data-h="afdeling">Afdelingen</button></div>' : '') +
+        '<button class="' + (k.hvem === 'afdeling' ? 'on' : '') + '" data-act="koeb-hvem" data-h="afdeling">Afdelingen</button>' +
+        '<button class="' + (k.hvem === 'valgt' ? 'on' : '') + '" data-act="koeb-hvem" data-h="valgt">Vælg selv</button></div>' : '') +
       (k.gave && k.hvem === 'kollega' ? '<div class="field"><label for="koeb-til">Kollega</label><select class="input" id="koeb-til" data-act="koeb-til"><option value="">Vælg …</option>' + kollegaer + '</select></div>' : '') +
-      (flere ? '<div class="field"><label>' + antal + ' personer inkl. dig</label><div class="modt">' + modt.map(function (u) { return '<span class="tag">' + esc(u.navn) + '</span>'; }).join('') + '</div></div>' : '') +
+      (flere && k.hvem === 'valgt' ? '<div class="field"><label>' + (antal ? antal + ' valgt' : 'Vælg hvem') + '</label><div class="modt">' + valgbare.map(function (u) {
+        return '<button class="tag vaelg' + ((k.valgt || {})[u.initialer] ? ' on' : '') + '" data-act="koeb-vaelg" data-i="' + esc(u.initialer) + '">' + esc(u.navn) + '</button>';
+      }).join('') + '</div></div>' : '') +
+      (flere && k.hvem !== 'valgt' ? '<div class="field"><label>' + antal + ' personer inkl. dig</label><div class="modt">' + modt.map(function (u) { return '<span class="tag">' + esc(u.navn) + '</span>'; }).join('') + '</div></div>' : '') +
       '<div class="sum"><span class="muted">Pris</span><b class="num">' + (antal > 1 ? '<span class="muted gange">' + antal + ' × ' + fmt(v.pris) + ' =</span> ' : '') + wc(total) + '</b></div>' +
       '<div class="sum"><span class="muted">Saldo efter</span><b class="num ' + (efter < 0 ? 'minus' : '') + '">' + wc(efter) + '</b></div>' +
       '<p class="note" style="margin:6px 0 0">' + (forud ? 'Shoppen har lukket. Leveres når shoppen åbner igen.' : 'Personlig levering, forvent lidt ventetid.') + '</p>' +
@@ -1605,6 +1611,7 @@
       case 'koeb': openKoeb(t.dataset.id, false); break;
       case 'giv': openKoeb(t.dataset.id, true); break;
       case 'koeb-mode': if (document.getElementById('koeb-oenske')) koebState.oenske = val('koeb-oenske'); koebState.gave = t.dataset.g === '1'; renderKoeb(); break;
+      case 'koeb-vaelg': koebState.valgt = koebState.valgt || {}; if (koebState.valgt[t.dataset.i]) delete koebState.valgt[t.dataset.i]; else koebState.valgt[t.dataset.i] = 1; renderKoeb(); break;
       case 'koeb-hvem': if (document.getElementById('koeb-oenske')) koebState.oenske = val('koeb-oenske'); koebState.hvem = t.dataset.h; renderKoeb(); break;
       case 'koeb-variant': koebState.variant = t.dataset.v; renderKoeb(); break;
       case 'koeb-drej': {
@@ -1664,7 +1671,7 @@
         var k = koebState;
         var forud = S.shop && !S.shop.aaben;
         var flere = k.gave && k.hvem !== 'kollega';
-        iBaggrunden('bestil', { vareId: k.vare.id, variant: k.variant, oenske: flere ? '' : val('koeb-oenske'), til: k.gave && !flere ? k.til : '', hvem: flere ? k.hvem : '' },
+        iBaggrunden('bestil', { vareId: k.vare.id, variant: k.variant, oenske: flere ? '' : val('koeb-oenske'), til: k.gave && !flere ? k.til : '', hvem: flere ? k.hvem : '', liste: flere && k.hvem === 'valgt' ? Object.keys(k.valgt || {}) : [] },
           forud ? (k.gave ? 'Din donation er forudbestilt 🎁' : k.vare.navn + ' er forudbestilt') : (k.gave ? 'Din donation er sendt 🎁' : k.vare.navn + ' er bestilt'),
           forud ? 'Leveres når shoppen åbner igen.' : 'Personlig levering, forvent lidt ventetid.');
         break;

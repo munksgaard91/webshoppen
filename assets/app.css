@@ -449,7 +449,13 @@ td.r, th.r { text-align: right; }
 .seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--card-2); border: 1px solid var(--line); border-radius: 14px; padding: 4px; margin-bottom: 16px; }
 .seg button { border: 0; background: transparent; border-radius: 10px; padding: 9px; font-weight: 700; color: var(--muted); }
 .seg button.on { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
-.seg.seg-3 { grid-template-columns: repeat(3, 1fr); margin-top: -8px; }
+.seg.seg-3 { grid-template-columns: repeat(4, auto); margin-top: -8px; }
+/* Købsvinduet er bredere, så varenavn og de fire donér-valg står på én linje */
+.modal:has([data-act=koeb-ok]) { max-width: 540px; }
+.modal:has([data-act=koeb-ok]) h2 { white-space: nowrap; }
+.seg.seg-3 button { padding: 9px 6px; font-size: 13px; }
+.tag.vaelg { cursor: pointer; border: 1px solid var(--line); background: var(--card); color: var(--muted); font: inherit; font-size: 12px; font-weight: 600; }
+.tag.vaelg.on { background: var(--brand); border-color: var(--brand); color: #fff; }
 .seg button { white-space: nowrap; }
 .seg button:disabled { opacity: .45; cursor: not-allowed; }
 .modt { display: flex; flex-wrap: wrap; gap: 6px; }
