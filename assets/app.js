@@ -477,7 +477,7 @@
     ui.lukketSet = true;
     openModal('<div class="closed">' + coin('coin-xl') +
       '<h2>Shoppen har lukket</h2>' +
-      '<p>' + (shop.grund === 'fravaer' ? 'Vi er ikke på kontoret lige nu.' : 'Åben hverdage ' + esc(shop.tider || '08:00–15:30') + '.') + '</p>' +
+      '<p>' + (shop.grund === 'fravaer' ? 'Vi er ikke på kontoret lige nu.' : 'Åben hverdage ' + esc(shop.tider || '08:00–15:45') + '.') + '</p>' +
       (shop.tekst ? '<p class="closed-when">' + esc(shop.tekst) + '</p>' : '') +
       '<p>Du kan forudbestille til når shoppen åbner igen.</p>' +
       '<button class="btn primary grow" data-act="close">OK</button></div>');

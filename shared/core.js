@@ -78,11 +78,11 @@ var Core = (function () {
     return maanedKey(p.tid);
   }
 
-  // Åbningstid, fx 08:00–15:30 på hverdage (dage "1-5", mandag = 1).
+  // Åbningstid, fx 08:00–15:45 på hverdage (dage "1-5", mandag = 1).
   var DAGE = ['mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag', 'søndag'];
   function tilMin(s) { var p = String(s || '0:0').split(':'); return Number(p[0]) * 60 + Number(p[1] || 0); }
   function aabningstider(nu, aabner, lukker, dage) {
-    aabner = aabner || '08:00'; lukker = lukker || '15:30';
+    aabner = aabner || '08:00'; lukker = lukker || '15:45';
     var interval = String(dage || '1-5').split('-').map(Number);
     var fra = interval[0], til = interval[1] || interval[0];
     var erDag = function (d) { return d >= fra && d <= til; };

@@ -696,7 +696,7 @@ function opsaet() {
     { noegle: 'CHAT_WEBHOOK', vaerdi: '' },
     { noegle: 'NOTIFIKATION_MAIL', vaerdi: Session.getActiveUser().getEmail() },
     { noegle: 'AABNER', vaerdi: '08:00' },
-    { noegle: 'LUKKER', vaerdi: '15:30' },
+    { noegle: 'LUKKER', vaerdi: '15:45' },
     { noegle: 'AABNE_DAGE', vaerdi: '1-5' },
     { noegle: 'LUK_VED_FRAVAER', vaerdi: 'ja' },
     { noegle: 'KALENDER_ID', vaerdi: '' },
