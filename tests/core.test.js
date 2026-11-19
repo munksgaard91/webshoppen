@@ -629,4 +629,49 @@ t('donér til team og afdelingen: pris × antal, én bestilling pr. person, refu
   kaster(function () { Core.handle(db, T, 'bestil', { vareId: 'cola', hvem: 'valgt', liste: 'TTB' }, env); }, 'mindst én');
   data.Brugere = gemB; data.Posteringer = gemP; data.Bestillinger = gemBe; data.Config = gemC;
 });
+t('admin-stats: største forbruger/donor (måned + i alt), højeste beholdning (nu + nogensinde), alt brugt i måneden', function () {
+  var gemP = data.Posteringer, gemB = data.Brugere;
+  data.Brugere = [
+    { email: 'a@best-one.dk', initialer: 'AAA', navn: 'Anna A', gruppe: 'Hjemmeside', aktiv: 'ja' },
+    { email: 'b@best-one.dk', initialer: 'BBB', navn: 'Bo B', gruppe: 'Support', aktiv: 'ja' }
+  ];
+  data.Posteringer = [
+    { tid: '2026-10-01T10:00:00.000Z', initialer: 'AAA', type: 'optjent', beloeb: 200 },
+    { tid: '2026-10-02T10:00:00.000Z', initialer: 'AAA', type: 'koeb', beloeb: -150 },
+    { tid: '2026-11-02T10:00:00.000Z', initialer: 'BBB', type: 'optjent', beloeb: 100 },
+    { tid: '2026-11-03T10:00:00.000Z', initialer: 'BBB', type: 'gave', beloeb: -40, ref: 'g1' },
+    { tid: '2026-11-03T10:00:00.000Z', initialer: 'BBB', type: 'hjul', beloeb: -30 },
+    { tid: '2026-11-04T10:00:00.000Z', initialer: 'BBB', type: 'refusion', beloeb: 10, ref: 'g1.2' },
+    { tid: '2026-11-05T10:00:00.000Z', initialer: 'AAA', type: 'koeb', beloeb: -5 },
+    { tid: '2026-11-05T10:00:00.000Z', initialer: 'EKS1', type: 'koeb', beloeb: -999 }
+  ];
+  var adm = Core.resolveUser(db, { email: 'adm@best-one.dk' }, ['adm@best-one.dk']);
+  var tp = Core.handle(db, adm, 'admin_state', {}, env).top;
+  eq(tp.brugtMaaned, 65, 'alt brugt i november (40 + 30 − 10 + 5)');
+  eq(tp.brugtAlle, 215);
+  eq([tp.forbruger.maaned.initialer, tp.forbruger.maaned.beloeb], ['BBB', 60]);
+  eq([tp.forbruger.alle.initialer, tp.forbruger.alle.beloeb], ['AAA', 155]);
+  eq([tp.donor.maaned.initialer, tp.donor.maaned.beloeb], ['BBB', 30], 'delvis refusion af gave trækkes fra');
+  eq(tp.donor.alle.beloeb, 30);
+  eq([tp.beholdning.nu.initialer, tp.beholdning.nu.beloeb], ['AAA', 45]);
+  eq([tp.beholdning.alle.initialer, tp.beholdning.alle.beloeb], ['AAA', 200]);
+  data.Posteringer = gemP; data.Brugere = gemB;
+});
+t('tilbud: lavere pris bruges ved bestilling og donation, normalpris vises som før-pris, kan fjernes', function () {
+  var adm = Core.resolveUser(db, { email: 'adm@best-one.dk' }, ['adm@best-one.dk']);
+  kaster(function () { Core.handle(db, B, 'admin_tilbud', { vareId: 'mon', pris: 5 }, env); }, 'admin');
+  kaster(function () { Core.handle(db, adm, 'admin_tilbud', { vareId: 'mon', pris: 20 }, env); }, 'lavere');
+  kaster(function () { Core.handle(db, adm, 'admin_tilbud', { vareId: 'andet', pris: 0 }, env); }, 'findes ikke');
+  Core.handle(db, adm, 'admin_tilbud', { vareId: 'mon', pris: 12 }, env);
+  var m = Core.handle(db, A, 'state', {}, env).menu.filter(function (v) { return v.id === 'mon'; })[0];
+  eq([m.pris, m.foerPris], [12, 20]);
+  var s0 = saldo(A);
+  Core.handle(db, A, 'bestil', { vareId: 'mon' }, env);
+  eq(saldo(A), s0 - 12);
+  eq(data.Bestillinger[data.Bestillinger.length - 1].pris, 12);
+  Core.handle(db, adm, 'admin_tilbud', { vareId: 'mon', pris: null }, env);
+  m = Core.handle(db, A, 'state', {}, env).menu.filter(function (v) { return v.id === 'mon'; })[0];
+  eq([m.pris, m.foerPris], [20, 0]);
+  data.Config = data.Config.filter(function (r) { return r.noegle !== 'TILBUD'; });
+});
 print('OK: ' + ok + '  FEJL: ' + fejl);

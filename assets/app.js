@@ -550,7 +550,7 @@
         if (v.snart) return forslagRaekke(vareBillede(v), v.navn, '', 'vare', kanKoebe);
         return '<div class="row' + (v.udsolgt ? ' udsolgt' : '') + '">' + vareBillede(v) +
           '<div class="row-main"><b>' + esc(v.navn) + '</b>' + (v.udsolgt ? ' <span class="tag annulleret">Udsolgt</span>' : '') + '</div>' +
-          '<div class="row-price num">' + (v.snart ? '<span class="tag">Kommer snart</span>' : '<span class="amt">' + fmt(v.pris) + '</span><span class="unit">' + enhed(v.pris) + '</span>' + coin()) + '</div>' +
+          '<div class="row-price num">' + (v.snart ? '<span class="tag">Kommer snart</span>' : (v.foerPris ? '<s class="foer-pris">' + fmt(v.foerPris) + '</s>' : '') + '<span class="amt' + (v.foerPris ? ' tilbud' : '') + '">' + fmt(v.pris) + '</span><span class="unit">' + enhed(v.pris) + '</span>' + coin()) + '</div>' +
           '<div class="row-acts">' +
           '<button class="btn sm" data-act="giv" data-id="' + esc(v.id) + '"' + (raad && S.kolleger.length ? '' : ' disabled') + '>' + ico('gift') + 'Donér</button>' +
           '<button class="btn primary sm" data-act="koeb" data-id="' + esc(v.id) + '"' + (raad ? '' : ' disabled') + '>' + (lukket ? 'Forudbestil' : 'Bestil') + '</button></div></div>';
@@ -1103,8 +1103,12 @@
     // Lager: markér en vare som udsolgt, så den ikke kan bestilles (Config UDSOLGT)
     var lager = '<section class="card lager"><div class="card-head"><h2 class="card-title">Lager</h2></div><div class="lager-liste">' +
       S.menu.filter(function (v) { return !v.snart; }).map(function (v) {
-        return '<div class="lager-item' + (v.udsolgt ? ' ud' : '') + '"><span>' + esc(v.ikon) + ' <b>' + esc(v.navn) + '</b></span>' +
-          '<button class="btn sm' + (v.udsolgt ? ' primary' : '') + '" data-act="udsolgt" data-id="' + esc(v.id) + '" data-u="' + (v.udsolgt ? '0' : '1') + '">' + (v.udsolgt ? 'På lager igen' : 'Udsolgt') + '</button></div>';
+        return '<div class="lager-item' + (v.udsolgt ? ' ud' : '') + '"><span>' + esc(v.ikon) + ' <b>' + esc(v.navn) + '</b>' +
+          ' <span class="num faint">' + (v.foerPris ? '<s>' + fmt(v.foerPris) + '</s> <b class="tilbud">' + wc(v.pris) + '</b>' : wc(v.pris)) + '</span></span>' +
+          '<span class="row-acts">' + (v.foerPris
+            ? '<button class="btn sm" data-act="tilbud-fjern" data-id="' + esc(v.id) + '">Fjern tilbud</button>'
+            : '<button class="btn sm" data-act="tilbud" data-id="' + esc(v.id) + '">Tilbud</button>') +
+          '<button class="btn sm' + (v.udsolgt ? ' primary' : '') + '" data-act="udsolgt" data-id="' + esc(v.id) + '" data-u="' + (v.udsolgt ? '0' : '1') + '">' + (v.udsolgt ? 'På lager igen' : 'Udsolgt') + '</button></span></div>';
       }).join('') + '</div></section>';
     return adminHead('Bestillinger') + lager +
       '<section class="card"><div class="card-head"><div class="chips">' +
@@ -1126,7 +1130,8 @@
   function synkTag() {
     var st = A && A.synk;
     if (!st || !st.tid) return '';
-    return '<span class="tag" title="Tal fra fakturering, anmeldelser og fælles mål hentes automatisk hver time">Hentet ' + esc(dato(st.tid)) + '</span>';
+    // Klik = hent optjening og tal nu (samme som "Hent optjening nu" under Posteringer)
+    return '<button class="tag tag-btn" data-act="sync" title="Hentes automatisk hver time – klik for at hente nu">↻ Hentet ' + esc(dato(st.tid)) + '</button>';
   }
   function synkBanner() {
     var st = A && A.synk;
@@ -1152,9 +1157,9 @@
     // Webcoins i omløb = alle saldi tilsammen – penge, der er lovet holdet, men ikke brugt endnu (1 kr = 2 Webcoins)
     var omloeb = iOmloeb();
     // Brugt siden start: alle ikke-annullerede bestillinger (Webcoins), omregnet til kr (1 kr = 2 Webcoins)
-    var start = rows.reduce(function (sum, o) { return sum + o.wc; }, 0);
+    var start = A.top ? A.top.brugtAlle : rows.reduce(function (sum, o) { return sum + o.wc; }, 0);
     var stats = '<div class="stat-grid tre">' +
-      statBox('Brugt i ' + mNavn, wcSmall(denne ? denne.wc : 0) + coin(), denne ? denne.antal + ' bestillinger' : 'Ingen bestillinger') +
+      statBox('Brugt i ' + mNavn, wcSmall(A.top ? A.top.brugtMaaned : denne ? denne.wc : 0) + coin(), A.top ? 'Alle Webcoins brugt' : denne ? denne.antal + ' bestillinger' : 'Ingen bestillinger') +
       (tb ? statBox('Teambudget tilbage', kr(tb.rest), 'Brugt i sæsonen: ' + kr(tb.brugt)) : '') +
       statBox('Webcoins i omløb', wcSmall(omloeb) + coin(), '≈ ' + kr(omloeb / 2) + ' på saldierne') +
       '</div>';
@@ -1188,6 +1193,22 @@
         }).join('') : '<div class="empty">Ingen fælles mål for ' + mNavn + ' endnu.</div>') +
       '</section>';
 
+    // Stats: største forbruger, største donor og højeste beholdning
+    var tp = A.top;
+    var topRaekke = function (label, x) {
+      return '<div class="stat-r"><small class="faint">' + label + '</small>' + (x
+        ? '<div class="top-linje"><span class="top-hvem">' + pAvatar(x.initialer, x.initialer, 'mini-av') + '<b>' + esc(x.navn) + '</b></span><b class="num">' + wc(x.beloeb) + coin() + '</b></div>'
+        : '<div class="top-linje"><span class="faint">Ingen endnu</span></div>') + '</div>';
+    };
+    var topKort = function (titel, ikon, a, b) {
+      return '<section class="card top-kort"><div class="card-head"><h2 class="card-title">' + ikon + ' ' + titel + '</h2></div>' + a + b + '</section>';
+    };
+    var topStats = tp ? '<div class="stat-grid tre top-stats">' +
+      topKort('Største forbruger', '🛒', topRaekke('I ' + mNavn, tp.forbruger.maaned), topRaekke('All time', tp.forbruger.alle)) +
+      topKort('Største donor', '🎁', topRaekke('I ' + mNavn, tp.donor.maaned), topRaekke('All time', tp.donor.alle)) +
+      topKort('Højeste beholdning', '💰', topRaekke('Lige nu', tp.beholdning.nu), topRaekke('All time', tp.beholdning.alle)) +
+      '</div>' : '';
+
     var akt = '<section class="card"><div class="card-head"><h2 class="card-title">Seneste aktivitet</h2><a class="link" href="#/admin/posteringer">Se alle</a></div>' +
       (A.posteringer.length ? '<div class="adm-list">' + A.posteringer.filter(function (p) { return p.type !== 'gave_modtaget'; }).slice(0, 6).map(function (p) {
         return '<div class="adm-row"><div class="adm-who">' + pAvatar(p.initialer, p.initialer, 'mini-av md') + '<div class="adm-main"><b>' + esc(p.navn) + '</b><small class="faint">' + esc(TYPER[p.type] || p.type) + ' · ' + esc(p.tekst) + ' · ' + postDato(p) + '</small></div></div>' +
@@ -1206,9 +1227,9 @@
       '</section>';
 
     // Rækkefølge: det der skal klares (nye bestillinger) øverst, så økonomi, derefter resten
-    var startTag = '<span class="tag start-tag" title="Alle bestillinger siden start (ikke annullerede) · 1 kr = 2 Webcoins">Brugt siden start: <b>' + wc(start) + '</b> ≈ ' + kr(start / 2) + '</span>';
+    var startTag = '<span class="tag start-tag" title="Alle Webcoins brugt siden start (køb, gaver, drej – minus refusioner) · 1 kr = 2 Webcoins">Brugt siden start: <b>' + wc(start) + '</b> ≈ ' + kr(start / 2) + '</span>';
     return adminHead('Overblik', startTag + synkTag() + (S.vedligehold ? '' : '<button class="tag tag-btn" data-act="vedl-spoerg">❌ Luk shoppen</button>')) + synkBanner() + '<div class="adm-first">' + best + '</div>' + stats +
-      '<div class="grid-2 top0 lige">' + ev + kollega + '</div>' +
+      '<div class="grid-2 top0 lige">' + ev + kollega + '</div>' + topStats +
       '<div class="adm-stak">' + opg + akt + '</div>';
   }
 
@@ -1718,6 +1739,20 @@
         break;
       case 'vedl':
         submit(t, 'admin_vedligehold', { lukket: t.dataset.l === '1' }, t.dataset.l === '1' ? 'Shoppen er lukket' : 'Shoppen er åben igen');
+        break;
+      case 'tilbud': {
+        var tv = S.menu.filter(function (x) { return x.id === t.dataset.id; })[0];
+        if (!tv) break;
+        openModal('<h2><span class="ico">' + esc(tv.ikon) + '</span>Tilbud på ' + esc(tv.navn) + '</h2>' +
+          '<div class="field"><label for="tilbud-pris">Ny pris (normalt ' + wc(tv.pris) + ')</label><input class="input" id="tilbud-pris" type="number" min="0" max="' + (tv.pris - 1) + '" step="1" value="' + Math.max(0, tv.pris - 1) + '"></div>' +
+          '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="tilbud-ok" data-id="' + esc(tv.id) + '">Sæt tilbud</button></div>');
+        break;
+      }
+      case 'tilbud-ok':
+        submit(t, 'admin_tilbud', { vareId: t.dataset.id, pris: val('tilbud-pris') }, 'Tilbud sat');
+        break;
+      case 'tilbud-fjern':
+        submit(t, 'admin_tilbud', { vareId: t.dataset.id, pris: null }, 'Tilbud fjernet');
         break;
       case 'udsolgt': {
         // Slås op ved hvert kald – refresh lægger ændringen oven på nye tal (nye objekter)

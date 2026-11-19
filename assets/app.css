@@ -956,3 +956,18 @@ html.tv-fuld .tv .maal-ikon { width: 2.8vw; height: 2.8vw; font-size: 1.4vw; }
   .tv-head { flex-direction: column; align-items: flex-start; }
   .tv .maal-row { grid-template-columns: minmax(0, 1fr) 44px 30px; }
 }
+
+/* Admin-overblik: stats (største forbruger/donor, højeste beholdning) */
+.top-stats { margin-top: 20px; }
+.top-kort .card-head { margin-bottom: 2px; }
+.stat-r { padding: 8px 0; border-top: 1px solid var(--line); }
+.top-kort .stat-r:first-of-type { border-top: 0; padding-top: 2px; }
+.stat-r small { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+.top-linje { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 14px; white-space: nowrap; }
+.top-hvem { display: inline-flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
+.top-hvem b { overflow: hidden; text-overflow: ellipsis; }
+.top-hvem .mini-av { flex: none; }
+
+/* Tilbud: normalpris overstreget før den nye pris */
+.foer-pris { color: var(--muted); font-weight: 500; margin-right: 6px; font-size: .9em; }
+.lager-item s { color: var(--muted); }

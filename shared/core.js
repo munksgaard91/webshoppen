@@ -165,10 +165,25 @@ var Core = (function () {
   function udsolgte(db) {
     return str(cfgVal(db, 'UDSOLGT', '')).split(/[,;\s]+/).filter(String);
   }
+  // Tilbud (sat af admin, Config TILBUD = "candybar:2, slik:4"): ny pris; den gamle vises overstreget. Kun lavere priser.
+  function tilbud(db) {
+    var m = {};
+    str(cfgVal(db, 'TILBUD', '')).split(/[,;]+/).forEach(function (x) {
+      var d = x.split(':'), id = str(d[0]).trim(), pr = Math.floor(num(d[1]));
+      if (id && d.length === 2 && pr >= 0) m[id] = pr;
+    });
+    return m;
+  }
+  function prisFor(db, vare, tb) {
+    var t = (tb || tilbud(db))[str(vare.id)];
+    return t !== undefined && t < num(vare.pris) ? t : num(vare.pris);
+  }
+
   function menu(db, alle) {
-    var ud = udsolgte(db);
+    var ud = udsolgte(db), tb = tilbud(db);
     return sortiment().menu.filter(function (v) { return alle || til(v.aktiv); }).map(function (v) {
-      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), billede: str(v.billede), pris: num(v.pris), kostpris: num(v.kostpris), varianter: varianter(v), oenskeFelt: ja(v.oenske), oenskeTekst: str(v.oenskeTekst), snart: ja(v.snart), aktiv: til(v.aktiv), udsolgt: ud.indexOf(str(v.id)) >= 0 };
+      var pris = prisFor(db, v, tb);
+      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), billede: str(v.billede), pris: pris, foerPris: pris < num(v.pris) ? num(v.pris) : 0, kostpris: num(v.kostpris), varianter: varianter(v), oenskeFelt: ja(v.oenske), oenskeTekst: str(v.oenskeTekst), snart: ja(v.snart), aktiv: til(v.aktiv), udsolgt: ud.indexOf(str(v.id)) >= 0 };
     });
   }
 
@@ -189,6 +204,23 @@ var Core = (function () {
     kraevAdmin(me);
     saetCfg(db, 'VEDLIGEHOLD', data.lukket ? 'ja' : '');
     return { ok: true, lukket: !!data.lukket };
+  }
+
+  // Tilbud: pris = ny pris (lavere end normalprisen); tom/null = fjern tilbuddet
+  function adminTilbud(db, me, data, env) {
+    kraevAdmin(me);
+    var id = str(data.vareId), vare = null;
+    sortiment().menu.forEach(function (v) { if (str(v.id) === id) vare = v; });
+    if (!vare || ja(vare.snart)) throw err('BAD', 'Varen findes ikke.');
+    var tb = tilbud(db);
+    delete tb[id];
+    if (data.pris !== null && data.pris !== undefined && str(data.pris).trim() !== '') {
+      var pr = Math.floor(num(data.pris));
+      if (!(pr >= 0) || pr >= num(vare.pris)) throw err('BAD', 'Tilbudsprisen skal være lavere end ' + num(vare.pris) + ' Webcoins.');
+      tb[id] = pr;
+    }
+    saetCfg(db, 'TILBUD', Object.keys(tb).map(function (k) { return k + ':' + tb[k]; }).join(', '));
+    return { ok: true };
   }
 
   function adminUdsolgt(db, me, data, env) {
@@ -472,7 +504,7 @@ var Core = (function () {
     // Lukket shop = forudbestilling. Den leveres, når shoppen åbner igen.
     var shop = env.shop ? env.shop() : { aaben: true };
     var forud = !shop.aaben;
-    var pris = num(vare.pris);
+    var pris = prisFor(db, vare);
     var hvem = str(data.hvem);
     if (hvem === 'team' || hvem === 'afdeling' || hvem === 'valgt') return bestilFlere(db, me, vare, hvem, forud, env, data.liste);
     var gave = !!data.til;
@@ -534,7 +566,7 @@ var Core = (function () {
       if (!alle.some(function (u) { return ini(u.initialer) === me.initialer; })) alle.push({ initialer: me.initialer, navn: me.navn });
       if (alle.length < 2) throw err('BAD', 'Der er ingen andre at donere til.');
     }
-    var pris = num(vare.pris), total = pris * alle.length;
+    var pris = prisFor(db, vare), total = pris * alle.length;
     if (saldoFor(db.all('Posteringer'), me.initialer) < total) throw err('FUNDS', 'Du har ikke nok Webcoins.');
     var hvemTekst = hvem === 'team' ? 'team ' + me.team : hvem === 'afdeling' ? 'afdelingen' : alle.length <= 3 ? alle.map(function (u) { return ini(u.initialer) === me.initialer ? 'sig selv' : str(u.navn); }).join(', ') : alle.length + ' personer';
     var id = env.uuid(), tid = env.now().toISOString();
@@ -831,6 +863,41 @@ var Core = (function () {
     });
   }
 
+  // Stats til admin-overblikket: største forbruger og donor (måned + i alt), højeste beholdning (nu + nogensinde)
+  // og alt brugt i måneden. Brugt = køb, gaver, drej og donationer minus refusioner – alle Webcoins, ikke kun varer
+  // med kostpris.
+  function adminTop(db, poster, nu) {
+    var mk = maanedKey(nu), navne = alleNavne(db), pr = {}, brugtMaaned = 0, gaveRefs = {};
+    poster.forEach(function (p) { if (p.type === 'gave') gaveRefs[str(p.ref)] = 1; });
+    var erGave = function (ref) { var r = str(ref), i = r.lastIndexOf('.'); return !!(gaveRefs[r] || (i > 0 && gaveRefs[r.slice(0, i)])); };
+    poster.slice().sort(function (a, b) { return str(a.tid).localeCompare(str(b.tid)); }).forEach(function (p) {
+      var i = ini(p.initialer);
+      if (!i || /^EKS\d+$/.test(i)) return;
+      var o = pr[i] = pr[i] || { brugt: 0, brugtM: 0, givet: 0, givetM: 0, saldo: 0, top: 0 };
+      var b = num(p.beloeb), denne = postMaaned(p) === mk;
+      var brugt = 0, givet = 0;
+      if (['koeb', 'hjul', 'gave', 'projekt'].indexOf(p.type) >= 0) brugt = -b;
+      if (p.type === 'gave') givet = -b;
+      if (p.type === 'refusion') { brugt = -b; if (erGave(p.ref)) givet = -b; }
+      o.brugt += brugt; o.givet += givet;
+      if (denne) { o.brugtM += brugt; o.givetM += givet; brugtMaaned += brugt; }
+      o.saldo += b;
+      if (o.saldo > o.top) o.top = o.saldo;
+    });
+    var bedst = function (felt) {
+      var v = null;
+      Object.keys(pr).forEach(function (i) { if (pr[i][felt] > 0 && (!v || pr[i][felt] > v.beloeb)) v = { initialer: i, navn: navne[i] || i, beloeb: Math.round(pr[i][felt]) }; });
+      return v;
+    };
+    return {
+      brugtMaaned: Math.round(brugtMaaned),
+      forbruger: { maaned: bedst('brugtM'), alle: bedst('brugt') },
+      donor: { maaned: bedst('givetM'), alle: bedst('givet') },
+      beholdning: { nu: bedst('saldo'), alle: bedst('top') },
+      brugtAlle: Math.round(Object.keys(pr).reduce(function (sum, i) { return sum + pr[i].brugt; }, 0))
+    };
+  }
+
   // Månedsmail til admin den 1.: opgørelse til RAB for sidste måned + påmindelser. Sendes af Code.gs (trigger).
   function maanedsrapport(db, env) {
     var nu = env.now(), mk = maanedKey(nu), sidst = forrigeMaaned(mk);
@@ -880,6 +947,7 @@ var Core = (function () {
         return { id: str(b.id), tid: str(b.tid), fra: str(b.fra), fraNavn: navne[b.fra] || b.fra, til: str(b.til), tilNavn: navne[b.til] || b.til, vare: str(b.vare), pris: num(b.pris), kostpris: num(b.kostpris), status: str(b.status), forud: str(b.forud) === 'ja', oenske: str(b.oenske) };
       }),
       opgoerelse: opgoerelse(db),
+      top: adminTop(db, poster, nu),
       // Den timelige hentning: { tid, fejl: [...] } (Script Properties i Apps Script; null før første kørsel)
       synk: env.synkStatus ? env.synkStatus() : null,
       forslag: (function () {
@@ -1210,13 +1278,14 @@ var Core = (function () {
     admin_justering: adminJustering,
     admin_saldo: adminSaldo,
     admin_udsolgt: adminUdsolgt,
+    admin_tilbud: adminTilbud,
     admin_vedligehold: adminVedligehold,
     admin_forslag_laest: adminForslagLaest,
     gaver_set: gaverSet,
     admin_gave: adminGave,
     admin_sync: function (db, me, data, env) { kraevAdmin(me); return env.sync(); }
   };
-  var SKRIVER = { forslag: 1, bestil: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_maal_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_udsolgt: 1, admin_vedligehold: 1, admin_forslag_laest: 1, gaver_set: 1, admin_gave: 1 }; // admin_sync tager selv låsen kun mens den skriver (Code.gs) – ikke mens kildearkene læses
+  var SKRIVER = { forslag: 1, bestil: 1, spin: 1, koeb_drej: 1, stem: 1, admin_mdk_praemie: 1, admin_maal_praemie: 1, admin_mdk_afsloer: 1, admin_afregnet: 1, admin_bestilling: 1, admin_bruger: 1, admin_justering: 1, admin_saldo: 1, admin_udsolgt: 1, admin_tilbud: 1, admin_vedligehold: 1, admin_forslag_laest: 1, gaver_set: 1, admin_gave: 1 }; // admin_sync tager selv låsen kun mens den skriver (Code.gs) – ikke mens kildearkene læses
 
   function handle(db, me, action, data, env) {
     var fn = Object.prototype.hasOwnProperty.call(HANDLINGER, action) ? HANDLINGER[action] : null;
