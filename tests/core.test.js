@@ -394,7 +394,8 @@ t('optjening er idempotent', function () {
 });
 t('åbningstider', function () {
   eq(Core.aabningstider(new Date(2026, 10, 16, 9, 0)).aaben, true);
-  eq(Core.aabningstider(new Date(2026, 10, 16, 15, 30)).aaben, false);
+  eq(Core.aabningstider(new Date(2026, 10, 16, 15, 40)).aaben, true, '15:40 er stadig åbent');
+  eq(Core.aabningstider(new Date(2026, 10, 16, 15, 45)).aaben, false);
   eq(Core.aabningstider(new Date(2026, 10, 15, 12, 0)).tekst, 'Åbner i morgen kl. 08:00');
 });
 t('ren admin deltager ikke, men kan moderere', function () {
