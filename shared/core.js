@@ -506,7 +506,7 @@ var Core = (function () {
     var forud = !shop.aaben;
     var pris = prisFor(db, vare);
     var hvem = str(data.hvem);
-    if (hvem === 'team' || hvem === 'afdeling' || hvem === 'valgt') return bestilFlere(db, me, vare, hvem, forud, env, data.liste);
+    if (hvem === 'team' || hvem === 'afdeling' || hvem === 'valgt') return bestilFlere(db, me, vare, hvem, forud, env, data.liste, vareNavn);
     var gave = !!data.til;
     var modtager = { initialer: me.initialer, navn: me.navn };
     if (gave) {
@@ -549,7 +549,8 @@ var Core = (function () {
   // af kolleger, ekstra modtagere og evt. en selv): pris × antal.
   // Én postering til giveren (ref = fælles id) og én bestilling pr. person (<id>.<nr>), så admin kan udlevere og
   // annullere (refundere) hver for sig.
-  function bestilFlere(db, me, vare, hvem, forud, env, liste) {
+  function bestilFlere(db, me, vare, hvem, forud, env, liste, vareNavn) {
+    vareNavn = vareNavn || str(vare.navn);
     var alle = aktiveBrugere(db).filter(function (u) { return str(u.gruppe); });
     if (hvem === 'valgt') {
       var valgt = {};
@@ -570,22 +571,21 @@ var Core = (function () {
     if (saldoFor(db.all('Posteringer'), me.initialer) < total) throw err('FUNDS', 'Du har ikke nok Webcoins.');
     var hvemTekst = hvem === 'team' ? 'team ' + me.team : hvem === 'afdeling' ? 'afdelingen' : alle.length <= 3 ? alle.map(function (u) { return ini(u.initialer) === me.initialer ? 'sig selv' : str(u.navn); }).join(', ') : alle.length + ' personer';
     var id = env.uuid(), tid = env.now().toISOString();
-    db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'gave', beloeb: -total, tekst: vareNavnAntal(vare, alle.length) + ' til ' + hvemTekst, ref: id });
+    db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'gave', beloeb: -total, tekst: alle.length + ' × ' + vareNavn + ' til ' + hvemTekst, ref: id });
     alle.sort(function (a, b) { return str(a.navn).localeCompare(str(b.navn), 'da'); }).forEach(function (u, n) {
       var bid = id + '.' + (n + 1), t = ini(u.initialer);
-      db.insert('Bestillinger', { id: bid, tid: tid, fra: me.initialer, til: t, vare: str(vare.navn), pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '', oenske: '' });
-      if (t !== me.initialer && !/^EKS\d+$/.test(t)) db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: t, type: 'gave_modtaget', beloeb: 0, tekst: str(vare.navn) + ' fra ' + me.navn, ref: bid });
+      db.insert('Bestillinger', { id: bid, tid: tid, fra: me.initialer, til: t, vare: vareNavn, pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '', oenske: '' });
+      if (t !== me.initialer && !/^EKS\d+$/.test(t)) db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: t, type: 'gave_modtaget', beloeb: 0, tekst: vareNavn + ' fra ' + me.navn, ref: bid });
     });
     env.notify({
       ikon: '🎁', side: 'bestillinger', kunChat: true,
-      emne: 'Gave: ' + vareNavnAntal(vare, alle.length) + ' til ' + hvemTekst + ' fra ' + me.navn + (vare.ikon ? ' ' + str(vare.ikon) : ''),
+      emne: 'Gave: ' + alle.length + ' × ' + vareNavn + ' til ' + hvemTekst + ' fra ' + me.navn + (vare.ikon ? ' ' + str(vare.ikon) : ''),
       kort: alle.map(function (u) { return /^EKS\d+$/.test(ini(u.initialer)) ? str(u.navn) : ini(u.initialer); }).join(', '),
-      tekst: me.navn + ' (' + me.initialer + ') ' + (forud ? 'forudbestiller ' : 'giver ') + str(vare.ikon) + ' ' + str(vare.navn) + ' til ' + hvemTekst + ' (' + alle.length + ' personer: ' +
+      tekst: me.navn + ' (' + me.initialer + ') ' + (forud ? 'forudbestiller ' : 'giver ') + str(vare.ikon) + ' ' + vareNavn + ' til ' + hvemTekst + ' (' + alle.length + ' personer: ' +
         alle.map(function (u) { return /^EKS\d+$/.test(ini(u.initialer)) ? str(u.navn) : ini(u.initialer); }).join(', ') + '). Pris: ' + total + ' Webcoins.'
     });
     return { id: id, forud: forud, antal: alle.length };
   }
-  function vareNavnAntal(vare, n) { return n + ' × ' + str(vare.navn); }
 
   // ---------- Månedens kollega ----------
   // Én stemme pr. person pr. måned. Flest stemmer vinder; ved lighed vinder den, der fik sin første stemme først.

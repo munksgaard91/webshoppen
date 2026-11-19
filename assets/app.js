@@ -80,6 +80,8 @@
     return p.replace(/\{ini\}/g, String(ini).toLowerCase()).replace(/\{INI\}/g, String(ini).toUpperCase());
   }
   function pAvatar(ini, tekst, cls) {
+    // Ekstra modtagere (EKS1 …, ikke brugere): intet foto, neutralt ikon i stedet for "EKS1"
+    if (/^EKS\d+$/.test(String(ini || ''))) return '<span class="' + cls + '">👤</span>';
     var url = fotoUrl(ini);
     return '<span class="' + cls + (url ? ' has-img' : '') + '">' + esc(tekst) +
       (url ? '<img src="' + esc(url) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">' : '') + '</span>';

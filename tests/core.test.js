@@ -620,6 +620,9 @@ t('donér til team og afdelingen: pris × antal, én bestilling pr. person, refu
   eq(data.Posteringer.filter(function (p) { return p.type === 'gave_modtaget'; }).length, nGm);
   eq(Core.handle(db, adm, 'admin_state', {}, env).bestillinger.filter(function (b) { return b.til === 'EKS1'; })[0].tilNavn, 'Ekstern Person');
   kaster(function () { Core.handle(db, T, 'bestil', { vareId: 'cola', til: 'EKS2' }, env); }, 'findes ikke');
+  // Variant følger med ved donation til flere
+  Core.handle(db, T, 'bestil', { vareId: 'soda', variant: 'Danskvand', hvem: 'valgt', liste: ['TTC'] }, env);
+  eq(data.Bestillinger[data.Bestillinger.length - 1].vare, 'Sodavand · Danskvand');
   // Vælg selv: blanding af kolleger, ekstern og en selv
   var g0 = data.Posteringer.filter(function (p) { return p.type === 'gave_modtaget'; }).length, s1 = saldo(T);
   eq(Core.handle(db, T, 'bestil', { vareId: 'cola', hvem: 'valgt', liste: ['TTA', 'TTC', 'EKS1', 'ttc'] }, env).antal, 3);
