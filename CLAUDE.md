@@ -41,6 +41,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs" +
 | `shared/core.js` | **Al forretningslogik**, delt mellem demo og Apps Script. Ingen Google-API'er her |
 | `apps-script/Code.gs` | Sheet-adapter, auth, doPost, synk, notifikationer, kalenderfravær, opsætning af arket |
 | `tools/udskaer.py` | Skærer produktbilleder ud til Bestil-listen (Pillow) – se NOTES.md |
+| `tools/deploy.sh` | Udruller backend til Apps Script med clasp (se Kør lokalt) |
 | `tests/core.test.js` | Logiktest af core.js – køres med macOS' indbyggede `jsc` (se NOTES.md → Test) |
 | `CNAME` | Custom domæne til GitHub Pages: `webshoppen.leksione.dk` |
 
@@ -95,4 +96,4 @@ Test af kernen (ingen Node nødvendig):
 cd ~/code/webshoppen && /System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc shared/core.js tests/core.test.js
 ```
 Efter ændringer: kør testen, klik siderne igennem i demo, bump `?v=` i `index.html`, opdatér NOTES.md, commit og push.
-Ændres `shared/core.js`, `shared/sortiment.js` eller `apps-script/Code.gs`, skal Rasmus kopiere filen ind i Apps Script (kopiér med `LC_ALL=en_US.UTF-8 pbcopy < fil` – uden UTF-8 bliver æøå og emojis forvanskede) og udgive en ny version (Administrer implementeringer → Rediger → Ny version). Saml ændringerne, så han ikke skal indsætte af flere omgange.
+Ændres `shared/core.js`, `shared/sortiment.js` eller `apps-script/Code.gs`: udrul backend med **`tools/deploy.sh "kort beskrivelse"`** (clasp – tester, skubber Kode/Core/Sortiment og udgiver en ny version på den eksisterende web app, så URL'en er uændret). Udrul altid backend **før** frontend pushes (ny frontend mod gammel backend kan give forkerte køb). Kræver `.deploy/.clasp.json` (gitignored) og clasp logget ind som rmu@ (`npx -y @google/clasp login --user rmu`). Nødløsning: Rasmus kopierer filen ind (`LC_ALL=en_US.UTF-8 pbcopy < fil` – uden UTF-8 bliver æøå og emojis forvanskede) og udgiver en ny version.
