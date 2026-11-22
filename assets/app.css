@@ -987,6 +987,15 @@ html.tv-fuld .tv .maal-ikon { width: 2.8vw; height: 2.8vw; font-size: 1.4vw; }
 .top-hvem b { overflow: hidden; text-overflow: ellipsis; }
 .top-hvem .mini-av { flex: none; }
 
-/* Tilbud: normalpris overstreget før den nye pris */
+/* Tilbud: lille blåt "På tilbud!"-mærke ved navnet; den nye pris står på den normale plads (i blå),
+   og normalprisen står overstreget til venstre for den uden at skubbe til kolonnen */
+.tilbud-maerke { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 2px 9px 2px 7px; border-radius: 999px;
+  background: var(--brand); color: #fff; font-size: 11px; font-weight: 700; vertical-align: 2px; white-space: nowrap; }
+.tilbud-maerke svg { width: 12px; height: 12px; }
+:root[data-theme="dark"] .tilbud-maerke { background: var(--brand-2); }
+.row-price { position: relative; }
+.row-price .foer-pris { position: absolute; right: 100%; margin-right: 8px; color: var(--muted); font-weight: 500; font-size: .9em; }
+.row-price .amt.tilbud { color: var(--brand); }
+:root[data-theme="dark"] .row-price .amt.tilbud { color: var(--brand-2); }
 .foer-pris { color: var(--muted); font-weight: 500; margin-right: 6px; font-size: .9em; }
 .lager-item s { color: var(--muted); }

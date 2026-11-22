@@ -132,6 +132,7 @@
   }
 
   var IKON = {
+    tag: '<path d="M21.4 11.6l-9-9A2 2 0 0 0 11 2H4a2 2 0 0 0-2 2v7c0 .55.22 1.05.59 1.42l9 9a2 2 0 0 0 2.82 0l7-7a2 2 0 0 0 0-2.82zM6.5 8A1.5 1.5 0 1 1 6.5 5a1.5 1.5 0 0 1 0 3z"/>',
     home: '<path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
     tv: '<path d="M3 5h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2v9h16V7z"/><path d="M8 20h8v1.5H8z"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6z"/>',
@@ -551,7 +552,7 @@
         var raad = st.saldo >= v.pris && kanKoebe && !v.snart && !v.udsolgt;
         if (v.snart) return forslagRaekke(vareBillede(v), v.navn, '', 'vare', kanKoebe);
         return '<div class="row' + (v.udsolgt ? ' udsolgt' : '') + '">' + vareBillede(v) +
-          '<div class="row-main"><b>' + esc(v.navn) + '</b>' + (v.udsolgt ? ' <span class="tag annulleret">Udsolgt</span>' : '') +
+          '<div class="row-main"><b>' + esc(v.navn) + '</b>' + (v.udsolgt ? ' <span class="tag annulleret">Udsolgt</span>' : v.foerPris ? '<span class="tilbud-maerke">' + ico('tag') + 'På tilbud!</span>' : '') +
             (v.besked ? '<small class="vare-besked">' + esc(v.besked) + '</small>' : '') + '</div>' +
           '<div class="row-price num">' + (v.snart ? '<span class="tag">Kommer snart</span>' : (v.foerPris ? '<s class="foer-pris">' + fmt(v.foerPris) + '</s>' : '') + '<span class="amt' + (v.foerPris ? ' tilbud' : '') + '">' + fmt(v.pris) + '</span><span class="unit">' + enhed(v.pris) + '</span>' + coin()) + '</div>' +
           '<div class="row-acts">' +
