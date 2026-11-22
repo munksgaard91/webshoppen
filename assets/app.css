@@ -190,6 +190,17 @@ a { color: inherit; }
 .block-head .block-title { margin: 0; }
 .note { font-size: 13px; color: var(--muted); }
 .block-head .note { margin-left: auto; }
+/* Påmindelse om at stemme (sidste 10 dage af måneden) – hele banneret er en knap, der ruller ned til Månedens Webkollega */
+.stem-banner { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 14px; width: 100%; margin-bottom: 18px;
+  padding: 12px 16px; border-radius: 14px; background: var(--brand); color: #fff; }
+.stem-banner:hover { filter: brightness(1.08); }
+.stem-banner:focus-visible { outline: 2px solid var(--brand-2); outline-offset: 2px; }
+.stem-banner .sb-ikon { font-size: 22px; }
+.stem-banner .sb-tekst { display: flex; flex-direction: column; min-width: 0; }
+.stem-banner .sb-tekst b { font-size: 15px; white-space: nowrap; }
+.stem-banner .sb-tekst small { font-size: 13px; opacity: .85; white-space: nowrap; }
+.stem-banner .sb-knap { margin-left: auto; padding: 8px 14px; border-radius: 10px; background: rgba(255, 255, 255, .16); font-weight: 700; font-size: 13px; white-space: nowrap; }
+#mdk { scroll-margin-top: 80px; }
 .banner { background: var(--brand-soft); color: var(--text); border: 1px solid var(--line-2); border-radius: 14px; padding: 12px 16px; font-size: 14px; font-weight: 600; margin-bottom: 18px; }
 .closed { text-align: center; padding: 10px 6px 4px; }
 .closed h2 { justify-content: center; font-size: 26px; font-weight: 900; margin: 0 0 8px; }

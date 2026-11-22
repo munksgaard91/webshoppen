@@ -562,7 +562,7 @@
       '</section>';
 
     var banner = lukket && me.admin ? '<div class="banner">Shoppen er lukket for medarbejderne lige nu' + (shop.grund === 'fravaer' ? ' (du er ikke til stede)' : '') + '. ' + esc(shop.tekst || '') + '</div>' : '';
-    return banner + top + menu + lucky(kanKoebe) + maanedHoved() + kollega(kanKoebe) + faellesMaal();
+    return banner + stemBanner() + top + menu + lucky(kanKoebe) + maanedHoved() + kollega(kanKoebe) + faellesMaal();
   }
 
   // Stor overskrift over det, der gælder for indeværende måned (Månedens Webkollega + Fælles mål)
@@ -699,6 +699,21 @@
 
   // ---------- Månedens Webkollega ----------
 
+  // Påmindelse øverst på forsiden de sidste 10 dage af måneden – kun for medarbejdere, der ikke har stemt endnu.
+  // Klik ruller ned til Månedens Webkollega.
+  function stemBanner() {
+    var m = S.mdk;
+    if (!m || S.me.admin || m.minStemme || !S.kolleger || !S.kolleger.length) return '';
+    var nu = new Date(S.nu);
+    var sidsteDag = new Date(nu.getFullYear(), nu.getMonth() + 1, 0).getDate();
+    var tilbage = sidsteDag - nu.getDate(); // 0 = sidste dag
+    if (tilbage > 9) return '';
+    var hvornaar = tilbage === 0 ? 'i dag er sidste dag' : tilbage === 1 ? 'kun 1 dag tilbage' : tilbage + ' dage tilbage';
+    return '<button class="stem-banner" data-act="til-mdk"><span class="sb-ikon" aria-hidden="true">🏆</span>' +
+      '<span class="sb-tekst"><b>Husk at stemme på Månedens Webkollega</b><small>' + cap(MAANEDER[nu.getMonth()]) + ' slutter snart – ' + hvornaar + '.</small></span>' +
+      '<span class="sb-knap">Stem nu ↓</span></button>';
+  }
+
   function kollega(kanKoebe) {
     var m = S.mdk;
     if (!m) return '';
@@ -746,7 +761,7 @@
       hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3>' + fakta + '<p class="mdk-why">Medarbejderne stemmer her. Du kan se stillingen under Admin → Konkurrencer.</p>';
     }
 
-    return '<section class="block"><h2 class="block-title">Månedens Webkollega</h2><div class="card mdk2">' + spot + '<div class="mdk-vote">' + hoejre + '</div></div></section>';
+    return '<section class="block" id="mdk"><h2 class="block-title">Månedens Webkollega</h2><div class="card mdk2">' + spot + '<div class="mdk-vote">' + hoejre + '</div></div></section>';
   }
 
 
@@ -1622,6 +1637,11 @@
           '<p class="note" style="margin:14px 0 0">Webcoins hentes automatisk og lægges på din saldo hver måned.</p>' +
           '<div class="modal-acts"><button class="btn primary grow" data-act="close">Forstået</button></div>');
         break;
+      case 'til-mdk': {
+        var md = document.getElementById('mdk');
+        if (md) md.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      }
       case 'faelles-maal': {
         closeModal();
         var fm = document.getElementById('faelles-maal');

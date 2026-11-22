@@ -79,6 +79,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs" +
 - "Andet?"-rækken i menuen ("Har du en idé?") har én hvid knap **"Send forslag"**. Forslag og feedback sendes via backend (`forslag`): gemmes i fanen `Forslag` og vises under **Admin → Feedback** (+ mail/Chat til admin), ikke mailto. Fælles mål har nederst "Har du en idé til hvad vi skal lave næste gang?" + "Send forslag" (type `praemie`).
 - Saldo-kortet: **"Hvordan optjener jeg?"** + i-ikon; klik åbner en boks med gruppens regler, hover viser en boble.
 - Teambudget: rest i alt som stort tal; "Brugt i sæsonen" står i **mild rød** (`.tb-sub .brugt`).
+- **Stem-banner** (2026-11-22): de sidste 10 dage af måneden står øverst på forsiden et blåt banner "Husk at stemme på Månedens Webkollega" med antal dage tilbage – kun for medarbejdere, der ikke har stemt endnu (ikke admin). Klik ruller ned til sektionen (`#mdk`).
 - Månedens Webkollega: begrundelse frivillig (alt godtages, også tomt); præmien er "Coming soon" ved ny måned, indtil admin vælger en (`MDK_PRAEMIE_MAANED`); tekst: "Stem på en kollega, der har hjulpet dig, gjort noget ekstra eller løftet stemningen. Det handler om mennesker, ikke salgstal."
 - Røde tal = brugt/minus, grønne = optjent/plus. **Fælles mål:** fyldet i progressbaren går fra lyseblå (0 %) til Best One-blå (99 %) (`maalFarve()` → CSS-variablen `--p`, `color-mix`), **dyb grøn** (#1f8a55) når målet er nået, og ✓ (grøn) / ✕ (rød) / – (ingen status) til højre. Ellers kun blå, hvid, grå og mørk.
 
