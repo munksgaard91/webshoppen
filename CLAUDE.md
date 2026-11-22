@@ -81,7 +81,7 @@ Google Apps Script web app (apps-script/Code.gs + shared/core.js som "Core.gs" +
 - Teambudget: rest i alt som stort tal; "Brugt i sæsonen" står i **mild rød** (`.tb-sub .brugt`).
 - **Navnet er "Månedens Webber"** (omdøbt fra Månedens Webkollega 2026-11-22) i al tekst; fanen i arket hedder stadig `Webkollega`, og koden bruger stadig `mdk`.
 - **Stem-banner** (2026-11-22): de sidste 10 dage af måneden står øverst på forsiden et blåt banner "Husk at stemme på Månedens Webber" med antal dage tilbage – kun for medarbejdere, der ikke har stemt endnu (ikke admin). Klik ruller ned til sektionen (`#mdk`).
-- Månedens Webber: begrundelse frivillig (alt godtages, også tomt); præmien er "Coming soon" ved ny måned, indtil admin vælger en (`MDK_PRAEMIE_MAANED`); tekst: "Stem på en kollega, der har hjulpet dig, gjort noget ekstra eller løftet stemningen. Det handler om mennesker, ikke salgstal."
+- Månedens Webber: begrundelse frivillig (alt godtages, også tomt); præmien er "Coming soon" ved ny måned, indtil admin vælger en (`MDK_PRAEMIE_MAANED`); tekst: "Stem på en i web der har hjulpet dig, gjort noget ekstra eller bare løftet stemningen. Giv din bedste begrundelse og stem én gang hver måned."
 - Røde tal = brugt/minus, grønne = optjent/plus. **Fælles mål:** fyldet i progressbaren går fra lyseblå (0 %) til Best One-blå (99 %) (`maalFarve()` → CSS-variablen `--p`, `color-mix`), **dyb grøn** (#1f8a55) når målet er nået, og ✓ (grøn) / ✕ (rød) / – (ingen status) til højre. Ellers kun blå, hvid, grå og mørk.
 
 - Escape altid brugerdata med `esc()` i app.js før det sættes ind i HTML. Tekst til arket neutraliseres i `SheetDB` (= + - @ foran → ren tekst), så fritekst aldrig bliver en formel.

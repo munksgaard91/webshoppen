@@ -751,7 +751,7 @@
         '<p class="mdk-fine">Vinderen findes, når ' + mNavn + ' er slut. Kun admin kan se stemmerne.</p>';
     } else if (kanKoebe) {
       hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3>' + fakta +
-        '<p class="mdk-why">Stem på en kollega, der har hjulpet dig, gjort noget ekstra eller løftet stemningen. Det handler om mennesker, ikke salgstal.</p>' +
+        '<p class="mdk-why">Stem på en i web der har hjulpet dig, gjort noget ekstra eller bare løftet stemningen. Giv din bedste begrundelse og stem én gang hver måned.</p>' +
         '<div class="mdk-select"><select class="input" id="mdk-til"><option value="">Vælg en kollega</option>' +
           kandidater.map(function (u) { return '<option value="' + esc(u.initialer) + '">' + esc(u.navn) + ' · ' + esc(u.gruppe) + '</option>'; }).join('') +
         '</select></div>' +
