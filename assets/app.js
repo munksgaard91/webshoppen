@@ -761,7 +761,7 @@
     if (f.hoved) return 'r-guld';
     if (f.type === 'intet') return 'r0';
     var vaerdi = f.type === 'webcoins' ? f.beloeb : ({ 'Hvid Monster': 15, 'Sodavand': 10, 'Mini Candybar': 5, 'Mini Chipspose': 5, 'Mini Slikpose': 5 }[f.navn] || 10);
-    return vaerdi >= 20 ? 'r3' : vaerdi >= 10 ? 'r2' : 'r1';
+    return vaerdi >= 30 ? 'r3' : vaerdi >= 15 ? 'r2' : 'r1';
   }
 
   function reelKort(f) {
@@ -783,8 +783,9 @@
     var sidsteKat = forrige.length ? reelKat(forrige[forrige.length - 1]) : '';
     var kat = { vare: [], coins: [], nitte: [] };
     felter.forEach(function (f) { kat[reelKat(f)].push(f); });
-    var vaegt = { vare: kat.vare.length ? 45 : 0, coins: kat.coins.length ? 40 : 0, nitte: kat.nitte.length ? 15 : 0 };
-    if (sidsteKat === 'coins') vaegt.coins = 0;
+    var vaegt = { vare: kat.vare.length ? 45 : 0, coins: kat.coins.length ? (kat.vare.length ? 40 : 85) : 0, nitte: kat.nitte.length ? 15 : 0 };
+    // Med varer på hjulet står to Webcoins-kort aldrig i træk; er det kun Webcoins (+ Nitte), må de gerne
+    if (sidsteKat === 'coins' && kat.vare.length) vaegt.coins = 0;
     if (sidsteKat === 'nitte') vaegt.nitte = 0;
     for (var forsoeg = 0; forsoeg < 20; forsoeg++) {
       var sum = vaegt.vare + vaegt.coins + vaegt.nitte, x = Math.random() * sum;
@@ -804,7 +805,7 @@
     var kort = [];
     for (var i = 0; i < 24; i++) kort.push(reelTraek(felter, kort.slice(-2)));
     // Sømløst loop: sidste og første kort må heller ikke være to Webcoins / samme præmie
-    if (reelKat(kort[0]) === 'coins' && reelKat(kort[23]) === 'coins' || kort[0].navn === kort[23].navn) kort[23] = reelTraek(felter, [kort[22], kort[0]]);
+    if (felter.some(function (f) { return f.type === 'vare'; }) && reelKat(kort[0]) === 'coins' && reelKat(kort[23]) === 'coins' || kort[0].navn === kort[23].navn) kort[23] = reelTraek(felter, [kort[22], kort[0]]);
     return kort;
   }
 

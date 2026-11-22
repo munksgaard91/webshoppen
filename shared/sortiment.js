@@ -14,7 +14,7 @@
  * Events: id (fast – donationer peger på det, skift det aldrig), navn, ikon, maal, aaben: false → skjult.
  */
 var SORTIMENT = {
-  hjulPris: 30,
+  hjulPris: 25,
   // Alle brugere starter med dette antal Webcoins (gives én gang, når de er oprettet i Brugere)
   startWebcoins: 5,
 
@@ -29,18 +29,19 @@ var SORTIMENT = {
     { id: 'andet', navn: 'Andet?', ikon: '💡', pris: 0, kostpris: 0, snart: true }
   ],
 
+  // Kun Webcoins (2026-11-22, model B): snit ca. 21,3 Webcoins tilbage pr. drej til 25 (85 %),
+  // 33 % af drejene giver mindst prisen tilbage, 22 % giver mere. Hovedpræmien (125) ca. hvert 50. drej.
   hjul: [
-    { id: 'h-100', navn: '100 Webcoins', ikon: '🏆', type: 'webcoins', beloeb: 100, vaegt: 30 },
-    { id: 'h-nitte', navn: 'Nitte', ikon: '❌', type: 'intet', vaegt: 90 },
-    { id: 'h-10', navn: '10 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 10, vaegt: 70 },
-    { id: 'h-sodavand', navn: 'Sodavand', ikon: '🥤', type: 'vare', kostpris: 10, vaegt: 110 },
-    { id: 'h-20', navn: '20 Webcoins', ikon: '💫', type: 'webcoins', beloeb: 20, vaegt: 170 },
-    { id: 'h-candybar', navn: 'Mini Candybar', ikon: '🍫', type: 'vare', kostpris: 0, vaegt: 45 }, // teamkassen
-    { id: 'h-30', navn: '30 Webcoins', ikon: '💎', type: 'webcoins', beloeb: 30, vaegt: 180 },
-    { id: 'h-chips', navn: 'Mini Chipspose', ikon: '🥔', type: 'vare', kostpris: 0, vaegt: 45 }, // teamkassen
-    { id: 'h-monster', navn: 'Hvid Monster', ikon: '⚡', type: 'vare', kostpris: 15, vaegt: 70 },
-    { id: 'h-slik', navn: 'Mini Slikpose', ikon: '🍬', type: 'vare', kostpris: 0, vaegt: 40 }, // teamkassen
-    { id: 'h-40', navn: '40 Webcoins', ikon: '💰', type: 'webcoins', beloeb: 40, vaegt: 150 }
+    { id: 'h-125', navn: '125 Webcoins', ikon: '🏆', type: 'webcoins', beloeb: 125, vaegt: 20 },
+    { id: 'h-nitte', navn: 'Nitte', ikon: '❌', type: 'intet', vaegt: 120 },
+    { id: 'h-5', navn: '5 Webcoins', ikon: '🪙', type: 'webcoins', beloeb: 5, vaegt: 130 },
+    { id: 'h-10', navn: '10 Webcoins', ikon: '✨', type: 'webcoins', beloeb: 10, vaegt: 150 },
+    { id: 'h-15', navn: '15 Webcoins', ikon: '⭐', type: 'webcoins', beloeb: 15, vaegt: 140 },
+    { id: 'h-20', navn: '20 Webcoins', ikon: '💫', type: 'webcoins', beloeb: 20, vaegt: 130 },
+    { id: 'h-25', navn: '25 Webcoins', ikon: '🎯', type: 'webcoins', beloeb: 25, vaegt: 110 },
+    { id: 'h-30', navn: '30 Webcoins', ikon: '💎', type: 'webcoins', beloeb: 30, vaegt: 90 },
+    { id: 'h-50', navn: '50 Webcoins', ikon: '💰', type: 'webcoins', beloeb: 50, vaegt: 70 },
+    { id: 'h-75', navn: '75 Webcoins', ikon: '🔥', type: 'webcoins', beloeb: 75, vaegt: 40 }
   ],
 
   events: [
