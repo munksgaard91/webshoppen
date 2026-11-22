@@ -678,4 +678,36 @@ t('tilbud: lavere pris bruges ved bestilling og donation, normalpris vises som f
   eq([m.pris, m.foerPris], [20, 0]);
   data.Config = data.Config.filter(function (r) { return r.noegle !== 'TILBUD'; });
 });
+t('admin retter menuen: tilføj, samme navn afvist, skjul/hent frem, besked, varianter og udsolgt variant', function () {
+  var adm = Core.resolveUser(db, { email: 'adm@best-one.dk' }, ['adm@best-one.dk']);
+  var vare = function (id) { return Core.handle(db, A, 'state', {}, env).menu.filter(function (v) { return v.id === id; })[0]; };
+  kaster(function () { Core.handle(db, B, 'admin_vare', { handling: 'gem', navn: 'Is', pris: 5 }, env); }, 'admin');
+  var ny = Core.handle(db, adm, 'admin_vare', { handling: 'gem', navn: 'Mini Candybar', ikon: '🍫', pris: 3, kostpris: '2,5', besked: 'Fra Celebrations', varianter: 'Mars, Snickers, Twix' }, env);
+  eq(ny.id, 'mini-candybar');
+  var v = vare('mini-candybar');
+  eq([v.navn, v.pris, v.kostpris, v.besked, v.varianter.length], ['Mini Candybar', 3, 2.5, 'Fra Celebrations', 3]);
+  kaster(function () { Core.handle(db, adm, 'admin_vare', { handling: 'gem', navn: 'mini candybar', pris: 4 }, env); }, 'allerede');
+  // Udsolgt variant kan ikke bestilles; de andre kan
+  Core.handle(db, adm, 'admin_vare', { handling: 'variant', id: 'mini-candybar', variant: 'Snickers', udsolgt: true }, env);
+  eq(vare('mini-candybar').udsolgteVarianter, ['Snickers']);
+  kaster(function () { Core.handle(db, A, 'bestil', { vareId: 'mini-candybar', variant: 'Snickers' }, env); }, 'udsolgt');
+  Core.handle(db, A, 'bestil', { vareId: 'mini-candybar', variant: 'Mars' }, env);
+  eq(data.Bestillinger[data.Bestillinger.length - 1].vare, 'Mini Candybar · Mars');
+  Core.handle(db, adm, 'admin_vare', { handling: 'variant', id: 'mini-candybar', variant: 'Mars', udsolgt: true }, env);
+  Core.handle(db, adm, 'admin_vare', { handling: 'variant', id: 'mini-candybar', variant: 'Twix', udsolgt: true }, env);
+  eq(vare('mini-candybar').udsolgt, true); // alle varianter udsolgt = hele varen
+  // Skjul: væk fra menuen, kan ikke bestilles, ligger under Tidligere varer; samme navn kan ikke oprettes på ny
+  Core.handle(db, adm, 'admin_vare', { handling: 'skjul', id: 'mini-candybar' }, env);
+  eq(vare('mini-candybar'), undefined);
+  eq(Core.handle(db, adm, 'admin_state', {}, env).menuAlle.filter(function (x) { return x.id === 'mini-candybar'; })[0].aktiv, false);
+  kaster(function () { Core.handle(db, adm, 'admin_vare', { handling: 'gem', navn: 'Mini Candybar', pris: 3 }, env); }, 'Tidligere varer');
+  Core.handle(db, adm, 'admin_vare', { handling: 'vis', id: 'mini-candybar' }, env);
+  eq(vare('mini-candybar').navn, 'Mini Candybar');
+  // Ret: pris og navn; gamle bestillinger beholder deres navn
+  Core.handle(db, adm, 'admin_vare', { handling: 'gem', id: 'mini-candybar', navn: 'Candybar', pris: 4, kostpris: 0, varianter: 'Mars, Twix' }, env);
+  eq([vare('mini-candybar').navn, vare('mini-candybar').pris, vare('mini-candybar').udsolgteVarianter], ['Candybar', 4, ['Mars', 'Twix']]);
+  eq(data.Bestillinger.filter(function (b) { return b.vare === 'Mini Candybar · Mars'; }).length, 1);
+  data.Menu = data.Menu.filter(function (r) { return r.id !== 'mini-candybar'; });
+  SORTIMENT.menu = data.Menu;
+});
 print('OK: ' + ok + '  FEJL: ' + fejl);
