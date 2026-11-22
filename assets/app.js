@@ -756,7 +756,7 @@
           kandidater.map(function (u) { return '<option value="' + esc(u.initialer) + '">' + esc(u.navn) + ' · ' + esc(u.gruppe) + '</option>'; }).join('') +
         '</select></div>' +
         '<textarea class="input vote-why" id="mdk-hvorfor" rows="2" maxlength="500" placeholder="Hvorfor?"></textarea>' +
-        '<div class="mdk-send"><button class="btn primary" data-act="stem">Stem</button><span class="mdk-fine">Én stemme i ' + mNavn + ' · kun admin kan se stemmerne</span></div>';
+        '<div class="mdk-send"><button class="btn primary" data-act="stem">Stem</button><span class="mdk-fine">Én stemme i ' + mNavn + '</span></div>';
     } else {
       hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3>' + fakta + '<p class="mdk-why">Medarbejderne stemmer her. Du kan se stillingen under Admin → Konkurrencer.</p>';
     }
