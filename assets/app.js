@@ -860,11 +860,11 @@
   }
   if (!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) requestAnimationFrame(idleLoop);
 
-  // Lille i-ikon med chancerne (vises ved hover), samlet pr. præmie og sorteret efter chance
+  // Lille i-ikon med chancerne (vises ved hover), samlet pr. præmie og sorteret efter præmiens størrelse (største først, Nitte sidst)
   function chancePop(felter) {
     var samlet = {};
-    felter.forEach(function (f) { var k = f.navn; samlet[k] = samlet[k] || { navn: k, ikon: f.type === 'webcoins' ? coin() : esc(f.ikon || ''), andel: 0 }; samlet[k].andel += f.andel || 0; });
-    var rk = Object.keys(samlet).map(function (k) { return samlet[k]; }).sort(function (a, b) { return b.andel - a.andel; });
+    felter.forEach(function (f) { var k = f.navn; samlet[k] = samlet[k] || { navn: k, ikon: f.type === 'webcoins' ? coin() : esc(f.ikon || ''), andel: 0, vaerdi: f.type === 'webcoins' ? Number(f.beloeb) || 0 : f.type === 'intet' ? -1 : 0 }; samlet[k].andel += f.andel || 0; });
+    var rk = Object.keys(samlet).map(function (k) { return samlet[k]; }).sort(function (a, b) { return b.vaerdi - a.vaerdi || b.andel - a.andel; });
     return '<span class="info chance-info" tabindex="0"><span class="info-mini" aria-label="Se chancerne">' + ico('info') + '</span>' +
       '<span class="pop" role="tooltip"><b class="pop-title">Chancer pr. drej</b>' + rk.map(function (x) {
         return '<div class="rule"><span class="chance-navn">' + x.ikon + ' ' + esc(x.navn) + '</span><b class="num">' + (x.andel * 100).toFixed(1).replace('.', ',').replace(',0', '') + ' %</b></div>';
