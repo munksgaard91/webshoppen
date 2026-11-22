@@ -250,8 +250,11 @@ a { color: inherit; }
 .afsloer .btn { white-space: nowrap; }
 .row.udsolgt .thumb, .row.udsolgt .row-price { opacity: .45; }
 .lager { margin-bottom: 20px; }
-.lager-liste { display: flex; flex-wrap: wrap; gap: 10px; }
-.lager-item { display: flex; align-items: center; gap: 14px; padding: 8px 8px 8px 14px; border-radius: 12px; background: var(--card-2); white-space: nowrap; }
+/* Lager: én vare pr. linje under hinanden – navn | pris | knapper */
+.lager-liste { display: flex; flex-direction: column; gap: 6px; }
+.lager-item { display: grid; grid-template-columns: minmax(0, 1fr) 160px auto; align-items: center; gap: 14px; padding: 8px 8px 8px 14px; border-radius: 12px; background: var(--card-2); white-space: nowrap; }
+.lager-item .lager-pris { text-align: right; }
+.lager-item .row-acts { justify-content: flex-end; }
 .lager-item.ud b { text-decoration: line-through; color: var(--minus); }
 .gave-pop { text-align: center; }
 .gave-pop h2 { justify-content: center; font-size: 26px; margin: 8px 0 18px; }

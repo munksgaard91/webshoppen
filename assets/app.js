@@ -1105,8 +1105,9 @@
     // Lager: markér en vare som udsolgt, så den ikke kan bestilles (Config UDSOLGT)
     var lager = '<section class="card lager"><div class="card-head"><h2 class="card-title">Lager</h2></div><div class="lager-liste">' +
       S.menu.filter(function (v) { return !v.snart; }).map(function (v) {
-        return '<div class="lager-item' + (v.udsolgt ? ' ud' : '') + '"><span>' + esc(v.ikon) + ' <b>' + esc(v.navn) + '</b>' +
-          ' <span class="num faint">' + (v.foerPris ? '<s>' + fmt(v.foerPris) + '</s> <b class="tilbud">' + wc(v.pris) + '</b>' : wc(v.pris)) + '</span></span>' +
+        // Én vare pr. linje: navn | pris | knapper (kolonnerne flugter)
+        return '<div class="lager-item' + (v.udsolgt ? ' ud' : '') + '"><span class="lager-navn">' + esc(v.ikon) + ' <b>' + esc(v.navn) + '</b></span>' +
+          '<span class="num faint lager-pris">' + (v.foerPris ? '<s>' + fmt(v.foerPris) + '</s> <b class="tilbud">' + wc(v.pris) + '</b>' : wc(v.pris)) + '</span>' +
           '<span class="row-acts">' + (v.foerPris
             ? '<button class="btn sm" data-act="tilbud-fjern" data-id="' + esc(v.id) + '">Fjern tilbud</button>'
             : '<button class="btn sm" data-act="tilbud" data-id="' + esc(v.id) + '">Tilbud</button>') +
