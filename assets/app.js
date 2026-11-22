@@ -491,8 +491,8 @@
   function mineRegler() {
     // Gruppens egne regler først, derefter dem for alle (Konkurrencer, Fælles mål)
     var r = S.regler.filter(function (x) { return x.gruppe === S.me.gruppe; }).concat(S.regler.filter(function (x) { return x.gruppe === 'Alle'; }));
-    // Månedens Webkollega står øverst hos alle med denne måneds præmie
-    return '<div class="rule"><span>Månedens Webkollega</span><b>' + mdkVaerdi() + '</b></div>' +
+    // Månedens Webber står øverst hos alle med denne måneds præmie
+    return '<div class="rule"><span>Månedens Webber</span><b>' + mdkVaerdi() + '</b></div>' +
       r.map(function (x) { return '<div class="rule"><span>' + esc(x.navn) + '</span><b>' + regelVaerdi(x) + '</b></div>'; }).join('');
   }
   // Regelens værdi med mønten til sidst, fx "20 Webcoins 🪙"
@@ -565,7 +565,7 @@
     return banner + stemBanner() + top + menu + lucky(kanKoebe) + maanedHoved() + kollega(kanKoebe) + faellesMaal();
   }
 
-  // Stor overskrift over det, der gælder for indeværende måned (Månedens Webkollega + Fælles mål)
+  // Stor overskrift over det, der gælder for indeværende måned (Månedens Webber + Fælles mål)
   function maanedHoved() {
     var nu = new Date(S.nu);
     return '<div class="maaned-hoved"><span class="maaned-pill">' + cap(MAANEDER[nu.getMonth()]) + ' ' + nu.getFullYear() + '</span><h2>Månedlige konkurrencer og mål</h2></div>';
@@ -697,10 +697,10 @@
     setTimeout(function () { boks.remove(); }, 4500);
   }
 
-  // ---------- Månedens Webkollega ----------
+  // ---------- Månedens Webber ----------
 
   // Påmindelse øverst på forsiden de sidste 10 dage af måneden – kun for medarbejdere, der ikke har stemt endnu.
-  // Klik ruller ned til Månedens Webkollega.
+  // Klik ruller ned til Månedens Webber.
   function stemBanner() {
     var m = S.mdk;
     if (!m || S.me.admin || m.minStemme || !S.kolleger || !S.kolleger.length) return '';
@@ -710,7 +710,7 @@
     if (tilbage > 9) return '';
     var hvornaar = tilbage === 0 ? 'i dag er sidste dag' : tilbage === 1 ? 'kun 1 dag tilbage' : tilbage + ' dage tilbage';
     return '<button class="stem-banner" data-act="til-mdk"><span class="sb-ikon" aria-hidden="true">🏆</span>' +
-      '<span class="sb-tekst"><b>Husk at stemme på Månedens Webkollega</b><small>' + cap(MAANEDER[nu.getMonth()]) + ' slutter snart – ' + hvornaar + '.</small></span>' +
+      '<span class="sb-tekst"><b>Husk at stemme på Månedens Webber</b><small>' + cap(MAANEDER[nu.getMonth()]) + ' slutter snart – ' + hvornaar + '.</small></span>' +
       '<span class="sb-knap">Stem nu ↓</span></button>';
   }
 
@@ -761,7 +761,7 @@
       hoejre = '<h3 class="mdk-q">Hvem gør en forskel i ' + mNavn + '?</h3>' + fakta + '<p class="mdk-why">Medarbejderne stemmer her. Du kan se stillingen under Admin → Konkurrencer.</p>';
     }
 
-    return '<section class="block" id="mdk"><h2 class="block-title">Månedens Webkollega</h2><div class="card mdk2">' + spot + '<div class="mdk-vote">' + hoejre + '</div></div></section>';
+    return '<section class="block" id="mdk"><h2 class="block-title">Månedens Webber</h2><div class="card mdk2">' + spot + '<div class="mdk-vote">' + hoejre + '</div></div></section>';
   }
 
 
@@ -1111,7 +1111,7 @@
       '<section class="card regel-liste">' + S.grupper.concat('Alle').map(function (g) {
         var r = S.regler.filter(function (x) { return x.gruppe === g; });
         return '<h2 class="card-title">' + esc(g === 'Alle' ? 'Alle grupper' : g) + '</h2>' +
-          (g === 'Alle' ? '<ul><li><span>Månedens Webkollega</span><b>' + mdkVaerdi() + '</b></li></ul>' : '') +
+          (g === 'Alle' ? '<ul><li><span>Månedens Webber</span><b>' + mdkVaerdi() + '</b></li></ul>' : '') +
           (r.length ? '<ul>' + r.map(function (x) { return '<li><span>' + esc(x.navn) + '</span><b>' + regelVaerdi(x) + '</b></li>'; }).join('') + '</ul>' : '<p class="faint">Kommer senere.</p>');
       }).join('') + '</section>';
   }
@@ -1206,7 +1206,7 @@
       '</section>';
 
     var top = m.stilling.slice(0, 3);
-    var kollega = '<section class="card"><div class="card-head"><h2 class="card-title">Månedens Webkollega</h2><a class="link" href="#/admin/konkurrencer">Åbn</a></div>' + afsloerKnap(m) +
+    var kollega = '<section class="card"><div class="card-head"><h2 class="card-title">Månedens Webber</h2><a class="link" href="#/admin/konkurrencer">Åbn</a></div>' + afsloerKnap(m) +
       '<div class="rule"><span>Præmie i ' + mNavn + '</span>' + (m.praemie ? '<b>' + esc(m.praemie) + '</b>' : '<a class="link" href="#/admin/konkurrencer">Coming soon – vælg præmie</a>') + '</div>' +
       '<div class="rule"><span>Stemmer</span><b class="num">' + m.afgivet + '</b></div>' +
       (top.length ? top.map(function (x, i) { return '<div class="rule"><span>' + ['🥇', '🥈', '🥉'][i] + ' ' + pAvatar(x.initialer, x.initialer, 'mini-av') + esc(x.navn) + '</span><b class="num">' + x.stemmer + '</b></div>'; }).join('') : '') +
@@ -1302,7 +1302,7 @@
       '<button class="btn primary" data-act="afsloer">🏆 Afslør vinder</button></div>';
   }
 
-  // Konkurrencer: én blok pr. konkurrence – Månedens Webkollega og belønningen for fælles mål.
+  // Konkurrencer: én blok pr. konkurrence – Månedens Webber og belønningen for fælles mål.
   function pageAdminKonkurrencer() {
     var m = A.mdk;
     var mNavn = MAANEDER[Number(m.maaned.slice(5)) - 1];
@@ -1317,7 +1317,7 @@
           '<small class="faint">' + (fp.praemie ? 'Gælder ' + mNavn + '.' : 'Ingen belønning for ' + mNavn + ' endnu – medarbejderne ser "Coming soon".') + ' Målene og deres status ligger i fanen Maal.</small>'
         : '<div class="empty">Læg månedens mål ind i fanen Maal først.</div>') + '</section>';
     return adminHead('Konkurrencer') + maalKort +
-      '<h2 class="block-title">Månedens Webkollega</h2>' + (afsloerKnap(m) ? '<section class="card" style="margin-bottom:20px">' + afsloerKnap(m) + '</section>' : '') +
+      '<h2 class="block-title">Månedens Webber</h2>' + (afsloerKnap(m) ? '<section class="card" style="margin-bottom:20px">' + afsloerKnap(m) + '</section>' : '') +
       '<section class="card" style="margin-bottom:20px"><div class="card-head"><h2 class="card-title">Præmie</h2></div>' +
       '<div class="vote-form">' + ikonFelt('mdk-ikon', m.praemieIkon) + '<input class="input" id="mdk-praemie" value="' + esc(m.praemie) + '" placeholder="fx 50 Webcoins"><button class="btn primary" data-act="mdk-praemie-ok">Gem</button></div>' +
       '<small class="faint">' + (m.praemie ? 'Gælder ' + mNavn + '.' : 'Ingen præmie for ' + mNavn + ' endnu – medarbejderne ser "Coming soon".') + ' Præmien nulstilles hver måned. Webcoins udbetales, når du trykker Afslør.</small></section>' +
@@ -1932,7 +1932,7 @@
       case 'afsloer-ok':
         busy(t, true);
         api('admin_mdk_afsloer', {}).then(function (r) {
-          openModal('<div class="afsloer-res"><span class="mdk-eyebrow">Månedens Webkollega · ' + MAANEDER[Number(r.maaned.slice(5)) - 1] + '</span>' +
+          openModal('<div class="afsloer-res"><span class="mdk-eyebrow">Månedens Webber · ' + MAANEDER[Number(r.maaned.slice(5)) - 1] + '</span>' +
             '<div class="afsloer-crown">🏆</div><h2>' + esc(r.navn) + '</h2>' +
             '<p class="muted">' + r.stemmer + (r.stemmer === 1 ? ' stemme' : ' stemmer') + '</p>' +
             (r.udbetalt ? '<div class="afsloer-praemie">' + coin() + '<span><b>' + wc(r.udbetalt) + '</b> er lagt på saldoen</span></div>'

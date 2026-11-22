@@ -190,7 +190,7 @@ a { color: inherit; }
 .block-head .block-title { margin: 0; }
 .note { font-size: 13px; color: var(--muted); }
 .block-head .note { margin-left: auto; }
-/* Påmindelse om at stemme (sidste 10 dage af måneden) – hele banneret er en knap, der ruller ned til Månedens Webkollega */
+/* Påmindelse om at stemme (sidste 10 dage af måneden) – hele banneret er en knap, der ruller ned til Månedens Webber */
 .stem-banner { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 14px; width: 100%; margin-bottom: 18px;
   padding: 12px 16px; border-radius: 14px; background: var(--brand); color: #fff; }
 .stem-banner:hover { filter: brightness(1.08); }

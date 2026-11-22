@@ -27,7 +27,7 @@ var Core = (function () {
     Afregning: ['maaned', 'sendt', 'tid'],
     Maal: ['maaned', 'navn', 'tekst', 'retning', 'graense', 'nu', 'enhed', 'kilde'],
     MaalPraemie: ['maaned', 'antal', 'praemie', 'ikon'],
-    // Månedens Webkollega pr. måned: præmien (sat af admin) og vinderen (sat, når admin trykker Afslør)
+    // Månedens Webber pr. måned: præmien (sat af admin) og vinderen (sat, når admin trykker Afslør)
     Webkollega: ['maaned', 'praemie', 'vinder', 'afsloeret', 'ikon'],
     // Feedback og forslag fra medarbejderne (type feedback / vare / praemie) – vises under Admin → Feedback
     Forslag: ['id', 'tid', 'initialer', 'type', 'tekst', 'laest'],
@@ -876,7 +876,7 @@ var Core = (function () {
     var udbetalt = db.all('Posteringer').some(function (p) { return str(p.ref) === 'mdk:' + mk; });
     if (udbetalt) beloeb = 0;
     if (beloeb > 0) {
-      db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: vinder.initialer, type: 'gevinst', beloeb: beloeb, tekst: 'Månedens Webkollega · ' + maanedNavn(mk), ref: 'mdk:' + mk });
+      db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: vinder.initialer, type: 'gevinst', beloeb: beloeb, tekst: 'Månedens Webber · ' + maanedNavn(mk), ref: 'mdk:' + mk });
     }
     return { maaned: mk, initialer: vinder.initialer, navn: vinder.navn, stemmer: vinder.stemmer, praemie: praemie, udbetalt: beloeb };
   }
@@ -1028,8 +1028,8 @@ var Core = (function () {
       (fs.praemie.praemie ? (fs.praemie.opnaaet ? ' – holdet har fortjent ' + fs.praemie.praemie + ' 🎉' : ' (krav ' + fs.praemie.antal + ' for ' + fs.praemie.praemie + ')') : '') + ' (tjek, at alle tal er endelige).');
     var husk = [];
     var uaf = uafsloeretMaaned(db, mk);
-    if (uaf) husk.push('Afslør Månedens Webkollega for ' + maanedNavn(uaf) + ' til briefingen (vinderen er klar).');
-    if (!mdkPraemie(db, mk)) husk.push('Vælg præmie til Månedens Webkollega i ' + nNavn + '.');
+    if (uaf) husk.push('Afslør Månedens Webber for ' + maanedNavn(uaf) + ' til briefingen (vinderen er klar).');
+    if (!mdkPraemie(db, mk)) husk.push('Vælg præmie til Månedens Webber i ' + nNavn + '.');
     var maal = faellesMaal(db, sidst);
     var mangler = maal.filter(function (m) { return m.nu === null; });
     if (mangler.length) husk.push('Skriv resultaterne for ' + sNavn.split(' ')[0] + ' i fanen Maal: ' + mangler.map(function (m) { return m.navn; }).join(', ') + '.');
