@@ -266,6 +266,7 @@ a { color: inherit; }
 .vare-ikoner { display: flex; flex-wrap: wrap; gap: 6px; }
 .vare-ikoner .ikon-valg { width: 38px; height: 38px; font-size: 20px; }
 .vare-ikoner .ikon-valg.on { outline: 2px solid var(--brand); outline-offset: 1px; }
+.vare-ikon-egen { margin-top: 8px; }
 .vare-ligner { margin: 6px 0 4px; padding: 12px 14px; border-radius: 12px; background: var(--card-2); }
 .vare-ligner .row-acts { margin-top: 10px; }
 .lager-item.ud b { text-decoration: line-through; color: var(--minus); }

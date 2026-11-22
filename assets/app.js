@@ -1402,7 +1402,7 @@
       }).join('') + '</div></div>' : '') +
       '<div class="field"><label>Ikon</label><input type="hidden" id="vare-ikon" value="' + esc(ikon) + '"><div class="vare-ikoner">' + VARE_IKONER.concat(VARE_IKONER.indexOf(ikon) < 0 ? [ikon] : []).map(function (k) {
         return '<button type="button" class="ikon-valg' + (k === ikon ? ' on' : '') + '" data-act="vare-ikon" data-v="' + esc(k) + '">' + esc(k) + '</button>';
-      }).join('') + '</div></div>' +
+      }).join('') + '</div><input class="input vare-ikon-egen" id="vare-ikon-egen" maxlength="16" placeholder="Eller indsæt din egen emoji (fx 🥨)"></div>' +
       '<div class="field"><label for="vare-navn">Navn</label><input class="input" id="vare-navn" maxlength="40" value="' + esc(v ? v.navn : '') + '"></div>' +
       '<div class="row-2"><div class="field"><label for="vare-pris">Pris i Webcoins</label><input class="input" id="vare-pris" type="number" min="1" step="1" value="' + (v ? v.normalPris : '') + '"></div>' +
       '<div class="field"><label for="vare-kost">Kostpris til RAB (kr) – 0 = teamkassen</label><input class="input" id="vare-kost" type="number" min="0" step="0.01" value="' + (v ? v.kostpris : 0) + '"></div></div>' +
@@ -1423,7 +1423,10 @@
     return d[a.length][b.length] <= 2;
   }
   function gemVare(btn, trodsLigner) {
-    var data = { handling: 'gem', id: ui.vareId, ikon: val('vare-ikon'), navn: val('vare-navn').trim(), pris: val('vare-pris'), kostpris: val('vare-kost'),
+    // Egen emoji i feltet vinder over valget i rækken
+    var egen = val('vare-ikon-egen').trim();
+    if (egen && (/[<>&"'\\a-z0-9]/i.test(egen) || egen.length > 16)) return toast('Kun emoji', 'Indsæt en emoji uden bogstaver og tal.', true);
+    var data = { handling: 'gem', id: ui.vareId, ikon: egen || val('vare-ikon'), navn: val('vare-navn').trim(), pris: val('vare-pris'), kostpris: val('vare-kost'),
       besked: val('vare-besked'), varianter: val('vare-var'), oenske: !!(document.getElementById('vare-oenske') || {}).checked };
     if (!data.navn) return toast('Skriv et navn', '', true);
     if (!ui.vareId && !trodsLigner) {
