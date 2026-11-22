@@ -202,10 +202,15 @@ var Core = (function () {
       var pris = prisFor(db, v, tb), valg = varianter(v), udV = udsolgteVarianter(v);
       // Er alle varianter udsolgt, er hele varen udsolgt
       var helt = ud.indexOf(str(v.id)) >= 0 || (valg.length > 0 && udV.length === valg.length);
-      return { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), billede: str(v.billede), besked: str(v.besked).trim(), pris: pris, foerPris: pris < num(v.pris) ? num(v.pris) : 0, normalPris: num(v.pris), kostpris: num(v.kostpris), varianter: valg, udsolgteVarianter: udV, oenskeFelt: ja(v.oenske), oenskeTekst: str(v.oenskeTekst), snart: ja(v.snart), aktiv: til(v.aktiv), udsolgt: helt };
+      return { id: str(v.id), udsolgtVare: ud.indexOf(str(v.id)) >= 0, navn: str(v.navn), ikon: str(v.ikon), billede: str(v.billede), besked: str(v.besked).trim(), pris: pris, foerPris: pris < num(v.pris) ? num(v.pris) : 0, normalPris: num(v.pris), kostpris: num(v.kostpris), varianter: valg, udsolgteVarianter: udV, oenskeFelt: ja(v.oenske), oenskeTekst: str(v.oenskeTekst), snart: ja(v.snart), aktiv: til(v.aktiv), udsolgt: helt };
     });
   }
 
+  function rydTilbudUdsolgt(db, id, ogsaaUdsolgt) {
+    var tb = tilbud(db);
+    if (tb[id] !== undefined) { delete tb[id]; saetCfg(db, 'TILBUD', Object.keys(tb).map(function (k) { return k + ':' + tb[k]; }).join(', ')); }
+    if (ogsaaUdsolgt && udsolgte(db).indexOf(id) >= 0) saetCfg(db, 'UDSOLGT', udsolgte(db).filter(function (x) { return x !== id; }).join(', '));
+  }
   // Admin retter menuen: handling 'gem' (ny eller rettet vare), 'skjul', 'vis' (hent en tidligere vare frem)
   // eller 'variant' (en variant udsolgt / på lager). Første gang kopieres menuen fra koden over i fanen Menu.
   function slug(navn) {
@@ -216,11 +221,18 @@ var Core = (function () {
     kraevAdmin(me);
     var rows;
     try { rows = db.all('Menu'); } catch (e) { throw err('BAD', 'Fanen Menu mangler. Kør Webshoppen → Opsæt faner.'); }
-    if (!rows.some(function (r) { return str(r.id).trim(); })) {
+    // Første gang: kopiér menuen fra koden ind i fanen. Gøres færdig ved næste kald, hvis den blev afbrudt
+    // (Config MENU_KOPIERET sættes først, når alle varer står i fanen).
+    if (!ja(cfgVal(db, 'MENU_KOPIERET', '')) && (!rows.some(function (r) { return str(r.id).trim(); }) || cfgVal(db, 'MENU_KOPIERER', ''))) {
+      saetCfg(db, 'MENU_KOPIERER', 'ja');
+      var har = rows.map(function (r) { return str(r.id); });
       sortiment().menu.filter(function (v) { return !ja(v.snart); }).forEach(function (v, i) {
+        if (har.indexOf(str(v.id)) >= 0) return;
         db.insert('Menu', { id: str(v.id), navn: str(v.navn), ikon: str(v.ikon), pris: num(v.pris), kostpris: num(v.kostpris), besked: str(v.besked),
           varianter: varianter(v).join(', '), udsolgte: '', oenske: ja(v.oenske) ? 'ja' : '', aktiv: til(v.aktiv) ? 'ja' : 'nej', raekke: i + 1 });
       });
+      saetCfg(db, 'MENU_KOPIERER', '');
+      saetCfg(db, 'MENU_KOPIERET', 'ja');
       rows = db.all('Menu');
     }
     rows = rows.filter(function (r) { return str(r.id).trim(); });
@@ -235,6 +247,8 @@ var Core = (function () {
       if (!row) throw err('BAD', 'Varen findes ikke.');
       if (handling === 'vis' && rows.some(function (r) { return r !== row && til(r.aktiv) && nogle(r.navn) === nogle(row.navn); })) throw err('BAD', 'Der er allerede en vare med navnet ' + str(row.navn) + '.');
       db.update('Menu', row, { aktiv: handling === 'vis' ? 'ja' : 'nej' });
+      // En fjernet vare tager ikke et gammelt tilbud eller en udsolgt-markering med, når den hentes frem igen
+      if (handling === 'skjul') rydTilbudUdsolgt(db, str(row.id), true);
       return { ok: true, id: str(row.id) };
     }
     if (handling === 'variant') {
@@ -264,6 +278,8 @@ var Core = (function () {
       besked: str(data.besked).trim().slice(0, 60), varianter: valg.join(', '), oenske: data.oenske ? 'ja' : '' };
     if (row) {
       felter.udsolgte = udsolgteVarianter({ varianter: felter.varianter, udsolgte: row.udsolgte }).join(', ');
+      // Ny normalpris: et tilbud, der ikke længere er lavere, fjernes (så det ikke vågner igen ved en senere prisstigning)
+      if (pris !== num(row.pris)) { var tb0 = tilbud(db)[str(row.id)]; if (tb0 !== undefined && tb0 >= pris) rydTilbudUdsolgt(db, str(row.id), false); }
       db.update('Menu', row, felter);
       return { ok: true, id: str(row.id) };
     }
@@ -318,6 +334,10 @@ var Core = (function () {
     var ud = udsolgte(db).filter(function (x) { return x !== id; });
     if (data.udsolgt) ud.push(id);
     saetCfg(db, 'UDSOLGT', ud.join(', '));
+    // "På lager igen" gælder hele varen – også varianter, der var markeret udsolgt hver for sig
+    if (!data.udsolgt) {
+      try { db.all('Menu').forEach(function (r) { if (str(r.id) === id && str(r.udsolgte).trim()) db.update('Menu', r, { udsolgte: '' }); }); } catch (e) { /* ingen fane Menu */ }
+    }
     return { ok: true };
   }
 
@@ -1152,6 +1172,8 @@ var Core = (function () {
       var vare = null;
       menuRaa(db).forEach(function (v) { if (str(v.id) === str(data.vareId) && til(v.aktiv) && !ja(v.snart)) vare = v; });
       if (!vare) throw err('BAD', 'Vælg en vare.');
+      var valgG = varianter(vare), udG = udsolgteVarianter(vare);
+      if (udsolgte(db).indexOf(str(vare.id)) >= 0 || (valgG.length && udG.length === valgG.length)) throw err('BAD', str(vare.navn) + ' er udsolgt lige nu.');
       var shop = env.shop ? env.shop() : { aaben: true };
       var id = env.uuid();
       db.insert('Bestillinger', { id: id, tid: tid, fra: i, til: i, vare: 'Gave fra admin: ' + str(vare.navn), pris: 0, kostpris: num(vare.kostpris), status: 'ny', forud: shop.aaben ? '' : 'ja', oenske: besked });

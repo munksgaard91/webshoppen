@@ -519,6 +519,7 @@ td.r, th.r { text-align: right; }
 .stats.two { grid-template-columns: 1fr; }
   .list .row { flex-wrap: wrap; }
   .row-price { min-width: 0; }
+  .row-price .foer-pris { position: static; }
   .list .row-acts { width: auto; }
   .row-2 { grid-template-columns: 1fr; }
   .search { max-width: none; width: 100%; }

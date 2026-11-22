@@ -1392,7 +1392,7 @@
   // med ét klik, og et navn, der ligner en tidligere vare, giver "Mente du …?" før en ny oprettes.
   var VARE_IKONER = ['🥤', '⚡', '🍫', '🥔', '🍬', '🍭', '🍪', '🧃', '☕', '🍵', '🧋', '🍎', '🍌', '🥜', '🍿', '🥨', '🧁', '🍩', '🍦', '🛍️'];
   function openVare(id) {
-    var v = id ? (A.menuAlle || []).filter(function (x) { return x.id === id; })[0] : null;
+    var v = id ? (A.menuAlle || S.menu).filter(function (x) { return x.id === id; })[0] : null;
     var tidligere = (A.menuAlle || []).filter(function (x) { return !x.aktiv; });
     var ikon = v ? v.ikon : '🛍️';
     ui.vareId = v ? v.id : '';
@@ -1407,7 +1407,7 @@
       '<div class="row-2"><div class="field"><label for="vare-pris">Pris i Webcoins</label><input class="input" id="vare-pris" type="number" min="1" step="1" value="' + (v ? v.normalPris : '') + '"></div>' +
       '<div class="field"><label for="vare-kost">Kostpris til RAB (kr) – 0 = teamkassen</label><input class="input" id="vare-kost" type="number" min="0" step="0.01" value="' + (v ? v.kostpris : 0) + '"></div></div>' +
       '<div class="field"><label for="vare-besked">Besked under navnet (valgfri)</label><input class="input" id="vare-besked" maxlength="60" value="' + esc(v ? v.besked : '') + '" placeholder="Fx Kun fredage"></div>' +
-      '<div class="field"><label for="vare-var">Varianter (valgfri, adskil med komma)</label><input class="input" id="vare-var" maxlength="300" value="' + esc(v ? v.varianter.join(', ') : '') + '" placeholder="Fx Mars, Snickers, Twix"></div>' +
+      '<div class="field"><label for="vare-var">Varianter (valgfri, adskil med komma – intet komma i selve navnet)</label><input class="input" id="vare-var" maxlength="300" value="' + esc(v ? v.varianter.join(', ') : '') + '" placeholder="Fx Mars, Snickers, Twix"></div>' +
       '<label class="check"><input type="checkbox" id="vare-oenske"' + (v && v.oenskeFelt ? ' checked' : '') + '> "Dit ønske"-felt ved bestilling</label>' +
       '<div id="vare-ligner"></div>' +
       '<div class="modal-acts"><button class="btn grow" data-act="close">Annullér</button><button class="btn primary grow" data-act="vare-gem">' + (v ? 'Gem' : 'Tilføj') + '</button></div>');
@@ -1840,8 +1840,9 @@
         skiftStraks('admin_vare', { handling: 'variant', id: vid, variant: vv, udsolgt: vu }, function () {
           (A.menuAlle || []).forEach(function (x) {
             if (x.id !== vid) return;
-            x.udsolgteVarianter = x.udsolgteVarianter.filter(function (y) { return y !== vv; });
+            x.udsolgteVarianter = (x.udsolgteVarianter || []).filter(function (y) { return y !== vv; });
             if (vu) x.udsolgteVarianter.push(vv);
+            x.udsolgt = !!x.udsolgtVare || (x.varianter.length > 0 && x.udsolgteVarianter.length === x.varianter.length);
           });
         }, vu ? vv + ' er udsolgt' : vv + ' er på lager igen');
         break;
@@ -1856,7 +1857,11 @@
         // Slås op ved hvert kald – refresh lægger ændringen oven på nye tal (nye objekter)
         var uid = t.dataset.id, ud = t.dataset.u === '1';
         skiftStraks('admin_udsolgt', { vareId: uid, udsolgt: ud }, function () {
-          S.menu.forEach(function (x) { if (x.id === uid) x.udsolgt = ud; });
+          S.menu.concat(A ? A.menuAlle || [] : []).forEach(function (x) {
+            if (x.id !== uid) return;
+            x.udsolgt = ud; x.udsolgtVare = ud;
+            if (!ud) x.udsolgteVarianter = []; // "På lager igen" gælder også varianterne
+          });
         }, ud ? 'Markeret som udsolgt' : 'På lager igen');
         break;
       }

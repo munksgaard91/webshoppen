@@ -511,7 +511,8 @@ function dato_(v) {
 // ---------- Sheet som database ----------
 
 // Kolonner der altid skal være tekst. Ellers laver Sheets "2026-11" om til en dato og id'er som "12e45678" om til tal.
-var TEKST_KOL_ = ['id', 'tid', 'maaned', 'initialer', 'fra', 'til', 'ref', 'email', 'sheet_id', 'noegle', 'vaerdi', 'gaver_set', 'afsloeret', 'vinder'];
+var TEKST_KOL_ = ['id', 'tid', 'maaned', 'initialer', 'fra', 'til', 'ref', 'email', 'sheet_id', 'noegle', 'vaerdi', 'gaver_set', 'afsloeret', 'vinder',
+  'navn', 'besked', 'varianter', 'udsolgte']; // fanen Menu: "10-12" eller "1/12" må ikke blive til en dato
 
 // Hvert kald til SpreadsheetApp (getSheetByName, getValues, setValue …) koster 50–150 ms. Derfor:
 //  - preload() henter alle faner i ét kald via Sheets-tjenesten (Advanced Sheets Service, v4). Er den ikke slået til,

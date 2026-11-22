@@ -710,4 +710,25 @@ t('admin retter menuen: tilføj, samme navn afvist, skjul/hent frem, besked, var
   data.Menu = data.Menu.filter(function (r) { return r.id !== 'mini-candybar'; });
   SORTIMENT.menu = data.Menu;
 });
+t('audit menu: på lager igen rydder varianter, tilbud ryddes ved lavere pris og skjul, admin-gave afviser udsolgt', function () {
+  var adm = Core.resolveUser(db, { email: 'adm@best-one.dk' }, ['adm@best-one.dk']);
+  var vare = function (id) { return Core.handle(db, adm, 'admin_state', {}, env).menuAlle.filter(function (v) { return v.id === id; })[0]; };
+  Core.handle(db, adm, 'admin_vare', { handling: 'gem', navn: 'Slik', pris: 10, varianter: 'Sur, Sød' }, env);
+  ['Sur', 'Sød'].forEach(function (x) { Core.handle(db, adm, 'admin_vare', { handling: 'variant', id: 'slik', variant: x, udsolgt: true }, env); });
+  eq([vare('slik').udsolgt, vare('slik').udsolgtVare], [true, false]);
+  kaster(function () { Core.handle(db, adm, 'admin_gave', { initialer: 'BBB', vareId: 'slik' }, env); }, 'udsolgt');
+  Core.handle(db, adm, 'admin_udsolgt', { vareId: 'slik', udsolgt: false }, env);
+  eq([vare('slik').udsolgt, vare('slik').udsolgteVarianter], [false, []]);
+  Core.handle(db, adm, 'admin_tilbud', { vareId: 'slik', pris: 8 }, env);
+  Core.handle(db, adm, 'admin_vare', { handling: 'gem', id: 'slik', navn: 'Slik', pris: 7, varianter: 'Sur, Sød' }, env);
+  Core.handle(db, adm, 'admin_vare', { handling: 'gem', id: 'slik', navn: 'Slik', pris: 12, varianter: 'Sur, Sød' }, env);
+  eq(vare('slik').foerPris, 0); // tilbuddet på 8 vågner ikke igen
+  Core.handle(db, adm, 'admin_tilbud', { vareId: 'slik', pris: 9 }, env);
+  Core.handle(db, adm, 'admin_udsolgt', { vareId: 'slik', udsolgt: true }, env);
+  Core.handle(db, adm, 'admin_vare', { handling: 'skjul', id: 'slik' }, env);
+  Core.handle(db, adm, 'admin_vare', { handling: 'vis', id: 'slik' }, env);
+  eq([vare('slik').foerPris, vare('slik').udsolgt], [0, false]);
+  data.Menu = data.Menu.filter(function (r) { return r.id !== 'slik'; });
+  SORTIMENT.menu = data.Menu;
+});
 print('OK: ' + ok + '  FEJL: ' + fejl);
