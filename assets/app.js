@@ -1110,7 +1110,7 @@
     var lager = '<section class="card lager"><div class="card-head"><h2 class="card-title">Lager</h2><button class="btn sm" data-act="vare-ny">+ Tilføj vare</button></div><div class="lager-liste">' +
       aktive.map(function (v) {
         var varianter = v.varianter.length > 1 ? '<div class="lager-var">' + v.varianter.map(function (x) {
-          var ud = v.udsolgteVarianter.indexOf(x) >= 0;
+          var ud = (v.udsolgteVarianter || []).indexOf(x) >= 0;
           return '<button class="chip' + (ud ? ' ud' : '') + '" data-act="variant-udsolgt" data-id="' + esc(v.id) + '" data-v="' + esc(x) + '" data-u="' + (ud ? '0' : '1') + '" title="' + (ud ? 'Klik: på lager igen' : 'Klik: udsolgt') + '">' + esc(x) + (ud ? ' · udsolgt' : '') + '</button>';
         }).join('') + '</div>' : '';
         return '<div class="lager-item' + (v.udsolgt ? ' ud' : '') + '"><span class="lager-navn">' + esc(v.ikon) + ' <b>' + esc(v.navn) + '</b>' + (v.besked ? ' <small class="faint">' + esc(v.besked) + '</small>' : '') + '</span>' +
