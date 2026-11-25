@@ -1153,7 +1153,7 @@
           var acts = '';
           if (b.status === 'ny') acts = '<button class="btn primary sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="udleveret">Udleveret</button><button class="btn danger sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="annulleret">Annullér</button>';
           else if (b.status === 'udleveret') acts = '<button class="btn sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="ny">Fortryd</button><button class="btn danger sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="annulleret">Annullér</button>';
-          return '<tr><td class="faint">' + dato(b.tid) + '</td><td class="nowrap">' + pAvatar(b.fra, b.fra, 'mini-av') + esc(b.fraNavn) + '</td><td class="nowrap">' + (b.til !== b.fra ? '🎁 ' + pAvatar(b.til, b.til, 'mini-av') + esc(b.tilNavn) : '<span class="faint">—</span>') + '</td><td><b>' + esc(b.vare) + '</b>' + (b.oenske ? '<small class="variants">Ønske: ' + esc(b.oenske) + '</small>' : '') + '</td><td class="r num">' + wc(b.pris) + '</td><td>' + statusTag(b) + '</td><td><div class="row-acts">' + acts + '</div></td></tr>';
+          return '<tr><td class="faint">' + dato(b.tid) + '</td><td class="nowrap">' + pAvatar(b.fra, b.fra, 'mini-av') + esc(b.fraNavn) + '</td><td class="nowrap">' + (b.til !== b.fra ? '🎁 ' + pAvatar(b.til, b.til, 'mini-av') + esc(b.tilNavn) : '<span class="faint">—</span>') + '</td><td><b>' + esc(b.vare) + '</b>' + (b.oenske ? '<small class="variants">Ønske: ' + esc(b.oenske) + '</small>' : '') + (b.besked ? '<small class="variants">💬 ' + esc(b.besked) + '</small>' : '') + '</td><td class="r num">' + wc(b.pris) + '</td><td>' + statusTag(b) + '</td><td><div class="row-acts">' + acts + '</div></td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty">Ingen bestillinger.</div>') +
       '</section>';
   }
@@ -1199,7 +1199,7 @@
     var best = '<section class="card"><div class="card-head"><h2 class="card-title">Nye bestillinger' + (nye.length ? ' <span class="badge">' + nye.length + '</span>' : '') + '</h2><a class="link" href="#/admin/bestillinger">Se alle</a></div>' +
       (nye.length ? '<div class="adm-list">' + nye.slice(0, 10).map(function (b) {
         var modt = b.til !== b.fra ? b.til : b.fra;
-        return '<div class="adm-row"><div class="adm-who">' + pAvatar(modt, modt, 'mini-av md') + '<div class="adm-main"><b>' + esc(b.vare) + '</b>' + (b.oenske ? ' <span class="faint">· ' + esc(b.oenske) + '</span>' : '') +
+        return '<div class="adm-row"><div class="adm-who">' + pAvatar(modt, modt, 'mini-av md') + '<div class="adm-main"><b>' + esc(b.vare) + '</b>' + (b.oenske ? ' <span class="faint">· ' + esc(b.oenske) + '</span>' : '') + (b.besked ? ' <span class="faint">· 💬 ' + esc(b.besked) + '</span>' : '') +
           '<small class="faint">Til ' + esc(b.til !== b.fra ? b.tilNavn : b.fraNavn) + (b.til !== b.fra ? ' · 🎁 gave fra ' + esc(b.fraNavn) : '') + ' · ' + dato(b.tid) + (b.forud ? ' · forudbestilt' : '') + '</small></div></div>' +
           '<div class="row-acts"><button class="btn primary sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="udleveret">Udleveret</button><button class="btn danger sm" data-act="bstatus" data-id="' + esc(b.id) + '" data-s="annulleret">Annullér</button></div></div>';
       }).join('') + '</div>' + (nye.length > 10 ? '<small class="faint">+ ' + (nye.length - 10) + ' flere</small>' : '') : '<div class="empty">Ingen nye bestillinger.</div>') +
@@ -1509,6 +1509,12 @@
   }
 
   var koebState = null;
+  // Felter i købsvinduet, der skal overleve en gentegning (antal, modtager, variant …)
+  function gemKoebFelter() {
+    if (!koebState) return;
+    if (document.getElementById('koeb-oenske')) koebState.oenske = val('koeb-oenske');
+    if (document.getElementById('koeb-besked')) koebState.besked = val('koeb-besked');
+  }
   function openKoeb(vareId, gave) {
     var v = S.menu.filter(function (x) { return x.id === vareId; })[0];
     if (!v) return;
@@ -1557,6 +1563,7 @@
         return '<button class="tag vaelg' + ((k.valgt || {})[u.initialer] ? ' on' : '') + '" data-act="koeb-vaelg" data-i="' + esc(u.initialer) + '">' + esc(u.navn) + '</button>';
       }).join('') + '</div></div>' : '') +
       (flere && k.hvem !== 'valgt' ? '<div class="field"><label>' + antal + ' personer inkl. dig</label><div class="modt">' + modt.map(function (u) { return '<span class="tag">' + esc(u.navn) + '</span>'; }).join('') + '</div></div>' : '') +
+      '<div class="field"><label for="koeb-besked">Besked <span class="faint">(valgfri)</span></label><input class="input" id="koeb-besked" maxlength="300" value="' + esc(k.besked || '') + '" placeholder="' + (k.gave ? 'Fx Tak for hjælpen!' : 'Fx Stil den på mit bord') + '"></div>' +
       (!k.gave ? '<div class="sum antal-r"><span class="muted">Antal</span><span class="antal-vaelg"><button class="btn sm" data-act="koeb-antal" data-d="-1"' + (antal <= 1 ? ' disabled' : '') + ' aria-label="Færre">−</button><b class="num">' + antal + '</b><button class="btn sm" data-act="koeb-antal" data-d="1"' + (antal >= 10 || S.stats.saldo < v.pris * (antal + 1) ? ' disabled' : '') + ' aria-label="Flere">+</button></span></div>' : '') +
       '<div class="sum"><span class="muted">Pris</span><b class="num">' + (antal > 1 ? '<span class="muted gange">' + antal + ' × ' + fmt(v.pris) + ' =</span> ' : '') + wc(total) + '</b></div>' +
       '<div class="sum"><span class="muted">Saldo efter</span><b class="num ' + (efter < 0 ? 'minus' : '') + '">' + wc(efter) + '</b></div>' +
@@ -1725,9 +1732,9 @@
       case 'koeb': openKoeb(t.dataset.id, false); break;
       case 'giv': openKoeb(t.dataset.id, true); break;
       case 'koeb-vaelg': koebState.valgt = koebState.valgt || {}; if (koebState.valgt[t.dataset.i]) delete koebState.valgt[t.dataset.i]; else koebState.valgt[t.dataset.i] = 1; renderKoeb(); break;
-      case 'koeb-antal': if (document.getElementById('koeb-oenske')) koebState.oenske = val('koeb-oenske'); koebState.antal = Math.min(10, Math.max(1, (koebState.antal || 1) + Number(t.dataset.d))); renderKoeb(); break;
-      case 'koeb-hvem': if (document.getElementById('koeb-oenske')) koebState.oenske = val('koeb-oenske'); koebState.hvem = t.dataset.h; renderKoeb(); break;
-      case 'koeb-variant': koebState.variant = t.dataset.v; renderKoeb(); break;
+      case 'koeb-antal': gemKoebFelter(); koebState.antal = Math.min(10, Math.max(1, (koebState.antal || 1) + Number(t.dataset.d))); renderKoeb(); break;
+      case 'koeb-hvem': gemKoebFelter(); koebState.hvem = t.dataset.h; renderKoeb(); break;
+      case 'koeb-variant': gemKoebFelter(); koebState.variant = t.dataset.v; renderKoeb(); break;
       case 'koeb-drej': {
         // Bekræft købet, så man altid ser prisen
         var hp = S.hjul.pris;
@@ -1785,7 +1792,7 @@
         var k = koebState;
         var forud = S.shop && !S.shop.aaben;
         var flere = k.gave && k.hvem !== 'kollega';
-        iBaggrunden('bestil', { vareId: k.vare.id, variant: k.variant, oenske: flere ? '' : val('koeb-oenske'), til: k.gave && !flere ? k.til : '', hvem: flere ? k.hvem : '', liste: flere && k.hvem === 'valgt' ? Object.keys(k.valgt || {}) : [], antal: k.gave ? 1 : (k.antal || 1) },
+        iBaggrunden('bestil', { vareId: k.vare.id, variant: k.variant, oenske: flere ? '' : val('koeb-oenske'), til: k.gave && !flere ? k.til : '', hvem: flere ? k.hvem : '', liste: flere && k.hvem === 'valgt' ? Object.keys(k.valgt || {}) : [], antal: k.gave ? 1 : (k.antal || 1), besked: val('koeb-besked') },
           forud ? (k.gave ? 'Din donation er forudbestilt 🎁' : k.vare.navn + ' er forudbestilt') : (k.gave ? 'Din donation er sendt 🎁' : ((k.antal || 1) > 1 ? k.antal + ' × ' : '') + k.vare.navn + ' er bestilt'),
           forud ? 'Leveres når shoppen åbner igen.' : 'Personlig levering, forvent lidt ventetid.');
         break;
@@ -1996,7 +2003,7 @@
 
   document.addEventListener('change', function (ev) {
     var t = ev.target;
-    if (t.dataset.act === 'koeb-til') { if (document.getElementById('koeb-oenske')) koebState.oenske = val('koeb-oenske'); koebState.til = t.value; renderKoeb(); }
+    if (t.dataset.act === 'koeb-til') { gemKoebFelter(); koebState.til = t.value; renderKoeb(); }
     if (t.dataset.act === 'pperson') { ui.postPerson = t.value; ui.postVis = 25; render(); }
   });
 

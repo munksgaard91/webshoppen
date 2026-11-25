@@ -751,4 +751,23 @@ t('bestil med antal: én postering med samlet pris, én bestilling pr. stk., mak
   eq(Core.handle(db, B, 'bestil', { vareId: 'cola', antal: 3, til: 'AAA' }, env).antal, undefined, 'gave til kollega ignorerer antal');
   data.Posteringer = gemP; data.Bestillinger = gemBe;
 });
+t('besked følger med bestilling, antal, donation og gruppe-donation – og vises i modtagerens gave-popup', function () {
+  var gemP = data.Posteringer, gemBe = data.Bestillinger;
+  data.Posteringer = [{ id: 's', tid: '2026-11-01T10:00:00.000Z', initialer: 'BBB', type: 'justering', beloeb: 200, tekst: 'Start' }];
+  data.Bestillinger = [];
+  Core.handle(db, B, 'bestil', { vareId: 'cola', besked: ' Stil den på mit bord ' }, env);
+  eq(data.Bestillinger[0].besked, 'Stil den på mit bord');
+  eq(sidsteBesked.kort, 'Besked: Stil den på mit bord');
+  Core.handle(db, B, 'bestil', { vareId: 'cola', antal: 2, besked: 'To kolde' }, env);
+  eq(data.Bestillinger.slice(1).map(function (b) { return b.besked; }), ['To kolde', 'To kolde']);
+  Core.handle(db, B, 'bestil', { vareId: 'cola', til: 'AAA', besked: 'Tak for hjælpen!' }, env);
+  var g = Core.handle(db, A, 'state', {}, env).gaver.filter(function (x) { return x.fra === 'BBB'; });
+  eq(g[g.length - 1].besked, 'Tak for hjælpen!');
+  Core.handle(db, B, 'bestil', { vareId: 'cola', hvem: 'afdeling', besked: 'God fredag' }, env);
+  eq(data.Bestillinger.slice(-2).map(function (b) { return b.besked; }), ['God fredag', 'God fredag']);
+  eq(Core.handle(db, B, 'state', {}, env).bestillinger[0].besked !== undefined, true);
+  Core.handle(db, B, 'bestil', { vareId: 'cola', besked: new Array(400).join('x') }, env);
+  eq(data.Bestillinger[data.Bestillinger.length - 1].besked.length, 300, 'højst 300 tegn');
+  data.Posteringer = gemP; data.Bestillinger = gemBe;
+});
 print('OK: ' + ok + '  FEJL: ' + fejl);

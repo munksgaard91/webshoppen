@@ -21,7 +21,8 @@ var Core = (function () {
     Stemmer: ['id', 'tid', 'maaned', 'fra', 'til', 'begrundelse'],
     Spil: ['id', 'tid', 'initialer', 'status', 'resultat'],
     Posteringer: ['id', 'tid', 'initialer', 'type', 'beloeb', 'tekst', 'ref'],
-    Bestillinger: ['id', 'tid', 'fra', 'til', 'vare', 'pris', 'kostpris', 'status', 'forud', 'oenske'],
+    // besked = fri besked fra bestilleren, der skal gives videre (til admin og evt. modtageren)
+    Bestillinger: ['id', 'tid', 'fra', 'til', 'vare', 'pris', 'kostpris', 'status', 'forud', 'oenske', 'besked'],
     Kilder: ['kilde', 'navn', 'sheet_id', 'fane', 'kol_initialer', 'kol_vaerdi', 'kol_dato', 'start_raekke'],
     Regler: ['gruppe', 'kilde', 'sats', 'tekst', 'navn', 'fra'],
     Afregning: ['maaned', 'sendt', 'tid'],
@@ -500,7 +501,7 @@ var Core = (function () {
         return { id: str(p.id), tid: str(p.tid), type: str(p.type), beloeb: num(p.beloeb), tekst: str(p.tekst), maaned: postMaaned(p) };
       }),
       bestillinger: bestillinger.map(function (b) {
-        return { id: str(b.id), tid: str(b.tid), fra: str(b.fra), fraNavn: navne[b.fra] || b.fra, til: str(b.til), tilNavn: navne[b.til] || b.til, vare: str(b.vare), pris: num(b.pris), status: str(b.status), forud: str(b.forud) === 'ja', oenske: str(b.oenske) };
+        return { id: str(b.id), tid: str(b.tid), fra: str(b.fra), fraNavn: navne[b.fra] || b.fra, til: str(b.til), tilNavn: navne[b.til] || b.til, vare: str(b.vare), pris: num(b.pris), status: str(b.status), forud: str(b.forud) === 'ja', oenske: str(b.oenske), besked: str(b.besked) };
       }),
       regler: regler(db),
       grupper: GRUPPER,
@@ -554,7 +555,7 @@ var Core = (function () {
         if (!b || str(b.status) === 'annulleret') return;
         var admin = /^Gave fra admin: /.test(str(b.vare));
         ud.push({ id: str(p.id), tid: str(p.tid), fra: admin ? '' : ini(b.fra), fraNavn: admin ? 'Admin' : (navne[ini(b.fra)] || ini(b.fra)),
-          hvad: str(b.vare).replace(/^Gave fra admin: /, ''), beloeb: 0, besked: admin ? besked : '' });
+          hvad: str(b.vare).replace(/^Gave fra admin: /, ''), beloeb: 0, besked: admin ? besked : str(b.besked) });
       } else if (str(p.ref) === 'admingave') {
         ud.push({ id: str(p.id), tid: str(p.tid), fra: '', fraNavn: 'Admin', hvad: '', beloeb: num(p.beloeb), besked: besked });
       }
@@ -610,12 +611,14 @@ var Core = (function () {
     var vareNavn = variant && variant !== str(vare.navn) ? str(vare.navn) + ' · ' + variant : str(vare.navn);
     // Varer uden valg har et frivilligt ønske-felt (fx "Kold, tak" eller "Gerne en med karamel")
     var oenske = valg.length <= 1 && ja(vare.oenske) ? str(data.oenske).trim().slice(0, 200) : '';
+    // Besked kan altid vedhæftes (bestilling og donation) – gives videre til admin og evt. modtageren
+    var besked = str(data.besked).trim().slice(0, 300);
     // Lukket shop = forudbestilling. Den leveres, når shoppen åbner igen.
     var shop = env.shop ? env.shop() : { aaben: true };
     var forud = !shop.aaben;
     var pris = prisFor(db, vare);
     var hvem = str(data.hvem);
-    if (hvem === 'team' || hvem === 'afdeling' || hvem === 'valgt') return bestilFlere(db, me, vare, hvem, forud, env, data.liste, vareNavn);
+    if (hvem === 'team' || hvem === 'afdeling' || hvem === 'valgt') return bestilFlere(db, me, vare, hvem, forud, env, data.liste, vareNavn, besked);
     var gave = !!data.til;
     var modtager = { initialer: me.initialer, navn: me.navn };
     if (gave) {
@@ -636,13 +639,13 @@ var Core = (function () {
     if (antal > 1) {
       db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'koeb', beloeb: -pris * antal, tekst: antal + ' × ' + vareNavn, ref: id });
       for (var n = 1; n <= antal; n++) {
-        db.insert('Bestillinger', { id: id + '.' + n, tid: tid, fra: me.initialer, til: me.initialer, vare: vareNavn, pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '', oenske: oenske });
+        db.insert('Bestillinger', { id: id + '.' + n, tid: tid, fra: me.initialer, til: me.initialer, vare: vareNavn, pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '', oenske: oenske, besked: besked });
       }
       env.notify({
         ikon: '🛒', side: 'bestillinger', kunChat: true,
         emne: 'Bestilling: ' + antal + ' × ' + vareNavn + ' til ' + me.navn + (vare.ikon ? ' ' + str(vare.ikon) : ''),
-        kort: oenske ? 'Ønske: ' + oenske : '',
-        tekst: me.navn + ' (' + me.initialer + ') har ' + (forud ? 'forudbestilt ' : 'bestilt ') + antal + ' × ' + str(vare.ikon) + ' ' + vareNavn + '. Pris: ' + (pris * antal) + ' Webcoins.' + (oenske ? ' Ønske: ' + oenske : '')
+        kort: ekstraTekst(oenske, besked),
+        tekst: me.navn + ' (' + me.initialer + ') har ' + (forud ? 'forudbestilt ' : 'bestilt ') + antal + ' × ' + str(vare.ikon) + ' ' + vareNavn + '. Pris: ' + (pris * antal) + ' Webcoins.' + (oenske ? ' Ønske: ' + oenske : '') + (besked ? ' Besked: ' + besked : '')
       });
       return { id: id, forud: forud, antal: antal };
     }
@@ -652,7 +655,7 @@ var Core = (function () {
       id: env.uuid(), tid: tid, initialer: me.initialer, type: gave ? 'gave' : 'koeb', beloeb: -pris,
       tekst: gave ? vareNavn + ' til ' + modtager.navn : vareNavn, ref: id
     });
-    db.insert('Bestillinger', { id: id, tid: tid, fra: me.initialer, til: modtager.initialer, vare: vareNavn, pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '', oenske: oenske });
+    db.insert('Bestillinger', { id: id, tid: tid, fra: me.initialer, til: modtager.initialer, vare: vareNavn, pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '', oenske: oenske, besked: besked });
     if (gave && !/^EKS\d+$/.test(modtager.initialer)) {
       db.insert('Posteringer', {
         id: env.uuid(), tid: tid, initialer: modtager.initialer, type: 'gave_modtaget', beloeb: 0,
@@ -662,10 +665,10 @@ var Core = (function () {
     env.notify({
       ikon: gave ? '🎁' : '🛒', side: 'bestillinger', kunChat: true,
       emne: (gave ? 'Gave: ' + vareNavn + ' til ' + modtager.navn + ' fra ' + me.navn : 'Bestilling: ' + vareNavn + ' til ' + me.navn) + (vare.ikon ? ' ' + str(vare.ikon) : ''),
-      kort: oenske ? 'Ønske: ' + oenske : '',
+      kort: ekstraTekst(oenske, besked),
       tekst: (gave
         ? me.navn + ' (' + me.initialer + ') giver ' + str(vare.ikon) + ' ' + vareNavn + ' til ' + modtager.navn + ' (' + modtager.initialer + ').'
-        : me.navn + ' (' + me.initialer + ') har ' + (forud ? 'forudbestilt ' : 'bestilt ') + str(vare.ikon) + ' ' + vareNavn + '.') + ' Pris: ' + pris + ' Webcoins.' + (oenske ? ' Ønske: ' + oenske : '')
+        : me.navn + ' (' + me.initialer + ') har ' + (forud ? 'forudbestilt ' : 'bestilt ') + str(vare.ikon) + ' ' + vareNavn + '.') + ' Pris: ' + pris + ' Webcoins.' + (oenske ? ' Ønske: ' + oenske : '') + (besked ? ' Besked: ' + besked : '')
     });
     return { id: id, forud: forud };
   }
@@ -674,7 +677,11 @@ var Core = (function () {
   // af kolleger, ekstra modtagere og evt. en selv): pris × antal.
   // Én postering til giveren (ref = fælles id) og én bestilling pr. person (<id>.<nr>), så admin kan udlevere og
   // annullere (refundere) hver for sig.
-  function bestilFlere(db, me, vare, hvem, forud, env, liste, vareNavn) {
+  function ekstraTekst(oenske, besked) {
+    return [oenske ? 'Ønske: ' + oenske : '', besked ? 'Besked: ' + besked : ''].filter(Boolean).join(' · ');
+  }
+  function bestilFlere(db, me, vare, hvem, forud, env, liste, vareNavn, besked) {
+    besked = besked || '';
     vareNavn = vareNavn || str(vare.navn);
     var alle = aktiveBrugere(db).filter(function (u) { return str(u.gruppe); });
     if (hvem === 'valgt') {
@@ -699,15 +706,15 @@ var Core = (function () {
     db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'gave', beloeb: -total, tekst: alle.length + ' × ' + vareNavn + ' til ' + hvemTekst, ref: id });
     alle.sort(function (a, b) { return str(a.navn).localeCompare(str(b.navn), 'da'); }).forEach(function (u, n) {
       var bid = id + '.' + (n + 1), t = ini(u.initialer);
-      db.insert('Bestillinger', { id: bid, tid: tid, fra: me.initialer, til: t, vare: vareNavn, pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '', oenske: '' });
+      db.insert('Bestillinger', { id: bid, tid: tid, fra: me.initialer, til: t, vare: vareNavn, pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '', oenske: '', besked: besked });
       if (t !== me.initialer && !/^EKS\d+$/.test(t)) db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: t, type: 'gave_modtaget', beloeb: 0, tekst: vareNavn + ' fra ' + me.navn, ref: bid });
     });
     env.notify({
       ikon: '🎁', side: 'bestillinger', kunChat: true,
       emne: 'Gave: ' + alle.length + ' × ' + vareNavn + ' til ' + hvemTekst + ' fra ' + me.navn + (vare.ikon ? ' ' + str(vare.ikon) : ''),
-      kort: alle.map(function (u) { return /^EKS\d+$/.test(ini(u.initialer)) ? str(u.navn) : ini(u.initialer); }).join(', '),
+      kort: alle.map(function (u) { return /^EKS\d+$/.test(ini(u.initialer)) ? str(u.navn) : ini(u.initialer); }).join(', ') + (besked ? ' · Besked: ' + besked : ''),
       tekst: me.navn + ' (' + me.initialer + ') ' + (forud ? 'forudbestiller ' : 'giver ') + str(vare.ikon) + ' ' + vareNavn + ' til ' + hvemTekst + ' (' + alle.length + ' personer: ' +
-        alle.map(function (u) { return /^EKS\d+$/.test(ini(u.initialer)) ? str(u.navn) : ini(u.initialer); }).join(', ') + '). Pris: ' + total + ' Webcoins.'
+        alle.map(function (u) { return /^EKS\d+$/.test(ini(u.initialer)) ? str(u.navn) : ini(u.initialer); }).join(', ') + '). Pris: ' + total + ' Webcoins.' + (besked ? ' Besked: ' + besked : '')
     });
     return { id: id, forud: forud, antal: alle.length };
   }
@@ -1069,7 +1076,7 @@ var Core = (function () {
         return { email: str(u.email).toLowerCase(), initialer: i, navn: str(u.navn), gruppe: str(u.gruppe), team: str(u.team).trim(), aktiv: sand(u.aktiv), saldo: st.saldo, optjentMaaned: st.optjentMaaned, optjentTotal: st.optjentTotal, brugt: st.brugt };
       }).sort(function (a, b) { return a.navn.localeCompare(b.navn, 'da'); }),
       bestillinger: db.all('Bestillinger').slice().sort(nyesteFoerst).map(function (b) {
-        return { id: str(b.id), tid: str(b.tid), fra: str(b.fra), fraNavn: navne[b.fra] || b.fra, til: str(b.til), tilNavn: navne[b.til] || b.til, vare: str(b.vare), pris: num(b.pris), kostpris: num(b.kostpris), status: str(b.status), forud: str(b.forud) === 'ja', oenske: str(b.oenske) };
+        return { id: str(b.id), tid: str(b.tid), fra: str(b.fra), fraNavn: navne[b.fra] || b.fra, til: str(b.til), tilNavn: navne[b.til] || b.til, vare: str(b.vare), pris: num(b.pris), kostpris: num(b.kostpris), status: str(b.status), forud: str(b.forud) === 'ja', oenske: str(b.oenske), besked: str(b.besked) };
       }),
       opgoerelse: opgoerelse(db),
       top: adminTop(db, poster, nu),
