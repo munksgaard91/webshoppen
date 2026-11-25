@@ -1012,3 +1012,8 @@ html.tv-fuld .tv .maal-ikon { width: 2.8vw; height: 2.8vw; font-size: 1.4vw; }
 :root[data-theme="dark"] .row-price .amt.tilbud { color: var(--brand-2); }
 .foer-pris { color: var(--muted); font-weight: 500; margin-right: 6px; font-size: .9em; }
 .lager-item s { color: var(--muted); }
+
+/* Antal i Bestil-vinduet: − 2 + */
+.antal-vaelg { display: inline-flex; align-items: center; gap: 10px; }
+.antal-vaelg .btn { width: 32px; padding: 0; justify-content: center; font-size: 16px; }
+.antal-vaelg b { min-width: 18px; text-align: center; }

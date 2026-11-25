@@ -731,4 +731,24 @@ t('audit menu: på lager igen rydder varianter, tilbud ryddes ved lavere pris og
   data.Menu = data.Menu.filter(function (r) { return r.id !== 'slik'; });
   SORTIMENT.menu = data.Menu;
 });
+t('bestil med antal: én postering med samlet pris, én bestilling pr. stk., maks. 10, saldo tjekkes mod det hele', function () {
+  var gemP = data.Posteringer, gemBe = data.Bestillinger;
+  data.Posteringer = [{ id: 's', tid: '2026-11-01T10:00:00.000Z', initialer: 'BBB', type: 'justering', beloeb: 35, tekst: 'Start' }];
+  data.Bestillinger = [];
+  kaster(function () { Core.handle(db, B, 'bestil', { vareId: 'cola', antal: 4 }, env); }, 'nok Webcoins');
+  var r = Core.handle(db, B, 'bestil', { vareId: 'cola', antal: 3, oenske: 'Kold' }, env);
+  eq(r.antal, 3);
+  eq(saldo(B), 5);
+  eq(data.Posteringer.filter(function (p) { return p.type === 'koeb'; }).map(function (p) { return [p.beloeb, p.tekst]; }), [[-30, '3 × Sodavand uden valg']]);
+  eq(data.Bestillinger.map(function (b) { return [b.til, b.pris, b.oenske]; }), [['BBB', 10, 'Kold'], ['BBB', 10, 'Kold'], ['BBB', 10, 'Kold']]);
+  var adm = Core.resolveUser(db, { email: 'adm@best-one.dk' }, ['adm@best-one.dk']);
+  Core.handle(db, adm, 'admin_bestilling', { id: data.Bestillinger[0].id, status: 'annulleret' }, env);
+  eq(saldo(B), 15, 'én af tre refunderes');
+  eq(Core.handle(db, B, 'state', {}, env).stats.brugtSelv, 20);
+  data.Posteringer.push({ id: 's2', tid: '2026-11-01T10:00:00.000Z', initialer: 'BBB', type: 'justering', beloeb: 500, tekst: 'Mere' });
+  eq(Core.handle(db, B, 'bestil', { vareId: 'cola', antal: 99 }, env).antal, 10, 'højst 10');
+  eq(Core.handle(db, B, 'bestil', { vareId: 'cola', antal: 'x' }, env).antal, undefined, 'ugyldigt antal = 1 (normal bestilling)');
+  eq(Core.handle(db, B, 'bestil', { vareId: 'cola', antal: 3, til: 'AAA' }, env).antal, undefined, 'gave til kollega ignorerer antal');
+  data.Posteringer = gemP; data.Bestillinger = gemBe;
+});
 print('OK: ' + ok + '  FEJL: ' + fejl);

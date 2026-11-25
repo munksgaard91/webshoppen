@@ -626,10 +626,26 @@ var Core = (function () {
       if (!u) throw err('BAD', 'Kollegaen findes ikke.');
       modtager = { initialer: t, navn: str(u.navn) };
     }
-    if (saldoFor(db.all('Posteringer'), me.initialer) < pris) throw err('FUNDS', 'Du har ikke nok Webcoins.');
+    // Antal (kun når man bestiller til sig selv): én bestilling pr. stk. (<id>.<nr>), så admin kan udlevere og
+    // annullere hver for sig – men én postering med det samlede beløb.
+    var antal = gave ? 1 : Math.min(10, Math.max(1, Math.floor(num(data.antal) || 1)));
+    if (saldoFor(db.all('Posteringer'), me.initialer) < pris * antal) throw err('FUNDS', 'Du har ikke nok Webcoins.');
 
     var id = env.uuid();
     var tid = env.now().toISOString();
+    if (antal > 1) {
+      db.insert('Posteringer', { id: env.uuid(), tid: tid, initialer: me.initialer, type: 'koeb', beloeb: -pris * antal, tekst: antal + ' × ' + vareNavn, ref: id });
+      for (var n = 1; n <= antal; n++) {
+        db.insert('Bestillinger', { id: id + '.' + n, tid: tid, fra: me.initialer, til: me.initialer, vare: vareNavn, pris: pris, kostpris: num(vare.kostpris), status: 'ny', forud: forud ? 'ja' : '', oenske: oenske });
+      }
+      env.notify({
+        ikon: '🛒', side: 'bestillinger', kunChat: true,
+        emne: 'Bestilling: ' + antal + ' × ' + vareNavn + ' til ' + me.navn + (vare.ikon ? ' ' + str(vare.ikon) : ''),
+        kort: oenske ? 'Ønske: ' + oenske : '',
+        tekst: me.navn + ' (' + me.initialer + ') har ' + (forud ? 'forudbestilt ' : 'bestilt ') + antal + ' × ' + str(vare.ikon) + ' ' + vareNavn + '. Pris: ' + (pris * antal) + ' Webcoins.' + (oenske ? ' Ønske: ' + oenske : '')
+      });
+      return { id: id, forud: forud, antal: antal };
+    }
     // Pengene trækkes først: fejler Sheets mellem de to skrivninger, er der i værste fald betalt uden en bestilling
     // (kan ses og refunderes), aldrig en bestilling uden betaling.
     db.insert('Posteringer', {
